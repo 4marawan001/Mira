@@ -1,6 +1,6 @@
 # Mira 0.5.11 · Mac build 156
 
-The package has been built and verified. Public release upload is pending. Source changes are available under [`updates/156`](../updates/156).
+[Download Mac build 156](https://github.com/4marawan001/Mira/releases/tag/v0.5.11) · [Source patches](../updates/156)
 
 This release updates the Apple Silicon Mac app. The released iPhone IPA and Fire TV APK remain at 0.5.10 / build 155, available from [build 155](https://github.com/4marawan001/Mira/releases/tag/v0.5.10).
 
@@ -28,4 +28,4 @@ Five broader desktop test failures documented in build 155 remain unresolved. Re
 
 ## Source
 
-The source update includes small verified source patches against the exact source archives in build 155, plus reconstruction instructions. The Mac patch contains build 156; the iPhone patch contains newer preview code. Original licenses and acknowledgements remain in the base source archives. Saved account data and private signing keys are excluded.
+This release includes small verified source patches against the exact source archives in build 155, plus reconstruction instructions. The Mac patch contains build 156; the iPhone patch contains newer preview code. Original licenses and acknowledgements remain in the base source archives. Saved account data and private signing keys are excluded.
