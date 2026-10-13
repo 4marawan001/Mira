@@ -1,3 +1,5 @@
+> Superseded by [Mac build 157](BUILD-157.md), which fixes an installed-app lookup failure in the updater. Install build 157 once from its DMG.
+
 # Mira 0.5.11 · Mac build 156
 
 [Download Mac build 156](https://github.com/4marawan001/Mira/releases/tag/v0.5.11) · [Source patches](../updates/156)
