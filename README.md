@@ -13,24 +13,24 @@
 </p>
 
 <p align="center">
-  <a href="#download">Download</a> · <a href="#inside-mira">Inside Mira</a> · <a href="docs/INSTALL.md">Installation</a> · <a href="docs/BUILD-158.md">Latest changes</a>
+  <a href="#download">Download</a> · <a href="#inside-mira">Inside Mira</a> · <a href="docs/INSTALL.md">Installation</a> · <a href="docs/BUILD-159.md">Latest changes</a>
 </p>
 
 ![Mira Home on Mac, with cinematic artwork, genre shortcuts, IMDb Top 250 and floating navigation](docs/assets/home.jpg)
 
-<p align="center"><sub>Real screenshots from the Mac app, build 155. Artwork and available titles depend on your catalogs.</sub></p>
+<p align="center"><sub>Real screenshot from the Mac app, build 155. Artwork and available titles depend on your catalogs.</sub></p>
 
 ## Download
 
-Latest releases: **iPhone 0.5.13 · build 158**, **Mac 0.5.12 · build 157**, and **Fire TV 0.5.10 · build 155**. These are Release packages.
+Latest releases: **Fire TV 0.5.14 · build 159**, **iPhone 0.5.13 · build 158**, and **Mac 0.5.12 · build 157**. These are Release packages.
 
 | Device | Download | Installation |
 | --- | --- | --- |
+| Fire TV | [APK](https://github.com/4marawan001/Mira/releases/download/v0.5.14/Mira-FireTV-universal.apk) | Install on a compatible Android-based Fire TV. Remote controls are supported. |
 | iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.13/Mira-ios-158.ipa) | Sign and install with Sideloadly on your Mac. |
 | Apple Silicon Mac | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.12/Mira-macOS-arm64.dmg) | Open the disk image and copy Mira to Applications. |
-| Fire TV | [APK](https://github.com/4marawan001/Mira/releases/download/v0.5.10/Mira-FireTV-universal.apk) | Install on a compatible Android-based Fire TV. Remote controls are supported. |
 
-[All releases and source downloads](https://github.com/4marawan001/Mira/releases) · [Step-by-step setup](docs/INSTALL.md) · [Mac build 157 checksums](https://github.com/4marawan001/Mira/releases/download/v0.5.12/SHA256SUMS.txt)
+[All releases and source downloads](https://github.com/4marawan001/Mira/releases) · [Step-by-step setup](docs/INSTALL.md) · [Fire TV build 159 checksums](https://github.com/4marawan001/Mira/releases/download/v0.5.14/SHA256SUMS.txt)
 
 ## Inside Mira
 
@@ -46,11 +46,26 @@ On iPhone and Mac, open **Settings → Look & feel → Browsing**. Movies & show
 
 ![A muted trailer preview over Mira's poster shelves](docs/assets/video-preview.jpg)
 
+<p align="center"><sub>Real screenshot from the Mac app, build 155 (Videos preview mode).</sub></p>
+
 ### Make it yours
 
 Choose an accent color, change the app icon, or adjust the browsing layout. The silver icon and dark surfaces carry through the app. On iPhone and Mac, the Home logo does a brief dance after ten stationary seconds and respects Reduce Motion.
 
 ![Mira appearance settings with accent colors and Movies or Videos browsing modes](docs/assets/appearance.jpg)
+
+<p align="center"><sub>Real screenshot from the Mac app, build 155 (appearance settings).</sub></p>
+
+## What's new in Fire TV build 159
+
+- **Automatic Arabic & English Subtitle Sync**: Automatic detection of Arabic Windows-1256 encoding without language hints, with strict script discrimination against Cyrillic, Greek, Hebrew and CJK encodings.
+- **Double-Encoded UTF-8 Mojibake Repair**: Detects and automatically restores Arabic subtitles corrupted by Latin-1/Windows-1252 mis-decoding.
+- **Release-Tag & FPS Matching**: Ranks subtitle candidates by release group (YTS, SPARKS, RARBG, etc.), source, codec, resolution, and target video frame rate.
+- **Bidi Marker Normalization**: Strips Unicode bidi control characters (`\u200E`, `\u200F`, `\u202A`..`\u202E`, `\u2066`..`\u2069`, `\uFEFF`) and filters phantom cues for reliable timeline correlation.
+- **Activity Correlation Drift Alignment**: Seamlessly aligns subtitles with frame-rate drift (such as 25.0 fps PAL to 23.976 fps NTSC) against embedded reference cues.
+- **Preserved Controls**: Manual subtitle track selection and delay adjustments remain completely intact.
+
+[Read Fire TV build 159 changes and checks](docs/BUILD-159.md).
 
 ## What's new in iPhone build 158
 
@@ -80,13 +95,13 @@ The [update manifest](https://github.com/4marawan001/Mira/releases/latest/downlo
 
 ## Testing status
 
-These are personal testing builds. Mac build 157 passed 30 focused checks, including real installer replacement and rejection checks in temporary folders. iPhone build 158 passed 102 regression checks and 10 preview checks on the iOS simulator, and TV build 155 passed its remote navigation smoke test. Five broader desktop failures remain unresolved. Real-provider excerpt playback and sustained Mac frame rates remain unverified; physical iPhone and Insignia testing is still needed. The iPhone preview opened, but a complete interactive playback check was blocked by Device Hub control availability. See [build 157 validation](docs/BUILD-157.md#validation).
+These are personal testing builds. Fire TV build 159 passed 91 focused checks and 611 player/autosync package checks with zero failures. Mac build 157 passed 30 focused checks, including real installer replacement and rejection checks in temporary folders. iPhone build 158 passed 102 regression checks and 10 preview checks on the iOS simulator. Five broader desktop failures from build 155 remain in the Mac repo. Unit tests verify parser, retimer, and selection logic; real-provider excerpt playback, sustained Mac frame rates, and physical television playback quality remain for device testing. See [Fire TV build 159 validation](docs/BUILD-159.md#validation) and [Mac build 157 validation](docs/BUILD-157.md#validation).
 
 The Mac package supports Apple Silicon and is ad-hoc signed. The Fire TV package supports ARMv7 and ARM64 Android/Fire OS devices with Android 7 or later. Platform features differ; Videos mode and the logo dance are excluded from TV.
 
 ## Source and credits
 
-Build 155 contains the full source archives, upstream base commits, original licenses and acknowledgements. Build 157 contains verified source patches and base archive checksums, with [reconstruction instructions](updates/157/SOURCE.md). Build 158 includes [iPhone Release source reconstruction instructions](updates/158/SOURCE.md). The iPhone patch matches Release 158, while the Mac patch matches Release 157. This repository is the download and documentation hub.
+Build 155 contains the full source archives, upstream base commits, original licenses and acknowledgements. Release 159 includes [Fire TV Release source reconstruction instructions](updates/159/SOURCE.md), with verified patches for Fire TV (Release 159), iPhone (Release 158) and Mac (Release 157). This repository is the download and documentation hub.
 
 Built on [Nuvio Mobile](https://github.com/NuvioMedia/NuvioMobile), [Nuvio Desktop](https://github.com/NuvioMedia/NuvioDesktop), [Nuvio TV](https://github.com/NuvioMedia/NuvioTV) and [nuvio-engine](https://github.com/NuvioMedia/nuvio-engine).
 

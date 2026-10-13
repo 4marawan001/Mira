@@ -1,6 +1,6 @@
 # Install Mira
 
-Download the package for your device from the [latest release](https://github.com/4marawan001/Mira/releases/latest). iPhone is build 158 / version 0.5.13, Mac is build 157 / version 0.5.12, and Fire TV is build 155 / version 0.5.10. Read the [testing status](BUILD-157.md#validation) before installing.
+Download the package for your device from the [latest release](https://github.com/4marawan001/Mira/releases/latest). Fire TV is build 159 / version 0.5.14, iPhone is build 158 / version 0.5.13, and Mac is build 157 / version 0.5.12. Read the [testing status](BUILD-159.md#validation) before installing.
 
 ## iPhone
 
@@ -33,7 +33,7 @@ Starting with build 157, Mira checks hourly while open and downloads updates aut
 3. Install it over the existing Mira app when updating, then open Mira.
 4. Use the remote's directional pad, Select and Back buttons to browse.
 
-The package includes ARMv7 and ARM64 support and requires Android 7 or later. Build 155 uses the existing Mira signing key so it can update the previous signed release. Physical Insignia TV performance has not been verified.
+The package includes ARMv7 and ARM64 support and requires Android 7 or later. Build 159 uses the existing Mira signing key so it can update the previous signed release. Physical Insignia TV performance has not been verified.
 
 ## Turn on video previews
 

@@ -1,0 +1,454 @@
+diff --git a/composeApp/src/androidMain/kotlin/com/nuvio/app/features/home/components/MiraPreviewPlatformSurface.android.kt b/composeApp/src/androidMain/kotlin/com/nuvio/app/features/home/components/MiraPreviewPlatformSurface.android.kt
+new file mode 100644
+--- /dev/null
++++ b/composeApp/src/androidMain/kotlin/com/nuvio/app/features/home/components/MiraPreviewPlatformSurface.android.kt
+@@ -0,0 +1,18 @@
++package com.nuvio.app.features.home.components
++
++import androidx.compose.runtime.Composable
++import androidx.compose.ui.Modifier
++import com.nuvio.app.features.player.*
++
++@Composable
++internal actual fun MiraPreviewPlatformSurface(
++    source: MiraPreviewSource, modifier: Modifier,
++    onControllerReady: (PlayerEngineController) -> Unit,
++    onSnapshot: (PlayerPlaybackSnapshot) -> Unit,
++    onError: (String?) -> Unit,
++) {
++    PlatformPlayerSurface(sourceUrl = source.videoUrl, sourceAudioUrl = source.audioUrl,
++        sourceHeaders = source.headers, modifier = modifier, playWhenReady = false,
++        useNativeController = false, onControllerReady = onControllerReady,
++        onSnapshot = onSnapshot, onError = onError)
++}
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/catalog/CatalogScreen.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/catalog/CatalogScreen.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/catalog/CatalogScreen.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/catalog/CatalogScreen.kt
+@@ -63,6 +63,9 @@
+ import com.nuvio.app.features.home.HomeCatalogSettingsRepository
+ import com.nuvio.app.features.home.PosterShape
+ import com.nuvio.app.features.home.components.HomeEmptyStateCard
++import com.nuvio.app.features.home.components.MiraVideoPreviewSheet
++import com.nuvio.app.features.settings.MiraBrowsingMode
++import com.nuvio.app.features.settings.MiraBrowsingPreferences
+ import com.nuvio.app.features.home.stableKey
+ import com.nuvio.app.features.watched.WatchedRepository
+ import com.nuvio.app.features.watching.application.WatchingState
+@@ -326,6 +329,11 @@
+     onClick: (() -> Unit)? = null,
+     onLongClick: (() -> Unit)? = null,
+ ) {
++    val browsingMode by MiraBrowsingPreferences.mode.collectAsStateWithLifecycle()
++    var previewOpen by remember(item.id, item.type) { mutableStateOf(false) }
++    val holdAction: (() -> Unit)? = if (browsingMode == MiraBrowsingMode.VIDEOS) {
++        { previewOpen = true }
++    } else onLongClick
+     Column(
+         modifier = Modifier.miraEntrance(item.stableKey()),
+         verticalArrangement = Arrangement.spacedBy(8.dp),
+@@ -342,7 +350,7 @@
+                 )
+                 .posterCardClickable(
+                     onClick = onClick,
+-                    onLongClick = onLongClick,
++                    onLongClick = holdAction,
+                     zoomImageUrl = item.poster,
+                     zoomCornerRadius = cornerRadiusDp.dp,
+                 ),
+@@ -399,6 +407,9 @@
+             }
+         }
+     }
++    if (previewOpen && browsingMode == MiraBrowsingMode.VIDEOS) {
++        MiraVideoPreviewSheet(item, onDismiss = { previewOpen = false }, onOpen = onClick)
++    }
+ }
+ 
+ @Composable
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/HomePosterCard.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/HomePosterCard.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/HomePosterCard.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/HomePosterCard.kt
+@@ -52,7 +52,7 @@
+         onClick = onClick,
+         onLongClick = holdAction,
+     )
+-    if (previewOpen) MiraVideoPreviewSheet(item, onDismiss = { previewOpen = false }, onOpen = onClick)
++    if (previewOpen && browsingMode == com.nuvio.app.features.settings.MiraBrowsingMode.VIDEOS) MiraVideoPreviewSheet(item, onDismiss = { previewOpen = false }, onOpen = onClick)
+ }
+ 
+ private fun PosterShape.toNuvioPosterShape(): NuvioPosterShape =
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/MiraVideoPreview.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/MiraVideoPreview.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/MiraVideoPreview.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/MiraVideoPreview.kt
+@@ -7,44 +7,195 @@
+ import androidx.compose.ui.Alignment
+ import androidx.compose.ui.unit.dp
+ import com.nuvio.app.core.ui.NuvioModalBottomSheet
++import com.nuvio.app.features.addons.*
+ import com.nuvio.app.features.details.MetaDetailsRepository
+ import com.nuvio.app.features.details.MetaTrailer
+-import com.nuvio.app.features.details.components.HeroTrailerPlayerSurface
+ import com.nuvio.app.features.details.selectHeroTrailer
+ import com.nuvio.app.features.details.youtubePlaybackUrl
+ import com.nuvio.app.features.home.MetaPreview
++import com.nuvio.app.features.player.*
++import com.nuvio.app.features.streams.*
+ import com.nuvio.app.features.trailer.TrailerPlaybackResolver
+-import com.nuvio.app.features.trailer.TrailerPlaybackSource
+-import kotlinx.coroutines.CancellationException
+-import kotlinx.coroutines.withTimeoutOrNull
+-
+-/** Previews never resolve or download a full movie stream. */
++import kotlinx.coroutines.*
++import kotlinx.coroutines.channels.Channel
++import kotlinx.coroutines.sync.Semaphore
++import kotlinx.coroutines.sync.withPermit
++import kotlin.random.Random
++
++internal const val MiraExcerptDurationMs = 30_000L
++internal data class MiraPreviewSource(
++    val videoUrl: String,
++    val audioUrl: String? = null,
++    val headers: Map<String, String> = emptyMap(),
++    val isExcerpt: Boolean = false,
++)
++
+ internal fun miraDirectPreviewUrl(trailers: List<MetaTrailer>): String? = trailers.firstOrNull {
+     !it.site.equals("YouTube", true) && it.key.startsWith("https://") &&
+         Regex("\\.(mp4|m3u8|webm)(?:[?#]|$)", RegexOption.IGNORE_CASE).containsMatchIn(it.key)
+ }?.key
+ 
+-internal suspend fun resolveMiraVideoPreview(item: MetaPreview): TrailerPlaybackSource? = withTimeoutOrNull(12_000) {
++internal fun miraExcerptStartMs(durationMs: Long, fraction: Double): Long {
++    if (durationMs <= MiraExcerptDurationMs) return 0L
++    val lastStart = durationMs - MiraExcerptDurationMs
++    val first = minOf(durationMs / 10, lastStart)
++    val last = minOf(durationMs * 4 / 5, lastStart)
++    return first + ((last - first) * fraction.coerceIn(0.0, 1.0)).toLong()
++}
++
++internal fun miraExcerptStream(streams: List<StreamItem>): StreamItem? = streams
++    .filter { stream ->
++        val url = stream.playableDirectUrl.orEmpty()
++        (url.startsWith("https://", true) || url.startsWith("http://", true))
++    }
++    .minByOrNull { stream ->
++        val label = listOfNotNull(stream.name, stream.title, stream.description, stream.behaviorHints.filename).joinToString(" ").lowercase()
++        when {
++            "720" in label -> 0
++            "1080" in label -> 1
++            "2160" in label || "remux" in label -> 3
++            else -> 2
++        }
++    }
++
++/** Isolated preview requests never change the main source list or watch progress. */
++internal suspend fun firstMiraExcerpt(
++    loaders: List<suspend () -> List<StreamItem>>,
++): StreamItem? = supervisorScope {
++    val completions = Channel<StreamItem?>(Channel.UNLIMITED)
++    val slots = Semaphore(3)
++    val jobs = loaders.map { load -> launch {
++        val result = slots.withPermit {
++            try { withTimeoutOrNull(7_000) { miraExcerptStream(load()) } }
++            catch (cancelled: CancellationException) { throw cancelled }
++            catch (_: Exception) { null }
++        }
++        completions.send(result)
++    } }
+     try {
+-    val meta = MetaDetailsRepository.peek(item.type, item.id) ?: MetaDetailsRepository.fetch(item.type, item.id)
++        withTimeoutOrNull(9_000) {
++            repeat(loaders.size) { completions.receive()?.let { return@withTimeoutOrNull it } }
++            null
++        }
++    } finally { jobs.forEach { it.cancel() }; completions.close() }
++}
++
++internal suspend fun resolveMiraVideoPreview(item: MetaPreview, allowExcerpt: Boolean = false): MiraPreviewSource? {
++    val meta = MetaDetailsRepository.peek(item.type, item.id) ?: try {
++        withTimeoutOrNull(4_000) { MetaDetailsRepository.fetch(item.type, item.id) }
++    } catch (cancelled: CancellationException) { throw cancelled }
++      catch (_: Exception) { null }
+     val trailers = meta?.trailers.orEmpty()
+-    miraDirectPreviewUrl(trailers)?.let { return@withTimeoutOrNull TrailerPlaybackSource(videoUrl = it) }
+-    val trailer = selectHeroTrailer(trailers) ?: return@withTimeoutOrNull null
+-    TrailerPlaybackResolver.resolveFromYouTubeUrl(trailer.youtubePlaybackUrl())
+-    } catch (cancelled: CancellationException) { throw cancelled }
+-    catch (_: Exception) { null }
++    miraDirectPreviewUrl(trailers)?.let { return MiraPreviewSource(videoUrl = it) }
++    val trailer = selectHeroTrailer(trailers)
++    if (trailer != null) {
++        val resolved = try { withTimeoutOrNull(4_000) {
++            TrailerPlaybackResolver.resolveFromYouTubeUrl(trailer.youtubePlaybackUrl())
++        } } catch (cancelled: CancellationException) { throw cancelled }
++          catch (_: Exception) { null }
++        if (resolved != null) return MiraPreviewSource(resolved.videoUrl, resolved.audioUrl)
++    }
++    if (!allowExcerpt) return null
++    val videoId = meta?.defaultVideoId ?: if (item.type == "series") meta?.videos?.firstOrNull()?.id ?: item.id else item.id
++    val embedded = meta?.videos?.firstOrNull { it.id == videoId }?.streams.orEmpty()
++    var stream = miraExcerptStream(embedded)
++    if (stream == null) {
++        val loaders = AddonRepository.uiState.value.addons.enabledAddons().mapNotNull { addon ->
++            val manifest = addon.manifest ?: return@mapNotNull null
++            if (!manifest.supportsStream(item.type, videoId)) return@mapNotNull null
++            val load: suspend () -> List<StreamItem> = {
++                StreamParser.parse(
++                    payload = fetchAddonResponseText(buildAddonResourceUrl(manifest.transportUrl, "stream", item.type, videoId)),
++                    addonName = addon.displayTitle.ifBlank { manifest.name },
++                    addonId = addon.streamAddonInstanceId(manifest.id),
++                    addonLogo = manifest.logoUrl,
++                )
++            }
++            load
++        }
++        stream = firstMiraExcerpt(loaders)
++    }
++    return stream?.let { MiraPreviewSource(it.playableDirectUrl!!,
++        headers = sanitizePlaybackHeaders(it.behaviorHints.proxyHeaders?.request), isExcerpt = true) }
++}
++
++@Composable
++internal expect fun MiraPreviewPlatformSurface(
++    source: MiraPreviewSource,
++    modifier: Modifier,
++    onControllerReady: (PlayerEngineController) -> Unit,
++    onSnapshot: (PlayerPlaybackSnapshot) -> Unit,
++    onError: (String?) -> Unit,
++)
++
++/** Playback lives only inside the preview, with no resume/history updates. */
++@Composable
++internal fun MiraPreviewPlayer(
++    source: MiraPreviewSource,
++    modifier: Modifier,
++    onReady: () -> Unit,
++    onEnded: () -> Unit,
++    onError: () -> Unit,
++) = key(source) {
++    var controller by remember { mutableStateOf<PlayerEngineController?>(null) }
++    var started by remember { mutableStateOf(false) }
++    var ready by remember { mutableStateOf(false) }
++    var finished by remember { mutableStateOf(false) }
++    var startMs by remember { mutableLongStateOf(0L) }
++    val fraction = remember { Random.nextDouble() }
++    val latestReady = rememberUpdatedState(onReady)
++    val latestEnded = rememberUpdatedState(onEnded)
++    val latestError = rememberUpdatedState(onError)
++    fun finish(error: Boolean) {
++        if (finished) return
++        finished = true
++        controller?.pause()
++        if (error) latestError.value() else latestEnded.value()
++    }
++    LaunchedEffect(source) {
++        delay(12_000)
++        if (!ready && !finished) finish(true)
++    }
++    // A frozen/failed server cannot leave a preview player alive indefinitely.
++    LaunchedEffect(ready) {
++        if (ready) { delay(45_000); finish(false) }
++    }
++    DisposableEffect(controller) {
++        val activeController = controller
++        onDispose { activeController?.pause() }
++    }
++    if (!finished) MiraPreviewPlatformSurface(source, modifier,
++        onControllerReady = { player -> controller = player; player.setMuted(true) },
++        onSnapshot = { snapshot ->
++            val player = controller
++            if (!finished && player != null && !snapshot.isLoading) {
++                if (!started && (!source.isExcerpt || snapshot.durationMs > 0L)) {
++                    startMs = if (source.isExcerpt) miraExcerptStartMs(snapshot.durationMs, fraction) else 0L
++                    player.setMuted(true)
++                    if (startMs > 0L) player.seekTo(startMs)
++                    player.play()
++                    started = true
++                }
++                if (started && snapshot.isPlaying && snapshot.positionMs >= startMs - 1_000L) {
++                    if (!ready) { ready = true; latestReady.value() }
++                    if (source.isExcerpt && snapshot.positionMs >= startMs + MiraExcerptDurationMs) finish(false)
++                }
++                if (snapshot.isEnded && started) finish(false)
++            }
++        }, onError = { if (!it.isNullOrBlank()) finish(true) })
+ }
+ 
+ @OptIn(ExperimentalMaterial3Api::class)
+ @Composable
+ internal fun MiraVideoPreviewSheet(item: MetaPreview, onDismiss: () -> Unit, onOpen: (() -> Unit)?) {
+     var retry by remember { mutableIntStateOf(0) }
+-    var source by remember(item.id, item.type) { mutableStateOf<TrailerPlaybackSource?>(null) }
++    var source by remember(item.id, item.type) { mutableStateOf<MiraPreviewSource?>(null) }
+     var loading by remember { mutableStateOf(true) }
+     var failed by remember { mutableStateOf(false) }
++    var ended by remember { mutableStateOf(false) }
+     LaunchedEffect(item.type, item.id, retry) {
+-        loading = true; failed = false; source = null
+-        try { source = resolveMiraVideoPreview(item) }
++        loading = true; failed = false; ended = false; source = null
++        try { source = resolveMiraVideoPreview(item, allowExcerpt = true) }
+         catch (cancelled: CancellationException) { throw cancelled }
+         catch (_: Exception) { failed = true }
+         finally { loading = false }
+@@ -59,19 +210,18 @@
+                 val playable = source
+                 when {
+                     loading -> CircularProgressIndicator(Modifier.size(28.dp))
+-                    playable != null -> HeroTrailerPlayerSurface(
+-                        sourceUrl = playable.videoUrl, sourceAudioUrl = playable.audioUrl,
+-                        playWhenReady = true, muted = true, modifier = Modifier.fillMaxSize(),
+-                        onReady = {}, onEnded = {},
++                    ended -> Text("Preview finished")
++                    playable != null -> MiraPreviewPlayer(playable, Modifier.fillMaxSize(),
++                        onReady = {}, onEnded = { ended = true },
+                         onError = { source = null; failed = true })
+-                    else -> Text(if (failed) "Couldn’t load the preview." else "No preview is available for this title.",
++                    else -> Text(if (failed) "Couldn’t load the preview." else "No playable preview is available.",
+                         style = MaterialTheme.typography.bodyMedium)
+                 }
+             }
+-            Text("Muted preview · Uses a supplied trailer or preview clip", style = MaterialTheme.typography.bodySmall,
+-                color = MaterialTheme.colorScheme.onSurfaceVariant)
++            Text(if (source?.isExcerpt == true) "Muted · Random excerpt, up to 30 seconds" else "Muted trailer or preview clip",
++                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+-                if (!loading && source == null) TextButton(onClick = { retry++ }) { Text("Retry") }
++                if (!loading && (source == null || ended)) TextButton(onClick = { retry++ }) { Text(if (ended) "Replay" else "Retry") }
+                 if (onOpen != null) Button(onClick = { onDismiss(); onOpen() }) { Text("View details") }
+             }
+             Spacer(Modifier.height(18.dp))
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/AppearanceSettingsPage.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/AppearanceSettingsPage.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/AppearanceSettingsPage.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/AppearanceSettingsPage.kt
+@@ -121,7 +121,7 @@
+             SettingsGroup(isTablet = isTablet) {
+                 androidx.compose.foundation.layout.Column(Modifier.padding(16.dp)) {
+                     Text("Choose your experience", style = MaterialTheme.typography.titleSmall)
+-                    Text("Videos enables muted hover previews on Mac and press-and-hold previews on iPhone. Only supplied trailers or preview clips are used.",
++                    Text("Videos enables muted hover previews on Mac and press-and-hold previews on iPhone. When no trailer is available, a playable stream provides a muted 30-second excerpt.",
+                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                         modifier = Modifier.padding(vertical = 8.dp))
+                     androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+diff --git a/composeApp/src/commonTest/kotlin/com/nuvio/app/features/home/components/MiraVideoPreviewTest.kt b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/home/components/MiraVideoPreviewTest.kt
+--- a/composeApp/src/commonTest/kotlin/com/nuvio/app/features/home/components/MiraVideoPreviewTest.kt
++++ b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/home/components/MiraVideoPreviewTest.kt
+@@ -3,6 +3,11 @@
+ import com.nuvio.app.features.details.MetaTrailer
+ import com.nuvio.app.features.settings.MiraBrowsingMode
+ import kotlin.test.*
++import com.nuvio.app.features.streams.StreamItem
++import com.nuvio.app.features.streams.StreamBehaviorHints
++import com.nuvio.app.features.streams.StreamProxyHeaders
++import kotlinx.coroutines.*
++import kotlinx.coroutines.test.runTest
+ 
+ class MiraVideoPreviewTest {
+     private fun clip(url: String, site: String = "Provider") = MetaTrailer("preview", url, "Preview", site)
+@@ -20,4 +25,62 @@
+         assertEquals(MiraBrowsingMode.MOVIES, MiraBrowsingMode.fromKey("unknown"))
+         assertEquals(MiraBrowsingMode.VIDEOS, MiraBrowsingMode.fromKey("videos"))
+     }
++
++    private fun stream(url: String, label: String = "720p") = StreamItem(
++        url = url, name = label, addonName = "Test", addonId = "test")
++
++    @Test fun randomExcerptNeverRunsPastEndAndAvoidsLongIntro() {
++        for (duration in listOf(1_000L, 29_000L, 30_000L, 31_000L, 120_000L, 7_200_000L)) {
++            for (fraction in listOf(-1.0, 0.0, 0.5, 1.0, 2.0)) {
++                val start = miraExcerptStartMs(duration, fraction)
++                assertTrue(start >= 0)
++                assertTrue(start + minOf(duration, MiraExcerptDurationMs) <= duration)
++            }
++        }
++        assertEquals(0L, miraExcerptStartMs(20_000L, 0.5))
++        assertNotEquals(miraExcerptStartMs(600_000L, 0.1), miraExcerptStartMs(600_000L, 0.9))
++    }
++
++    @Test fun excerptSelectsEfficientDirectStreamAndRejectsExternalOrTorrent() {
++        val large = stream("https://example.com/huge.mkv", "2160p REMUX")
++        val small = stream("https://example.com/video.mp4?sig=test", "720p")
++        assertEquals(small, miraExcerptStream(listOf(large, small)))
++        assertNull(miraExcerptStream(listOf(stream("magnet:?xt=test"), stream("file:///video.mp4"),
++            StreamItem(externalUrl = "https://example.com/watch", addonName = "Test", addonId = "test"))))
++    }
++
++    @Test fun noProvidersReturnsImmediately() = runTest {
++        assertNull(firstMiraExcerpt(emptyList()))
++    }
++
++    @Test fun fastProviderWinsAndSlowProviderIsCancelled() = runTest {
++        var slowCancelled = false
++        val expected = stream("https://example.com/video.mp4")
++        assertEquals(expected, firstMiraExcerpt(listOf(
++            { try { delay(60_000); emptyList() } finally { slowCancelled = true } },
++            { delay(50); listOf(expected) },
++        )))
++        assertTrue(slowCancelled)
++    }
++
++    @Test fun stalledAndFailedProvidersFinishWithoutHanging() = runTest {
++        assertNull(firstMiraExcerpt(listOf(
++            { error("provider failed") },
++            { delay(60_000); emptyList() },
++        )))
++    }
++
++    @Test fun parentCancellationStopsPreviewFetches() = runTest {
++        var cancelled = false
++        val started = CompletableDeferred<Unit>()
++        val job = launch {
++            firstMiraExcerpt(listOf({
++                try { started.complete(Unit); awaitCancellation() }
++                finally { cancelled = true }
++            }))
++        }
++        started.await()
++        job.cancelAndJoin()
++        assertTrue(cancelled)
++    }
+ }
+diff --git a/composeApp/src/commonTest/kotlin/com/nuvio/app/features/mdblist/MdbListLibrarySorterTest.kt b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/mdblist/MdbListLibrarySorterTest.kt
+--- a/composeApp/src/commonTest/kotlin/com/nuvio/app/features/mdblist/MdbListLibrarySorterTest.kt
++++ b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/mdblist/MdbListLibrarySorterTest.kt
+@@ -64,7 +64,7 @@
+     }
+ 
+     @Test
+-    fun `release order is fetched once, oriented oldest first by date and serves both directions`() = runTest {
++    fun `release order is fetched once and oriented oldest first by date and serves both directions`() = runTest {
+         for (newestFirst in listOf(false, true)) {
+             val h = MdbListSyncTestHarness(backgroundScope)
+             h.seedLibrary(mdbListLibrarySnapshot(h.http.now).copy(itemsByList = mapOf(MDBLIST_TEST_LIST_KEY to items)))
+diff --git a/composeApp/src/iosMain/kotlin/com/nuvio/app/features/home/components/MiraPreviewPlatformSurface.ios.kt b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/home/components/MiraPreviewPlatformSurface.ios.kt
+new file mode 100644
+--- /dev/null
++++ b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/home/components/MiraPreviewPlatformSurface.ios.kt
+@@ -0,0 +1,18 @@
++package com.nuvio.app.features.home.components
++
++import androidx.compose.runtime.Composable
++import androidx.compose.ui.Modifier
++import com.nuvio.app.features.player.*
++
++@Composable
++internal actual fun MiraPreviewPlatformSurface(
++    source: MiraPreviewSource, modifier: Modifier,
++    onControllerReady: (PlayerEngineController) -> Unit,
++    onSnapshot: (PlayerPlaybackSnapshot) -> Unit,
++    onError: (String?) -> Unit,
++) {
++    PlatformPlayerSurface(sourceUrl = source.videoUrl, sourceAudioUrl = source.audioUrl,
++        sourceHeaders = source.headers, modifier = modifier, playWhenReady = false,
++        useNativeController = false, onControllerReady = onControllerReady,
++        onSnapshot = onSnapshot, onError = onError)
++}
+diff --git a/iosApp/Configuration/Version.xcconfig b/iosApp/Configuration/Version.xcconfig
+--- a/iosApp/Configuration/Version.xcconfig
++++ b/iosApp/Configuration/Version.xcconfig
+@@ -1,2 +1,2 @@
+-CURRENT_PROJECT_VERSION=155
+-MARKETING_VERSION=0.5.10
++CURRENT_PROJECT_VERSION=158
++MARKETING_VERSION=0.5.13
