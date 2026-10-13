@@ -32,6 +32,10 @@ Current release: **0.5.10 · build 155**. All three packages are Release builds.
 
 [All releases and source downloads](https://github.com/4marawan001/Mira/releases) · [Step-by-step setup](docs/INSTALL.md) · [Build 155 checksums](https://github.com/4marawan001/Mira/releases/download/v0.5.10/SHA256SUMS.txt)
 
+## Latest work: Mac build 156
+
+The latest Mac package is built and verified; its release upload is being completed. [Build 156 notes and source changes](docs/BUILD-156.md) cover the hourly Mac updater, muted 30-second excerpt fallback in Videos mode, and additional scrolling changes. The released iPhone IPA and Fire TV APK remain build 155. The iPhone excerpt implementation is preview source only.
+
 ## Inside Mira
 
 Mira is a personal fork of the open-source Nuvio apps. Home puts artwork first, with genre shortcuts, IMDb Top 250 entry points and compact poster shelves. Home, Search and Saved use a consistent navigation style on iPhone and Mac; TV adapts browsing for the remote.

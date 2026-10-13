@@ -1,0 +1,16 @@
+{
+  "mira-desktop": {
+    "base_archive": "Mira-macOS-source.zip",
+    "base_sha256": "bcb59437a506bf8b069ee3d3e14cf9ac9354142788c22fda88026fb402e3691f",
+    "patch": "Mira-macOS-changes-from-155.patch",
+    "changed_files": 17,
+    "kind": "Mac Release 156"
+  },
+  "nuvio-custom": {
+    "base_archive": "Mira-ios-source.zip",
+    "base_sha256": "552ef561e70f37540a21490f1721a2d949fc08c3810e8d50196667b6cb8f5b58",
+    "patch": "Mira-ios-preview-changes-from-155.patch",
+    "changed_files": 6,
+    "kind": "iPhone preview source; released IPA remains 155"
+  }
+}
