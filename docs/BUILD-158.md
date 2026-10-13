@@ -1,5 +1,3 @@
-> The source and checks are ready. The Release IPA is still compiling and has not been published.
-
 # Mira 0.5.13 · iPhone build 158
 
 [Download the iPhone IPA](https://github.com/4marawan001/Mira/releases/tag/v0.5.13) · [Source patches](../updates/158)

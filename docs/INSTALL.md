@@ -1,10 +1,10 @@
 # Install Mira
 
-Download the package for your device from the [latest release](https://github.com/4marawan001/Mira/releases/latest). Mac build 157 is version 0.5.12. iPhone and Fire TV remain build 155 / version 0.5.10. Read the [testing status](BUILD-157.md#validation) before installing.
+Download the package for your device from the [latest release](https://github.com/4marawan001/Mira/releases/latest). iPhone is build 158 / version 0.5.13, Mac is build 157 / version 0.5.12, and Fire TV is build 155 / version 0.5.10. Read the [testing status](BUILD-157.md#validation) before installing.
 
 ## iPhone
 
-1. Download `Mira-ios-155.ipa` to your Mac.
+1. Download `Mira-ios-158.ipa` to your Mac.
 2. Open Sideloadly, connect your iPhone and select the IPA.
 3. Use the same Apple ID and signing options you used for your existing Mira installation, then install.
 4. Open Mira on your iPhone. Keep the existing app installed when applying an update to preserve its local data.
@@ -37,7 +37,7 @@ The package includes ARMv7 and ARM64 support and requires Android 7 or later. Bu
 
 ## Turn on video previews
 
-On iPhone or Mac, go to **Settings → Look & feel → Browsing → Videos**. Hover over a poster on Mac or press and hold on iPhone. Mac build 157 falls back to a muted random excerpt of up to 30 seconds when no trailer resolves and a provider has a direct playable stream. The released iPhone build 155 still requires a supplied trailer or preview clip; an unavailable preview does not mean the full title is unavailable.
+On iPhone or Mac, go to **Settings → Look & feel → Browsing → Videos**. Hover over a poster on Mac or press and hold on iPhone. iPhone build 158 and Mac build 157 fall back to a muted random excerpt of up to 30 seconds when no trailer resolves and a provider has a direct playable stream. An unavailable preview does not mean the full title is unavailable. Excerpts require a playable, seekable direct stream with a reported duration.
 
 Choose **Movies & shows** to return to the default experience. TV does not include this mode.
 

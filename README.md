@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="#download">Download</a> · <a href="#inside-mira">Inside Mira</a> · <a href="docs/INSTALL.md">Installation</a> · <a href="docs/BUILD-157.md">Latest changes</a>
+  <a href="#download">Download</a> · <a href="#inside-mira">Inside Mira</a> · <a href="docs/INSTALL.md">Installation</a> · <a href="docs/BUILD-158.md">Latest changes</a>
 </p>
 
 ![Mira Home on Mac, with cinematic artwork, genre shortcuts, IMDb Top 250 and floating navigation](docs/assets/home.jpg)
@@ -22,11 +22,11 @@
 
 ## Download
 
-Latest Mac release: **0.5.12 · build 157**. iPhone and Fire TV remain **0.5.10 · build 155**. These are Release packages; newer iPhone excerpt code is available as preview source only.
+Latest releases: **iPhone 0.5.13 · build 158**, **Mac 0.5.12 · build 157**, and **Fire TV 0.5.10 · build 155**. These are Release packages.
 
 | Device | Download | Installation |
 | --- | --- | --- |
-| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.10/Mira-ios-155.ipa) | Sign and install with Sideloadly on your Mac. |
+| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.13/Mira-ios-158.ipa) | Sign and install with Sideloadly on your Mac. |
 | Apple Silicon Mac | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.12/Mira-macOS-arm64.dmg) | Open the disk image and copy Mira to Applications. |
 | Fire TV | [APK](https://github.com/4marawan001/Mira/releases/download/v0.5.10/Mira-FireTV-universal.apk) | Install on a compatible Android-based Fire TV. Remote controls are supported. |
 
@@ -42,7 +42,7 @@ Playback preferences include Low Data, Balanced and Highest. Balanced favors goo
 
 ### Movies or videos
 
-On iPhone and Mac, open **Settings → Look & feel → Browsing**. Movies & shows is the default. Videos enables muted hover previews on Mac and press-and-hold preview sheets on iPhone. On Mac build 157, a missing trailer falls back to a muted random excerpt lasting up to 30 seconds when an enabled provider exposes a ready direct stream. Short videos may end earlier. The released iPhone IPA still uses supplied trailers or preview clips; the excerpt implementation is preview source only.
+On iPhone and Mac, open **Settings → Look & feel → Browsing**. Movies & shows is the default. Videos enables muted hover previews on Mac and press-and-hold preview sheets on iPhone. On iPhone build 158 and Mac build 157, a missing trailer falls back to a muted random excerpt lasting up to 30 seconds when an enabled provider exposes a ready direct stream. Short videos may end earlier. On iPhone, press and hold a poster to open the preview sheet. Full catalog grids support the same gesture. Providers without a ready direct stream may have no excerpt.
 
 ![A muted trailer preview over Mira's poster shelves](docs/assets/video-preview.jpg)
 
@@ -51,6 +51,14 @@ On iPhone and Mac, open **Settings → Look & feel → Browsing**. Movies & show
 Choose an accent color, change the app icon, or adjust the browsing layout. The silver icon and dark surfaces carry through the app. On iPhone and Mac, the Home logo does a brief dance after ten stationary seconds and respects Reduce Motion.
 
 ![Mira appearance settings with accent colors and Movies or Videos browsing modes](docs/assets/appearance.jpg)
+
+## What's new in iPhone build 158
+
+- Random muted excerpts of up to 30 seconds when no trailer resolves, enabled only in Videos mode.
+- Press-and-hold previews on poster shelves and full catalog grids.
+- Preview requests time out and cancel without writing watch progress.
+
+[Read iPhone build 158 changes and checks](docs/BUILD-158.md).
 
 ## What's new in Mac build 157
 
@@ -72,13 +80,13 @@ The [update manifest](https://github.com/4marawan001/Mira/releases/latest/downlo
 
 ## Testing status
 
-These are personal testing builds. Mac build 157 passed 30 focused checks, including real installer replacement and rejection checks in temporary folders. The earlier iPhone build 155 passed 102 regression checks, and TV build 155 passed its remote navigation smoke test. Five broader desktop failures remain unresolved. Real-provider excerpt playback and sustained Mac frame rates remain unverified; physical iPhone and Insignia testing is still needed. See [build 157 validation](docs/BUILD-157.md#validation).
+These are personal testing builds. Mac build 157 passed 30 focused checks, including real installer replacement and rejection checks in temporary folders. iPhone build 158 passed 102 regression checks and 10 preview checks on the iOS simulator, and TV build 155 passed its remote navigation smoke test. Five broader desktop failures remain unresolved. Real-provider excerpt playback and sustained Mac frame rates remain unverified; physical iPhone and Insignia testing is still needed. The iPhone preview opened, but a complete interactive playback check was blocked by Device Hub control availability. See [build 157 validation](docs/BUILD-157.md#validation).
 
 The Mac package supports Apple Silicon and is ad-hoc signed. The Fire TV package supports ARMv7 and ARM64 Android/Fire OS devices with Android 7 or later. Platform features differ; Videos mode and the logo dance are excluded from TV.
 
 ## Source and credits
 
-Build 155 contains the full source archives, upstream base commits, original licenses and acknowledgements. Build 157 contains verified source patches and base archive checksums, with [reconstruction instructions](updates/157/SOURCE.md). The iPhone patch is preview code, while the Mac patch matches release 157. This repository is the download and documentation hub.
+Build 155 contains the full source archives, upstream base commits, original licenses and acknowledgements. Build 157 contains verified source patches and base archive checksums, with [reconstruction instructions](updates/157/SOURCE.md). Build 158 includes [iPhone Release source reconstruction instructions](updates/158/SOURCE.md). The iPhone patch matches Release 158, while the Mac patch matches Release 157. This repository is the download and documentation hub.
 
 Built on [Nuvio Mobile](https://github.com/NuvioMedia/NuvioMobile), [Nuvio Desktop](https://github.com/NuvioMedia/NuvioDesktop), [Nuvio TV](https://github.com/NuvioMedia/NuvioTV) and [nuvio-engine](https://github.com/NuvioMedia/nuvio-engine).
 
