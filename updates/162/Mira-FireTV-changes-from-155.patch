@@ -1,0 +1,2359 @@
+diff --git a/app/build.gradle.kts b/app/build.gradle.kts
+--- a/app/build.gradle.kts
++++ b/app/build.gradle.kts
+@@ -106,8 +106,8 @@
+         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+         minSdk = 24
+         targetSdk = 36
+-        versionCode = 155
+-        versionName = "0.5.10"
++        versionCode = 162
++        versionName = "0.5.17"
+ 
+         buildConfigField("String", "PARENTAL_GUIDE_API_URL", "\"${localProperties.getProperty("PARENTAL_GUIDE_API_URL", "")}\"")
+         buildConfigField("String", "INTRODB_API_URL", "\"${localProperties.getProperty("INTRODB_API_URL", "")}\"")
+diff --git a/app/src/main/java/com/nuvio/tv/MainActivity.kt b/app/src/main/java/com/nuvio/tv/MainActivity.kt
+--- a/app/src/main/java/com/nuvio/tv/MainActivity.kt
++++ b/app/src/main/java/com/nuvio/tv/MainActivity.kt
+@@ -1820,100 +1820,34 @@
+     onNavigate: (String) -> Unit,
+     onExitApp: () -> Unit
+ ) {
+-
+-    val showNavigation = currentRoute in rootRoutes
++    val isHomeScreen = currentRoute == Screen.Home.route || currentRoute == null
+     val contentFocus = remember { FocusRequester() }
+-    val visibleItems = remember(drawerItems) {
+-        drawerItems.filter { it.route != Screen.Discover.route }.map {
+-            if (it.route == Screen.Library.route) it.copy(label = "Saved") else it
+-        }
+-    }
+-    val requesters = rememberDrawerItemFocusRequesters(visibleItems)
+-    val focusManager = LocalFocusManager.current
+-    var navigationFocused by remember { mutableStateOf(false) }
+-    fun focusNavigation() {
+-        val route = selectedDrawerRoute ?: Screen.Home.route
+-        runCatching { (requesters[route] ?: requesters.values.first()).requestFocus() }
+-    }
+-    fun focusContent() {
+-        navigationFocused = false
+-        if (runCatching { contentFocus.requestFocus() }.isFailure) focusManager.moveFocus(FocusDirection.Up)
+-    }
+-    LaunchedEffect(currentRoute) {
+-        if (showNavigation) {
+-            repeat(2) { withFrameNanos { } }
+-            runCatching { contentFocus.requestFocus() }
+-        }
+-    }
+-    BackHandler(enabled = showNavigation && navigationFocused) { onExitApp() }
+-    Box(Modifier.fillMaxSize().background(Color.Black).onPreviewKeyEvent { event ->
+-        if (showNavigation && event.key == Key.Back && event.type == KeyEventType.KeyDown && event.nativeKeyEvent.isLongPress) {
+-            longPressBackHeld.value = true
+-            focusNavigation()
+-            true
+-        } else if (longPressBackHeld.value && event.key == Key.Back) {
+-            if (event.type == KeyEventType.KeyUp) longPressBackHeld.value = false
+-            true
+-        } else false
+-    }) {
+-        Box(Modifier.fillMaxSize()
+-            .padding(top = if (showNavigation) 62.dp else 0.dp, bottom = if (showNavigation) 82.dp else 0.dp)
+-            .onKeyEvent { event ->
+-                if (showNavigation && !navigationFocused && event.type == KeyEventType.KeyDown &&
+-                    (event.key == Key.DirectionLeft || event.key == Key.DirectionDown)) {
+-                    focusNavigation(); true
+-                } else false
+-            }) {
+-            CompositionLocalProvider(
+-                LocalSidebarExpanded provides navigationFocused,
+-                LocalContentFocusRequester provides contentFocus,
+-                com.nuvio.tv.ui.screens.home.LocalMiraBrowse provides { slug -> navController.navigate("mira_browse/$slug") }
+-            ) {
+-                NuvioNavHost(navController = navController, startDestination = startDestination, hideBuiltInHeaders = true)
+-            }
+-        }
+-        if (showNavigation) {
+-            com.nuvio.tv.ui.components.BrandWordmark(
+-                modifier = Modifier.align(Alignment.TopStart).padding(start = 36.dp, top = 18.dp).height(30.dp),
+-                contentDescription = "Mira", drawableOverride = R.drawable.app_logo_wordmark
++
++    BackHandler(enabled = isHomeScreen) {
++        onExitApp()
++    }
++
++    Box(
++        modifier = Modifier
++            .fillMaxSize()
++            .background(Color.Black)
++    ) {
++        CompositionLocalProvider(
++            LocalSidebarExpanded provides false,
++            LocalContentFocusRequester provides contentFocus,
++            com.nuvio.tv.ui.screens.home.LocalMiraBrowse provides { slug ->
++                navController.navigate("mira_browse/$slug")
++            }
++        ) {
++            NuvioNavHost(
++                navController = navController,
++                startDestination = startDestination,
++                hideBuiltInHeaders = false
+             )
+-            Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 18.dp)
+-                .clip(RoundedCornerShape(50))
+-                .background(Brush.verticalGradient(listOf(Color(0xE52C2C30), Color(0xF018181A))))
+-                .border(1.dp, Color.White.copy(alpha = .16f), RoundedCornerShape(50))
+-                .padding(6.dp)
+-                .onFocusChanged { navigationFocused = it.hasFocus }
+-                .onPreviewKeyEvent { event ->
+-                    if (event.type == KeyEventType.KeyDown && event.key == Key.DirectionUp) {
+-                        focusContent(); true
+-                    } else false
+-                },
+-                horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+-                visibleItems.forEach { item ->
+-                    val selected = item.route == selectedDrawerRoute
+-                    Card(onClick = {
+-                        onNavigate(item.route)
+-                        navigateToDrawerRoute(navController, currentRoute, item.route)
+-                        focusContent()
+-                    }, modifier = Modifier.height(44.dp).focusRequester(requesters.getValue(item.route)),
+-                        shape = CardDefaults.shape(RoundedCornerShape(50)),
+-                        colors = CardDefaults.colors(
+-                            containerColor = if (selected) Color.White.copy(alpha = .12f) else Color.Transparent,
+-                            focusedContainerColor = Color.White.copy(alpha = .24f), contentColor = Color.White, focusedContentColor = Color.White),
+-                        scale = CardDefaults.scale(focusedScale = 1.04f),
+-                        border = CardDefaults.border(focusedBorder = androidx.tv.material3.Border(
+-                            androidx.compose.foundation.BorderStroke(2.dp, Color.White), shape = RoundedCornerShape(50)))) {
+-                        Row(Modifier.padding(horizontal = 18.dp).fillMaxHeight(), verticalAlignment = Alignment.CenterVertically,
+-                            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+-                            DrawerItemIcon(iconRes = item.iconRes, icon = item.icon, tint = Color.White, modifier = Modifier.size(22.dp))
+-                            if (item.route != Screen.Settings.route) Text(item.label, fontWeight = FontWeight.Medium)
+-                        }
+-                    }
+-                }
+-            }
+         }
+     }
+ }
++
+ 
+ @Composable
+ private fun CollapsedSidebarPill(
+diff --git a/app/src/main/java/com/nuvio/tv/core/player/StreamAutoPlaySelector.kt b/app/src/main/java/com/nuvio/tv/core/player/StreamAutoPlaySelector.kt
+--- a/app/src/main/java/com/nuvio/tv/core/player/StreamAutoPlaySelector.kt
++++ b/app/src/main/java/com/nuvio/tv/core/player/StreamAutoPlaySelector.kt
+@@ -6,6 +6,7 @@
+ import com.nuvio.tv.domain.model.AddonStreams
+ import com.nuvio.tv.domain.model.Stream
+ import com.nuvio.tv.domain.model.StreamDebridCacheState
++import com.nuvio.tv.ui.screens.player.PlayerSubtitleUtils
+ 
+ object StreamAutoPlaySelector {
+     fun orderAddonStreams(
+@@ -167,4 +168,211 @@
+ 
+         }
+     }
++
++    data class SubtitleReleaseMatch(
++        val score: Double,
++        val matchedTokens: Set<String>,
++        val streamFps: Double?,
++        val subtitleFps: Double?,
++        val fpsMatched: Boolean,
++    )
++
++    private val RELEASE_GROUPS = setOf(
++        "yts", "yify", "sparks", "rarbg", "psa", "fgt", "amiable", "flux", "ntb", "ion10",
++        "galaxyrg", "cmrg", "evo", "megusta", "vxt", "tgx", "pahe", "darksiders", "ettv",
++        "batv", "strife", "cake", "deflate", "rovers", "geckos", "shortbrehd", "drom",
++        "playhd", "wiki", "qxr", "utr", "swtyblz", "surcode", "framestor", "epsilon",
++        "ctrlhd", "don", "hdchina", "chd", "bhdstudio", "pter", "mkvhub"
++    )
++
++    private val SOURCE_TAGS = setOf(
++        "bluray", "bdrip", "brrip", "web-dl", "webdl", "webrip", "web", "hdtv", "dvdrip", "remux", "uhd", "hdr"
++    )
++
++    private val CODEC_TAGS = setOf(
++        "x264", "x265", "hevc", "h264", "h265", "avc", "xvid", "10bit"
++    )
++
++    private val RESOLUTION_TAGS = setOf(
++        "2160p", "4k", "1080p", "720p", "480p", "576p"
++    )
++
++    fun extractReleaseTokens(text: String?): Set<String> {
++        if (text.isNullOrBlank()) return emptySet()
++        var normalized = text.lowercase()
++        // Canonicalize compound release and codec tags before punctuation stripping
++        normalized = normalized
++            .replace(Regex("""\bweb[\-._]?dl\b"""), " webdl ")
++            .replace(Regex("""\bweb[\-._]?rip\b"""), " webrip ")
++            .replace(Regex("""\bblu[\-._]?ray\b"""), " bluray ")
++            .replace(Regex("""\bbd[\-._]?rip\b"""), " bdrip ")
++            .replace(Regex("""\bbr[\-._]?rip\b"""), " brrip ")
++            .replace(Regex("""\bdvd[\-._]?rip\b"""), " dvdrip ")
++            .replace(Regex("""\bh[\-._]?264\b"""), " h264 ")
++            .replace(Regex("""\bh[\-._]?265\b"""), " h265 ")
++            .replace(Regex("""\bx[\-._]?264\b"""), " x264 ")
++            .replace(Regex("""\bx[\-._]?265\b"""), " x265 ")
++
++        val tokens = normalized
++            .replace(Regex("""[.\-_+\[\]()/{}:,|]"""), " ")
++            .split(Regex("""\s+"""))
++            .filter { it.isNotBlank() }
++            .toSet()
++
++        val matched = mutableSetOf<String>()
++        tokens.forEach { token ->
++            if (token in RELEASE_GROUPS || token in SOURCE_TAGS || token in CODEC_TAGS || token in RESOLUTION_TAGS) {
++                matched += token
++            }
++        }
++        return matched
++    }
++
++    fun extractFps(text: String?): Double? {
++        if (text.isNullOrBlank()) return null
++        val lower = text.lowercase()
++
++        val fpsRegex = Regex("""\b(23\.976|23\.98|24(?:\.0)?|25(?:\.0)?|29\.97|30(?:\.0)?|50(?:\.0)?|60(?:\.0)?)\s*fps\b""")
++        val match = fpsRegex.find(lower)
++        if (match != null) {
++            val v = match.groupValues[1].toDoubleOrNull()
++            if (v != null) {
++                return if (kotlin.math.abs(v - 23.98) < 0.01) 23.976 else v
++            }
++        }
++
++        if (Regex("""\b23\.976\b""").containsMatchIn(lower)) return 23.976
++        if (Regex("""\b29\.97\b""").containsMatchIn(lower)) return 29.97
++        if (Regex("""\bpal\b""").containsMatchIn(lower)) return 25.0
++        if (Regex("""\bntsc\b""").containsMatchIn(lower)) return 23.976
++
++        return null
++    }
++
++    fun scoreSubtitleForStreamText(
++        streamText: String?,
++        subtitleName: String?,
++        subtitleId: String? = null,
++        subtitleUrl: String? = null
++    ): SubtitleReleaseMatch {
++        val streamTokens = extractReleaseTokens(streamText)
++        val subtitleCombinedText = listOfNotNull(subtitleName, subtitleId, subtitleUrl).joinToString(" ")
++        val subTokens = extractReleaseTokens(subtitleCombinedText)
++
++        val streamFps = extractFps(streamText)
++        val subFps = extractFps(subtitleCombinedText)
++
++        var score = 0.0
++        val matchedTokens = streamTokens.intersect(subTokens).toMutableSet()
++
++        matchedTokens.forEach { token ->
++            when {
++                token in RELEASE_GROUPS -> score += 50.0
++                token in SOURCE_TAGS -> score += 20.0
++                token in CODEC_TAGS -> score += 10.0
++                token in RESOLUTION_TAGS -> score += 5.0
++            }
++        }
++
++        // Codec synonym matching (e.g. stream has HEVC/H.265 and subtitle has x265)
++        val hevcFamily = setOf("x265", "h265", "hevc")
++        val h264Family = setOf("x264", "h264", "avc")
++        if (matchedTokens.none { it in hevcFamily } &&
++            streamTokens.any { it in hevcFamily } && subTokens.any { it in hevcFamily }
++        ) {
++            score += 10.0
++            matchedTokens += "hevc"
++        }
++        if (matchedTokens.none { it in h264Family } &&
++            streamTokens.any { it in h264Family } && subTokens.any { it in h264Family }
++        ) {
++            score += 10.0
++            matchedTokens += "x264"
++        }
++
++        val fpsMatched = if (streamFps != null && subFps != null) {
++            if (kotlin.math.abs(streamFps - subFps) < 0.05) {
++                score += 30.0
++                true
++            } else {
++                score -= 20.0
++                false
++            }
++        } else {
++            false
++        }
++
++        return SubtitleReleaseMatch(
++            score = score,
++            matchedTokens = matchedTokens,
++            streamFps = streamFps,
++            subtitleFps = subFps,
++            fpsMatched = fpsMatched
++        )
++    }
++
++    fun scoreSubtitleForStream(
++        stream: Stream?,
++        subtitleName: String?,
++        subtitleId: String? = null,
++        subtitleUrl: String? = null
++    ): SubtitleReleaseMatch {
++        val streamText = buildString {
++            if (stream != null) {
++                append(stream.addonName).append(' ')
++                append(stream.name.orEmpty()).append(' ')
++                append(stream.title.orEmpty()).append(' ')
++                append(stream.description.orEmpty()).append(' ')
++                append(stream.getStreamUrl().orEmpty())
++            }
++        }
++        return scoreSubtitleForStreamText(streamText, subtitleName, subtitleId, subtitleUrl)
++    }
++
++    fun rankSubtitlesForStream(
++        subtitles: List<com.nuvio.tv.domain.model.Subtitle>,
++        stream: Stream?,
++        preferredLanguage: String? = null
++    ): List<com.nuvio.tv.domain.model.Subtitle> {
++        val streamText = buildString {
++            if (stream != null) {
++                append(stream.addonName).append(' ')
++                append(stream.name.orEmpty()).append(' ')
++                append(stream.title.orEmpty()).append(' ')
++                append(stream.description.orEmpty()).append(' ')
++                append(stream.getStreamUrl().orEmpty())
++            }
++        }
++        return rankSubtitlesForStreamText(subtitles, streamText, preferredLanguage)
++    }
++
++    fun rankSubtitlesForStreamText(
++        subtitles: List<com.nuvio.tv.domain.model.Subtitle>,
++        streamText: String?,
++        preferredLanguage: String? = null
++    ): List<com.nuvio.tv.domain.model.Subtitle> {
++        if (subtitles.isEmpty()) return subtitles
++
++        return subtitles
++            .mapIndexed { index, subtitle ->
++                val langMatch = if (!preferredLanguage.isNullOrBlank()) {
++                    PlayerSubtitleUtils.matchesLanguageCode(subtitle.lang, preferredLanguage)
++                } else false
++
++                val match = scoreSubtitleForStreamText(
++                    streamText = streamText,
++                    subtitleName = subtitle.addonName,
++                    subtitleId = subtitle.id,
++                    subtitleUrl = subtitle.url
++                )
++                Triple(subtitle, index, Pair(langMatch, match.score))
++            }
++            .sortedWith(
++                compareByDescending<Triple<com.nuvio.tv.domain.model.Subtitle, Int, Pair<Boolean, Double>>> { it.third.first }
++                    .thenByDescending { it.third.second }
++                    .thenByDescending { it.first.isStreamProvided }
++                    .thenBy { it.second }
++            )
++            .map { it.first }
++    }
+ }
+diff --git a/app/src/main/java/com/nuvio/tv/core/player/SubtitleCharsetDetector.kt b/app/src/main/java/com/nuvio/tv/core/player/SubtitleCharsetDetector.kt
+--- a/app/src/main/java/com/nuvio/tv/core/player/SubtitleCharsetDetector.kt
++++ b/app/src/main/java/com/nuvio/tv/core/player/SubtitleCharsetDetector.kt
+@@ -87,37 +87,61 @@
+ 
+         val normalized = languageHint?.trim()?.lowercase()?.substringBefore('-')?.substringBefore('_')
+         val isHebrewHint = normalized == "heb" || normalized == "he" || normalized == "iw" || normalized?.startsWith("hebrew") == true
+-
+-        // Double-encoded UTF-8 subtitles (where Windows-1255 Hebrew bytes were decoded as Latin-1 and saved as UTF-8)
+-        // are an issue specific to Hebrew providers like Ktuvit.
+-        // If a non-Hebrew language hint is present (e.g. Russian, Romanian, Spanish), or if the text contains standard Latin/Cyrillic words,
++        val isArabicHint = normalized == "ara" || normalized == "ar" || normalized?.startsWith("arabic") == true
++
++        // Double-encoded UTF-8 subtitles (where Windows-1255 Hebrew or Windows-1256 Arabic bytes were decoded as Latin-1/Windows-1252 and saved as UTF-8).
++        // If a non-RTL language hint is present (e.g. Russian, Romanian, Spanish), or if the text contains standard Latin/Cyrillic words,
+         // do not attempt conversion.
+-        if (!isHebrewHint && !normalized.isNullOrBlank()) {
++        if (!isHebrewHint && !isArabicHint && !normalized.isNullOrBlank()) {
+             return text
+         }
+ 
+         val words = text.split("\\s+".toRegex()).filter { it.length >= 2 && it.any { c -> c.isLetter() } }
+         if (words.isEmpty()) return text
+ 
+-        // In true double-encoded Hebrew text, dialogue words consist almost exclusively of Latin-1 characters in \u00E0..\u00FA
+-        val mojibakeWordsCount = words.count { word ->
+-            word.all { c -> (c in '\u00E0'..'\u00FA') || c in "<i></i>-.,!?:'\"<>/\\_()" }
+-        }
+-
+-        val threshold = if (isHebrewHint) 5 else 10
+-        if (mojibakeWordsCount >= threshold && (mojibakeWordsCount * 2 >= words.size)) {
+-            try {
+-                // Ensure text can be encoded to Windows-1252 cleanly without unmappable replacement characters
+-                val encoder = CHARSET_WIN1252.newEncoder()
+-                if (!encoder.canEncode(text)) return text
+-
+-                val win1252Bytes = text.toByteArray(CHARSET_WIN1252)
+-                val hebrewCandidate = String(win1252Bytes, CHARSET_WIN1255)
+-                val hebrewChars = hebrewCandidate.count { it in '\u0590'..'\u05FF' }
+-                if (hebrewChars >= 10) {
+-                    return hebrewCandidate
+-                }
+-            } catch (_: Exception) {}
++        // 1. Hebrew check: dialogue words consist almost exclusively of Latin-1 characters in \u00E0..\u00FA
++        if (isHebrewHint || normalized.isNullOrBlank()) {
++            val mojibakeWordsCount = words.count { word ->
++                word.any { c -> c in '\u00E0'..'\u00FA' } &&
++                    word.all { c -> (c in '\u00E0'..'\u00FA') || c in "<i></i>-.,!?:'\"<>/\\_()[]{}" }
++            }
++            val threshold = if (isHebrewHint) 3 else 4
++            if (mojibakeWordsCount >= threshold && (mojibakeWordsCount * 2 >= words.size)) {
++                try {
++                    val encoder = CHARSET_WIN1252.newEncoder()
++                    if (encoder.canEncode(text)) {
++                        val win1252Bytes = text.toByteArray(CHARSET_WIN1252)
++                        val hebrewCandidate = String(win1252Bytes, CHARSET_WIN1255)
++                        val hebrewChars = hebrewCandidate.count { it in '\u0590'..'\u05FF' }
++                        if (hebrewChars >= 8) {
++                            return hebrewCandidate
++                        }
++                    }
++                } catch (_: Exception) {}
++            }
++        }
++
++        // 2. Arabic check: dialogue words consist of Latin-1 supplement characters in \u00C0..\u00FE
++        // (Windows-1256 Arabic letter bytes 0xC1..0xFE interpreted as Windows-1252, or Arabic punctuation \u00BA, \u00BF)
++        if (isArabicHint || normalized.isNullOrBlank()) {
++            val arabicMojibakeWordsCount = words.count { word ->
++                word.any { c -> c in '\u00C0'..'\u00FE' } &&
++                    word.all { c -> (c in '\u00C0'..'\u00FE') || c == '\u00BA' || c == '\u00BF' || c in "<i></i>-.,!?:'\"<>/\\_()[]{}،؛؟" }
++            }
++            val threshold = if (isArabicHint) 3 else 4
++            if (arabicMojibakeWordsCount >= threshold && (arabicMojibakeWordsCount * 2 >= words.size)) {
++                try {
++                    val encoder = CHARSET_WIN1252.newEncoder()
++                    if (encoder.canEncode(text)) {
++                        val win1252Bytes = text.toByteArray(CHARSET_WIN1252)
++                        val arabicCandidate = String(win1252Bytes, CHARSET_WIN1256)
++                        val arabicChars = arabicCandidate.count { it in '\u0600'..'\u06FF' }
++                        if (arabicChars >= 8) {
++                            return arabicCandidate
++                        }
++                    }
++                } catch (_: Exception) {}
++            }
+         }
+ 
+         return text
+@@ -212,6 +236,10 @@
+         return true
+     }
+ 
++    private fun isWindows1256ArabicByte(b: Int): Boolean {
++        return (b in 0xC1..0xD6) || (b in 0xD8..0xDF) || (b == 0xE1) || (b in 0xE3..0xE6) || (b in 0xEC..0xED) || (b == 0xBA) || (b == 0xBF) || (b == 0xBB)
++    }
++
+     private fun detectUniversalCharset(bytes: ByteArray, offset: Int, length: Int): Charset {
+         var startOffset = offset
+         val totalEnd = offset + length
+@@ -228,7 +256,6 @@
+         var nonAscii = 0
+         var consecutiveNonAscii = 0
+         var maxConsecutiveNonAscii = 0
+-
+         for (i in sampleOffset until end) {
+             val b = bytes[i].toInt() and 0xFF
+             if ((b in 'a'.code..'z'.code) || (b in 'A'.code..'Z'.code)) {
+@@ -321,21 +348,61 @@
+         // Statistical evaluation for non-Latin single-byte alphabets (Hebrew, Arabic, Thai, Cyrillic, Greek)
+         var thaiConsonants = 0
+         var hebrewLetters = 0
+-        var arabicAlCount = 0
+         var russianVowels = 0
+         var koi8Vowels = 0
+         var greekVowels = 0
++        var greekSpecific = 0
++        var nonArabicEuropeanLetters = 0
+         var bytes0xC0to0xDF = 0
++        var arabicLetters = 0
++        var arabicAlCount = 0
++        var arabicPunctuation = 0
++        var arabicHighLetters = 0
+ 
+         for (i in sampleOffset until end) {
+             val b = bytes[i].toInt() and 0xFF
+             if (b in 0xA1..0xBF) thaiConsonants++
+             if (b in 0xE0..0xFA) hebrewLetters++
+             if (b in 0xC0..0xDF) bytes0xC0to0xDF++
+-            if (b == 0xEE || b == 0xE0 || b == 0xE5 || b == 0xE8 || b == 0xFF || b == 0xFB || b == 0xF3 || b == 0xFD || b == 0xFE) russianVowels++
++
++            // Russian vowels in Windows-1251 (both lower and upper, plus ё/Ё)
++            if (b == 0xEE || b == 0xE0 || b == 0xE5 || b == 0xE8 || b == 0xFF || b == 0xFB || b == 0xF3 || b == 0xFD || b == 0xFE ||
++                b == 0xC0 || b == 0xC5 || b == 0xC8 || b == 0xCE || b == 0xD3 || b == 0xDB || b == 0xDD || b == 0xDE || b == 0xDF ||
++                b == 0xA8 || b == 0xB8
++            ) {
++                russianVowels++
++            }
++
+             if (b == 0xCF || b == 0xC1 || b == 0xC5 || b == 0xC9 || b == 0xD5 || b == 0xDF) koi8Vowels++
+-            if (b == 0xE1 || b == 0xEF || b == 0xE5 || b == 0xE7 || b == 0xFD || b == 0xFE || b == 0xE9 || b == 0xF5 || b == 0xF9 || b == 0xDC || b == 0xDD || b == 0xDE || b == 0xDF || b == 0xFA || b == 0xFB || b == 0xFC) greekVowels++
+-            if (i < end - 1 && b == 0xC7 && (bytes[i + 1].toInt() and 0xFF) == 0xE1) arabicAlCount++
++
++            // Greek vowels in Windows-1253
++            if (b == 0xE1 || b == 0xEF || b == 0xE5 || b == 0xE7 || b == 0xFD || b == 0xFE || b == 0xE9 || b == 0xF5 || b == 0xF9 ||
++                b == 0xDC || b == 0xDD || b == 0xDE || b == 0xDF || b == 0xFA || b == 0xFB || b == 0xFC
++            ) {
++                greekVowels++
++            }
++
++            // Greek distinctive letters (tones and unique consonants)
++            if (b == 0xDC || b == 0xDD || b == 0xDE || b == 0xDF || b == 0xFA || b == 0xFB || b == 0xFC ||
++                b == 0xF2 || b == 0xF4 || b == 0xE7 || b == 0xF9
++            ) {
++                greekSpecific++
++            }
++
++            // Letters present in Russian 1251 or Greek 1253 that never appear as base Arabic letters in 1256
++            if (b == 0xE0 || b == 0xE2 || b == 0xE7 || b == 0xE8 || b == 0xE9 || b == 0xEA || b == 0xEB || b == 0xEE ||
++                b == 0xEF || b == 0xF4 || b == 0xF7 || b == 0xF9 || b == 0xFB || b == 0xFC || b == 0xFD || b == 0xFE
++            ) {
++                nonArabicEuropeanLetters++
++            }
++
++            if (isWindows1256ArabicByte(b)) arabicLetters++
++            if (b == 0xA1 || b == 0xBA || b == 0xBF) arabicPunctuation++
++            if (b in 0xE1..0xED && b != 0xE2 && b !in 0xE7..0xEB) arabicHighLetters++
++
++            if (i < end - 1 && b == 0xC7 && (bytes[i + 1].toInt() and 0xFF) == 0xE1) {
++                arabicAlCount++
++            }
+         }
+ 
+         // Hebrew check: consonants (0xE0..0xFA) make up all non-ASCII bytes in non-Latin script
+@@ -348,9 +415,30 @@
+             return CHARSET_WIN874
+         }
+ 
+-        // Arabic check
+-        if (arabicAlCount > 0) {
+-            return CHARSET_WIN1256
++        // Competing script evaluation:
++        // If non-Arabic European letters (Russian/Greek lowercase) are present:
++        if (nonArabicEuropeanLetters >= 1) {
++            if (greekSpecific >= 2 && greekVowels > russianVowels) {
++                return CHARSET_WIN1253
++            }
++            if (greekVowels >= 4 && greekVowels > russianVowels) {
++                return CHARSET_WIN1253
++            }
++            if (russianVowels >= 2) {
++                return CHARSET_WIN1251
++            }
++        }
++
++        // Russian ALL-CAPS check (all non-ASCII in 0xC0..0xDF with Cyrillic vowels and no Arabic indicators)
++        if (bytes0xC0to0xDF == nonAscii && russianVowels >= 3 && arabicHighLetters == 0 && arabicPunctuation == 0 && arabicAlCount == 0) {
++            return CHARSET_WIN1251
++        }
++
++        // Arabic check: only if no European letters that contradict Arabic are present
++        if (nonArabicEuropeanLetters == 0) {
++            if (arabicAlCount > 0 || arabicPunctuation > 0 || (arabicLetters >= 4 && arabicLetters * 10 >= nonAscii * 8 && (arabicHighLetters > 0 || nonAscii < 6))) {
++                return CHARSET_WIN1256
++            }
+         }
+ 
+         // Cyrillic check
+@@ -364,6 +452,11 @@
+         // Greek check
+         if (greekVowels > russianVowels && greekVowels >= 4) {
+             return CHARSET_WIN1253
++        }
++
++        // Arabic fallback
++        if (arabicAlCount > 0 && nonArabicEuropeanLetters == 0) {
++            return CHARSET_WIN1256
+         }
+ 
+         // Turkish / Central European / Vietnamese / Western European fallback
+diff --git a/app/src/main/java/com/nuvio/tv/ui/navigation/NuvioNavHost.kt b/app/src/main/java/com/nuvio/tv/ui/navigation/NuvioNavHost.kt
+--- a/app/src/main/java/com/nuvio/tv/ui/navigation/NuvioNavHost.kt
++++ b/app/src/main/java/com/nuvio/tv/ui/navigation/NuvioNavHost.kt
+@@ -256,7 +256,10 @@
+                 },
+                 onNavigateToFolderDetail = { collectionId, folderId ->
+                     navController.navigate(Screen.FolderDetail.createRoute(collectionId, folderId))
+-                }
++                },
++                onSearchClick = { navController.navigate(Screen.Search.route) },
++                onSavedClick = { navController.navigate(Screen.Library.route) },
++                onSettingsClick = { navController.navigate(Screen.Settings.route) }
+             )
+         }
+ 
+diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/HomeScreen.kt b/app/src/main/java/com/nuvio/tv/ui/screens/home/HomeScreen.kt
+--- a/app/src/main/java/com/nuvio/tv/ui/screens/home/HomeScreen.kt
++++ b/app/src/main/java/com/nuvio/tv/ui/screens/home/HomeScreen.kt
+@@ -95,7 +95,10 @@
+     onContinueWatchingStartFromBeginning: (ContinueWatchingItem) -> Unit = onContinueWatchingClick,
+     onContinueWatchingPlayManually: (ContinueWatchingItem) -> Unit = onContinueWatchingClick,
+     onNavigateToCatalogSeeAll: (String, String, String) -> Unit = { _, _, _ -> },
+-    onNavigateToFolderDetail: (String, String) -> Unit = { _, _ -> }
++    onNavigateToFolderDetail: (String, String) -> Unit = { _, _ -> },
++    onSearchClick: () -> Unit = {},
++    onSavedClick: () -> Unit = {},
++    onSettingsClick: () -> Unit = {}
+ ) {
+     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+ 
+@@ -365,21 +368,6 @@
+                         }
+                     ) {
+                         when (uiState.homeLayout) {
+-                            HomeLayout.CLASSIC -> ClassicHomeRoute(
+-                                viewModel = viewModel,
+-                                uiState = uiState,
+-                                posterCardStyle = posterCardStyle,
+-                                onNavigateToDetail = onNavigateToDetailStable,
+-                                onContinueWatchingClick = onContinueWatchingClickStable,
+-                                onContinueWatchingStartFromBeginning = onContinueWatchingStartFromBeginningStable,
+-                                onContinueWatchingPlayManually = onContinueWatchingPlayManuallyStable,
+-                                showContinueWatchingManualPlayOption = effectiveAutoplayEnabled,
+-                                onNavigateToCatalogSeeAll = onNavigateToCatalogSeeAllStable,
+-                                onNavigateToFolderDetail = onNavigateToFolderDetailStable,
+-                                isCatalogItemWatched = isCatalogItemWatched,
+-                                onCatalogItemLongPress = onCatalogItemLongPress
+-                            )
+-
+                             HomeLayout.GRID -> GridHomeRoute(
+                                 viewModel = viewModel,
+                                 uiState = uiState,
+@@ -395,7 +383,7 @@
+                                 onCatalogItemLongPress = onCatalogItemLongPress
+                             )
+ 
+-                            HomeLayout.MODERN -> ModernHomeRoute(
++                            else -> MiraTvHomeRoute(
+                                 viewModel = viewModel,
+                                 uiState = uiState,
+                                 onNavigateToDetail = onNavigateToDetailStable,
+@@ -403,9 +391,13 @@
+                                 onContinueWatchingStartFromBeginning = onContinueWatchingStartFromBeginningStable,
+                                 onContinueWatchingPlayManually = onContinueWatchingPlayManuallyStable,
+                                 showContinueWatchingManualPlayOption = effectiveAutoplayEnabled,
++                                onNavigateToCatalogSeeAll = onNavigateToCatalogSeeAllStable,
+                                 onNavigateToFolderDetail = onNavigateToFolderDetailStable,
+                                 isCatalogItemWatched = isCatalogItemWatched,
+-                                onCatalogItemLongPress = onCatalogItemLongPress
++                                onCatalogItemLongPress = onCatalogItemLongPress,
++                                onSearchClick = onSearchClick,
++                                onSavedClick = onSavedClick,
++                                onSettingsClick = onSettingsClick
+                             )
+                         }
+                     }
+@@ -521,6 +513,46 @@
+ }
+ 
+ @Composable
++private fun MiraTvHomeRoute(
++    viewModel: HomeViewModel,
++    uiState: HomeUiState,
++    onNavigateToDetail: (String, String, String) -> Unit,
++    onContinueWatchingClick: (ContinueWatchingItem) -> Unit,
++    onContinueWatchingStartFromBeginning: (ContinueWatchingItem) -> Unit,
++    onContinueWatchingPlayManually: (ContinueWatchingItem) -> Unit,
++    showContinueWatchingManualPlayOption: Boolean,
++    onNavigateToCatalogSeeAll: (String, String, String) -> Unit,
++    onNavigateToFolderDetail: (String, String) -> Unit,
++    isCatalogItemWatched: (MetaPreview) -> Boolean,
++    onCatalogItemLongPress: (MetaPreview, String) -> Unit,
++    onSearchClick: () -> Unit,
++    onSavedClick: () -> Unit,
++    onSettingsClick: () -> Unit
++) {
++    val scrollToTopTrigger by viewModel.scrollToTopTrigger.collectAsStateWithLifecycle()
++
++    MiraTvHomeContent(
++        uiState = uiState,
++        onNavigateToDetail = onNavigateToDetail,
++        onContinueWatchingClick = onContinueWatchingClick,
++        onContinueWatchingStartFromBeginning = onContinueWatchingStartFromBeginning,
++        onContinueWatchingPlayManually = onContinueWatchingPlayManually,
++        showContinueWatchingManualPlayOption = showContinueWatchingManualPlayOption,
++        onNavigateToCatalogSeeAll = onNavigateToCatalogSeeAll,
++        onNavigateToFolderDetail = onNavigateToFolderDetail,
++        onRemoveContinueWatching = { contentId, season, episode, isNextUp ->
++            viewModel.onEvent(HomeEvent.OnRemoveContinueWatching(contentId, season, episode, isNextUp))
++        },
++        isCatalogItemWatched = isCatalogItemWatched,
++        onCatalogItemLongPress = onCatalogItemLongPress,
++        onSearchClick = onSearchClick,
++        onSavedClick = onSavedClick,
++        onSettingsClick = onSettingsClick,
++        scrollToTopTrigger = scrollToTopTrigger
++    )
++}
++
++@Composable
+ private fun ClassicHomeRoute(
+     viewModel: HomeViewModel,
+     uiState: HomeUiState,
+diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt
+--- a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt
++++ b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt
+@@ -11,10 +11,12 @@
+ import androidx.compose.runtime.saveable.rememberSaveable
+ import androidx.compose.ui.Alignment
+ import androidx.compose.ui.Modifier
++import androidx.compose.ui.draw.clip
+ import androidx.compose.ui.graphics.Brush
+ import androidx.compose.ui.graphics.Color
+ import androidx.compose.ui.text.font.FontWeight
+ import androidx.compose.ui.unit.dp
++import androidx.compose.ui.unit.sp
+ import androidx.tv.material3.*
+ import com.nuvio.tv.domain.model.*
+ import com.nuvio.tv.ui.components.GridContentCard
+@@ -30,41 +32,165 @@
+ val LocalMiraBrowse = staticCompositionLocalOf<(String) -> Unit> { {} }
+ internal val miraGenres = listOf("Action", "Adventure", "Animation", "Comedy", "Crime", "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Thriller")
+ 
+-@Composable
+-internal fun MiraBrowseShelves() {
+-    val navigate = LocalMiraBrowse.current
+-    Column(Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+-        Text("Genres", style = MaterialTheme.typography.titleLarge, color = Color.White)
+-        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(4.dp)) {
++val genreGradients = listOf(
++    Color(0xFFB83DF5),
++    Color(0xFFFF4D2F),
++    Color(0xFFB4DB00),
++    Color(0xFF00CCA7),
++    Color(0xFF497CFF),
++    Color(0xFFF756BF)
++)
++
++@Composable
++fun TvHomeGenreSection(
++    onGenreClick: (String) -> Unit = LocalMiraBrowse.current,
++    modifier: Modifier = Modifier
++) {
++    Column(
++        modifier = modifier
++            .fillMaxWidth()
++            .padding(horizontal = 36.dp, vertical = 10.dp),
++        verticalArrangement = Arrangement.spacedBy(10.dp)
++    ) {
++        Text(
++            text = "Genres",
++            style = MaterialTheme.typography.titleMedium,
++            fontWeight = FontWeight.SemiBold,
++            color = Color.White
++        )
++        LazyRow(
++            horizontalArrangement = Arrangement.spacedBy(10.dp),
++            contentPadding = PaddingValues(horizontal = 2.dp, vertical = 4.dp)
++        ) {
+             items(miraGenres) { genre ->
+                 val index = miraGenres.indexOf(genre)
+-                val colors = listOf(Color(0xFFFF467F), Color(0xFFFF9933), Color(0xFF3CBE8A), Color(0xFF578AFF), Color(0xFFAC67F5))
+-                Card(onClick = { navigate(genre) }, modifier = Modifier.size(116.dp, 60.dp),
+-                    shape = CardDefaults.shape(RoundedCornerShape(14.dp)),
+-                    colors = CardDefaults.colors(containerColor = colors[index % colors.size], focusedContainerColor = colors[index % colors.size]),
+-                    scale = CardDefaults.scale(focusedScale = 1.06f),
+-                    border = CardDefaults.border(focusedBorder = Border(androidx.compose.foundation.BorderStroke(2.dp, Color.White), shape = RoundedCornerShape(14.dp)))) {
+-                    Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color.White.copy(alpha = .14f), Color.Transparent))), contentAlignment = Alignment.Center) {
+-                        Text(genre, color = Color.White, fontWeight = FontWeight.SemiBold)
++                val dotColor = genreGradients[index % genreGradients.size]
++                Card(
++                    onClick = { onGenreClick(genre) },
++                    shape = CardDefaults.shape(RoundedCornerShape(50)),
++                    colors = CardDefaults.colors(
++                        containerColor = Color(0xFF1C1C1E),
++                        focusedContainerColor = Color(0xFF2C2C30),
++                        contentColor = Color(0xFFE8E9EC),
++                        focusedContentColor = Color.White
++                    ),
++                    scale = CardDefaults.scale(focusedScale = 1.08f),
++                    border = CardDefaults.border(
++                        focusedBorder = Border(
++                            androidx.compose.foundation.BorderStroke(2.dp, Color.White),
++                            shape = RoundedCornerShape(50)
++                        )
++                    )
++                ) {
++                    Row(
++                        modifier = Modifier
++                            .height(42.dp)
++                            .padding(horizontal = 16.dp),
++                        verticalAlignment = Alignment.CenterVertically,
++                        horizontalArrangement = Arrangement.spacedBy(8.dp)
++                    ) {
++                        Box(
++                            modifier = Modifier
++                                .size(7.dp)
++                                .clip(RoundedCornerShape(50))
++                                .background(dotColor)
++                        )
++                        Text(
++                            text = genre,
++                            fontSize = 13.sp,
++                            fontWeight = FontWeight.Medium,
++                            maxLines = 1
++                        )
+                     }
+                 }
+             }
+         }
+-        Text("IMDb Top 250", style = MaterialTheme.typography.titleLarge, color = Color.White)
+-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
++    }
++}
++
++@Composable
++fun TvMiraChartSection(
++    onChartClick: (String) -> Unit = LocalMiraBrowse.current,
++    modifier: Modifier = Modifier
++) {
++    Column(
++        modifier = modifier
++            .fillMaxWidth()
++            .padding(horizontal = 36.dp, vertical = 10.dp),
++        verticalArrangement = Arrangement.spacedBy(10.dp)
++    ) {
++        Text(
++            text = "IMDb Top 250",
++            style = MaterialTheme.typography.titleMedium,
++            fontWeight = FontWeight.SemiBold,
++            color = Color.White
++        )
++        Row(
++            modifier = Modifier.fillMaxWidth(),
++            horizontalArrangement = Arrangement.spacedBy(14.dp)
++        ) {
+             listOf("imdb-movies" to "Movies", "imdb-shows" to "TV Shows").forEach { (slug, label) ->
+-                Card(onClick = { navigate(slug) }, modifier = Modifier.weight(1f).height(64.dp),
++                Card(
++                    onClick = { onChartClick(slug) },
++                    modifier = Modifier.weight(1f).height(68.dp),
+                     shape = CardDefaults.shape(RoundedCornerShape(16.dp)),
+-                    colors = CardDefaults.colors(containerColor = Color(0xFF1C1C1E), focusedContainerColor = Color(0xFF303034))) {
+-                    Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+-                        Text("★  $label", color = Color.White, fontWeight = FontWeight.SemiBold)
+-                        Text("Rated by IMDb users", color = Color(0xFF98989E), style = MaterialTheme.typography.bodySmall)
++                    colors = CardDefaults.colors(
++                        containerColor = Color(0xFF1C1C1E),
++                        focusedContainerColor = Color(0xFF2C2C30),
++                        contentColor = Color.White,
++                        focusedContentColor = Color.White
++                    ),
++                    scale = CardDefaults.scale(focusedScale = 1.04f),
++                    border = CardDefaults.border(
++                        focusedBorder = Border(
++                            androidx.compose.foundation.BorderStroke(2.dp, Color.White),
++                            shape = RoundedCornerShape(16.dp)
++                        )
++                    )
++                ) {
++                    Column(
++                        modifier = Modifier
++                            .fillMaxSize()
++                            .padding(horizontal = 20.dp, vertical = 12.dp),
++                        verticalArrangement = Arrangement.spacedBy(4.dp)
++                    ) {
++                        Row(
++                            verticalAlignment = Alignment.CenterVertically,
++                            horizontalArrangement = Arrangement.spacedBy(6.dp)
++                        ) {
++                            Text(
++                                text = "★",
++                                color = Color(0xFFF5C518),
++                                fontSize = 16.sp,
++                                fontWeight = FontWeight.Bold
++                            )
++                            Text(
++                                text = label,
++                                color = Color.White,
++                                style = MaterialTheme.typography.titleMedium,
++                                fontWeight = FontWeight.SemiBold
++                            )
++                        }
++                        Text(
++                            text = "Rated by IMDb users",
++                            color = Color(0xFF98989E),
++                            style = MaterialTheme.typography.bodySmall
++                        )
+                     }
+                 }
+             }
+         }
+     }
+ }
++
++@Composable
++internal fun MiraBrowseShelves() {
++    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
++        TvHomeGenreSection()
++        TvMiraChartSection()
++    }
++}
++
+ 
+ internal object MiraBrowseData {
+     private val client = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(20, TimeUnit.SECONDS).callTimeout(25, TimeUnit.SECONDS).build()
+@@ -85,7 +211,7 @@
+         }
+         val payload = client.newCall(request).execute().use { response ->
+             check(response.isSuccessful) { "Catalog unavailable (HTTP ${response.code}). Try again." }
+-            response.body?.string() ?: error("Empty catalog response")
++            response.body.string()
+         }
+         currentCoroutineContext().ensureActive()
+         parse(payload, type, chart)
+diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHeroSection.kt b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHeroSection.kt
+new file mode 100644
+--- /dev/null
++++ b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHeroSection.kt
+@@ -0,0 +1,330 @@
++@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
++package com.nuvio.tv.ui.screens.home
++
++import androidx.compose.animation.Crossfade
++import androidx.compose.animation.core.tween
++import androidx.compose.foundation.BorderStroke
++import androidx.compose.foundation.background
++import androidx.compose.foundation.layout.*
++import androidx.compose.foundation.shape.RoundedCornerShape
++import androidx.compose.material.icons.Icons
++import androidx.compose.material.icons.filled.Info
++import androidx.compose.material.icons.filled.PlayArrow
++import androidx.compose.runtime.*
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.draw.clip
++import androidx.compose.ui.graphics.Brush
++import androidx.compose.ui.graphics.Color
++import androidx.compose.ui.layout.ContentScale
++import androidx.compose.ui.platform.LocalContext
++import androidx.compose.ui.text.font.FontWeight
++import androidx.compose.ui.text.style.TextOverflow
++import androidx.compose.ui.unit.dp
++import androidx.compose.ui.unit.sp
++import androidx.tv.material3.*
++import coil3.compose.AsyncImage
++import coil3.request.CachePolicy
++import coil3.request.ImageRequest
++import com.nuvio.tv.domain.model.MetaPreview
++import kotlinx.coroutines.delay
++
++@Composable
++fun MiraTvHeroSection(
++    items: List<MetaPreview>,
++    onPlayClick: (MetaPreview) -> Unit,
++    onDetailClick: (MetaPreview) -> Unit,
++    modifier: Modifier = Modifier
++) {
++    if (items.isEmpty()) return
++
++    var activeIndex by remember { mutableIntStateOf(0) }
++    val currentItem = items.getOrNull(activeIndex) ?: items.first()
++    val context = LocalContext.current
++
++    // Auto-advance hero banner every 12 seconds
++    LaunchedEffect(items.size) {
++        if (items.size <= 1) return@LaunchedEffect
++        while (true) {
++            delay(12_000)
++            activeIndex = (activeIndex + 1) % items.size
++        }
++    }
++
++    Box(
++        modifier = modifier
++            .fillMaxWidth()
++            .height(380.dp)
++            .padding(horizontal = 36.dp, vertical = 6.dp)
++            .clip(RoundedCornerShape(24.dp))
++            .background(Color(0xFF141416))
++    ) {
++        // Backdrop Image with smooth crossfade
++        Crossfade(
++            targetState = currentItem.background ?: currentItem.poster,
++            animationSpec = tween(400),
++            label = "heroBackdrop"
++        ) { bgUrl ->
++            if (!bgUrl.isNullOrBlank()) {
++                val backdropRequest = remember(bgUrl) {
++                    ImageRequest.Builder(context)
++                        .data(bgUrl)
++                        .size(1920, 1080)
++                        .memoryCachePolicy(CachePolicy.ENABLED)
++                        .diskCachePolicy(CachePolicy.ENABLED)
++                        .build()
++                }
++                AsyncImage(
++                    model = backdropRequest,
++                    contentDescription = currentItem.name,
++                    modifier = Modifier.fillMaxSize(),
++                    contentScale = ContentScale.Crop
++                )
++            }
++        }
++
++        // Gradient overlays: Left to Right and Bottom to Top for cinema text legibility
++        Box(
++            modifier = Modifier
++                .fillMaxSize()
++                .background(
++                    Brush.horizontalGradient(
++                        colors = listOf(
++                            Color.Black.copy(alpha = 0.92f),
++                            Color.Black.copy(alpha = 0.65f),
++                            Color.Transparent
++                        ),
++                        startX = 0f,
++                        endX = 1200f
++                    )
++                )
++        )
++        Box(
++            modifier = Modifier
++                .fillMaxSize()
++                .background(
++                    Brush.verticalGradient(
++                        colors = listOf(
++                            Color.Transparent,
++                            Color.Black.copy(alpha = 0.85f)
++                        ),
++                        startY = 180f
++                    )
++                )
++        )
++
++        // Hero Info & Actions
++        Column(
++            modifier = Modifier
++                .align(Alignment.BottomStart)
++                .fillMaxWidth(0.58f)
++                .padding(start = 32.dp, bottom = 28.dp),
++            verticalArrangement = Arrangement.spacedBy(10.dp)
++        ) {
++            // Title or Clearlogo
++            if (!currentItem.logo.isNullOrBlank()) {
++                val logoRequest = remember(currentItem.logo) {
++                    ImageRequest.Builder(context)
++                        .data(currentItem.logo)
++                        .size(500, 200)
++                        .build()
++                }
++                AsyncImage(
++                    model = logoRequest,
++                    contentDescription = currentItem.name,
++                    modifier = Modifier
++                        .height(64.dp)
++                        .widthIn(max = 320.dp),
++                    contentScale = ContentScale.Fit,
++                    alignment = Alignment.CenterStart
++                )
++            } else {
++                Text(
++                    text = currentItem.name,
++                    style = MaterialTheme.typography.headlineMedium,
++                    color = Color.White,
++                    fontWeight = FontWeight.Bold,
++                    maxLines = 2,
++                    overflow = TextOverflow.Ellipsis
++                )
++            }
++
++            // Badges row: Year, Rating, Type, Genres
++            Row(
++                verticalAlignment = Alignment.CenterVertically,
++                horizontalArrangement = Arrangement.spacedBy(10.dp)
++            ) {
++                // IMDb Rating
++                currentItem.imdbRating?.let { rating ->
++                    Row(
++                        modifier = Modifier
++                            .clip(RoundedCornerShape(6.dp))
++                            .background(Color(0xFF26262A))
++                            .padding(horizontal = 8.dp, vertical = 3.dp),
++                        verticalAlignment = Alignment.CenterVertically,
++                        horizontalArrangement = Arrangement.spacedBy(4.dp)
++                    ) {
++                        Text("★", color = Color(0xFFF5C518), fontSize = 12.sp, fontWeight = FontWeight.Bold)
++                        Text(
++                            text = String.format("%.1f", rating),
++                            color = Color.White,
++                            fontSize = 12.sp,
++                            fontWeight = FontWeight.SemiBold
++                        )
++                    }
++                }
++
++                // Release Info / Year
++                currentItem.releaseInfo?.takeIf { it.isNotBlank() }?.let { year ->
++                    Text(
++                        text = year,
++                        color = Color(0xFFD1D1D6),
++                        fontSize = 13.sp,
++                        fontWeight = FontWeight.Medium
++                    )
++                }
++
++                // Content Type
++                val typeName = when (currentItem.type.name.lowercase()) {
++                    "series", "tv" -> "TV Series"
++                    else -> "Movie"
++                }
++                Text(
++                    text = "•  $typeName",
++                    color = Color(0xFFAAAAAF),
++                    fontSize = 13.sp
++                )
++
++                // Genres preview
++                if (currentItem.genres.isNotEmpty()) {
++                    Text(
++                        text = "•  " + currentItem.genres.take(2).joinToString(" / "),
++                        color = Color(0xFFAAAAAF),
++                        fontSize = 13.sp,
++                        maxLines = 1,
++                        overflow = TextOverflow.Ellipsis
++                    )
++                }
++            }
++
++            // Description overview
++            currentItem.description?.takeIf { it.isNotBlank() }?.let { overview ->
++                Text(
++                    text = overview,
++                    color = Color(0xFFB0B0B5),
++                    fontSize = 13.sp,
++                    maxLines = 2,
++                    lineHeight = 18.sp,
++                    overflow = TextOverflow.Ellipsis
++                )
++            }
++
++            Spacer(modifier = Modifier.height(4.dp))
++
++            // Action Buttons
++            Row(
++                horizontalArrangement = Arrangement.spacedBy(12.dp),
++                verticalAlignment = Alignment.CenterVertically
++            ) {
++                // Play Button
++                Card(
++                    onClick = { onPlayClick(currentItem) },
++                    shape = CardDefaults.shape(RoundedCornerShape(50)),
++                    colors = CardDefaults.colors(
++                        containerColor = Color.White,
++                        focusedContainerColor = Color.White,
++                        contentColor = Color.Black,
++                        focusedContentColor = Color.Black
++                    ),
++                    scale = CardDefaults.scale(focusedScale = 1.08f),
++                    border = CardDefaults.border(
++                        focusedBorder = Border(
++                            BorderStroke(2.dp, Color(0xFF578AFF)),
++                            shape = RoundedCornerShape(50)
++                        )
++                    )
++                ) {
++                    Row(
++                        modifier = Modifier
++                            .height(42.dp)
++                            .padding(horizontal = 20.dp),
++                        verticalAlignment = Alignment.CenterVertically,
++                        horizontalArrangement = Arrangement.spacedBy(8.dp)
++                    ) {
++                        Icon(
++                            imageVector = Icons.Default.PlayArrow,
++                            contentDescription = "Play",
++                            modifier = Modifier.size(20.dp),
++                            tint = Color.Black
++                        )
++                        Text(
++                            text = "Play",
++                            fontWeight = FontWeight.Bold,
++                            fontSize = 14.sp
++                        )
++                    }
++                }
++
++                // Details Button
++                Card(
++                    onClick = { onDetailClick(currentItem) },
++                    shape = CardDefaults.shape(RoundedCornerShape(50)),
++                    colors = CardDefaults.colors(
++                        containerColor = Color.White.copy(alpha = 0.16f),
++                        focusedContainerColor = Color.White.copy(alpha = 0.32f),
++                        contentColor = Color.White,
++                        focusedContentColor = Color.White
++                    ),
++                    scale = CardDefaults.scale(focusedScale = 1.06f),
++                    border = CardDefaults.border(
++                        focusedBorder = Border(
++                            BorderStroke(2.dp, Color.White),
++                            shape = RoundedCornerShape(50)
++                        )
++                    )
++                ) {
++                    Row(
++                        modifier = Modifier
++                            .height(42.dp)
++                            .padding(horizontal = 18.dp),
++                        verticalAlignment = Alignment.CenterVertically,
++                        horizontalArrangement = Arrangement.spacedBy(6.dp)
++                    ) {
++                        Icon(
++                            imageVector = Icons.Default.Info,
++                            contentDescription = "Details",
++                            modifier = Modifier.size(18.dp),
++                            tint = Color.White
++                        )
++                        Text(
++                            text = "Details",
++                            fontWeight = FontWeight.Medium,
++                            fontSize = 14.sp
++                        )
++                    }
++                }
++            }
++        }
++
++        // Slide indicator pills on bottom-right
++        if (items.size > 1) {
++            Row(
++                modifier = Modifier
++                    .align(Alignment.BottomEnd)
++                    .padding(end = 28.dp, bottom = 28.dp),
++                horizontalArrangement = Arrangement.spacedBy(6.dp)
++            ) {
++                repeat(items.size.coerceAtMost(8)) { idx ->
++                    val isCurrent = idx == activeIndex
++                    Box(
++                        modifier = Modifier
++                            .size(width = if (isCurrent) 22.dp else 6.dp, height = 4.dp)
++                            .clip(RoundedCornerShape(2.dp))
++                            .background(if (isCurrent) Color.White else Color.White.copy(alpha = 0.35f))
++                    )
++                }
++            }
++        }
++    }
++}
++
+diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHomeContent.kt b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHomeContent.kt
+new file mode 100644
+--- /dev/null
++++ b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHomeContent.kt
+@@ -0,0 +1,209 @@
++@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
++package com.nuvio.tv.ui.screens.home
++
++import androidx.compose.foundation.background
++import androidx.compose.foundation.layout.*
++import androidx.compose.foundation.lazy.LazyColumn
++import androidx.compose.foundation.lazy.LazyRow
++import androidx.compose.foundation.lazy.items
++import androidx.compose.foundation.lazy.rememberLazyListState
++import androidx.compose.runtime.*
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.graphics.Color
++import androidx.compose.ui.text.font.FontWeight
++import androidx.compose.ui.unit.dp
++import androidx.compose.ui.unit.sp
++import androidx.tv.material3.*
++import com.nuvio.tv.domain.model.CatalogRow
++import com.nuvio.tv.domain.model.MetaPreview
++import com.nuvio.tv.ui.components.CollectionRowSection
++import com.nuvio.tv.ui.components.ContinueWatchingSection
++
++@Composable
++fun MiraTvHomeContent(
++    uiState: HomeUiState,
++    onNavigateToDetail: (String, String, String) -> Unit,
++    onContinueWatchingClick: (ContinueWatchingItem) -> Unit,
++    onContinueWatchingStartFromBeginning: (ContinueWatchingItem) -> Unit = {},
++    onContinueWatchingPlayManually: (ContinueWatchingItem) -> Unit = {},
++    showContinueWatchingManualPlayOption: Boolean = false,
++    onNavigateToCatalogSeeAll: (String, String, String) -> Unit = { _, _, _ -> },
++    onNavigateToFolderDetail: (String, String) -> Unit = { _, _ -> },
++    onRemoveContinueWatching: (String, Int?, Int?, Boolean) -> Unit = { _, _, _, _ -> },
++    isCatalogItemWatched: (MetaPreview) -> Boolean = { false },
++    onCatalogItemLongPress: (MetaPreview, String) -> Unit = { _, _ -> },
++    onSearchClick: () -> Unit = {},
++    onSavedClick: () -> Unit = {},
++    onSettingsClick: () -> Unit = {},
++    scrollToTopTrigger: Int = 0
++) {
++    val listState = rememberLazyListState()
++
++    LaunchedEffect(scrollToTopTrigger) {
++        if (scrollToTopTrigger > 0) {
++            listState.animateScrollToItem(0)
++        }
++    }
++
++    LazyColumn(
++        state = listState,
++        modifier = Modifier
++            .fillMaxSize()
++            .background(Color.Black),
++        contentPadding = PaddingValues(bottom = 48.dp),
++        verticalArrangement = Arrangement.spacedBy(16.dp)
++    ) {
++        // 1. Mira Top Header (Brand + Navigation Actions)
++        item(key = "mira_header") {
++            MiraTvHomeHeader(
++                onSearchClick = onSearchClick,
++                onSavedClick = onSavedClick,
++                onSettingsClick = onSettingsClick
++            )
++        }
++
++        // 2. Hero Section (Backdrop Banner + Metadata + Action Buttons)
++        if (uiState.heroSectionEnabled && uiState.heroItems.isNotEmpty()) {
++            item(key = "mira_hero") {
++                MiraTvHeroSection(
++                    items = uiState.heroItems,
++                    onPlayClick = { item ->
++                        onNavigateToDetail(item.id, item.apiType, "")
++                    },
++                    onDetailClick = { item ->
++                        onNavigateToDetail(item.id, item.apiType, "")
++                    }
++                )
++            }
++        }
++
++        // 3. Genre Pills Section (1:1 with iPhone IPA)
++        item(key = "mira_genres") {
++            TvHomeGenreSection()
++        }
++
++        // 4. IMDb Top 250 Section (1:1 with iPhone IPA)
++        item(key = "mira_charts") {
++            TvMiraChartSection()
++        }
++
++        // 5. Continue Watching
++        if (uiState.continueWatchingEnabled && uiState.continueWatchingItems.isNotEmpty()) {
++            item(key = "mira_continue_watching") {
++                Column(
++                    modifier = Modifier
++                        .fillMaxWidth()
++                        .padding(vertical = 6.dp),
++                    verticalArrangement = Arrangement.spacedBy(10.dp)
++                ) {
++                    Text(
++                        text = "Continue Watching",
++                        style = MaterialTheme.typography.titleMedium,
++                        fontWeight = FontWeight.SemiBold,
++                        color = Color.White,
++                        modifier = Modifier.padding(horizontal = 36.dp)
++                    )
++                    ContinueWatchingSection(
++                        items = uiState.continueWatchingItems,
++                        onItemClick = onContinueWatchingClick,
++                        onStartFromBeginning = onContinueWatchingStartFromBeginning,
++                        onPlayManually = onContinueWatchingPlayManually,
++                        showManualPlayOption = showContinueWatchingManualPlayOption,
++                        onRemoveItem = { item ->
++                            val contentId = when (item) {
++                                is ContinueWatchingItem.InProgress -> item.progress.contentId
++                                is ContinueWatchingItem.NextUp -> item.info.contentId
++                            }
++                            val season = when (item) {
++                                is ContinueWatchingItem.InProgress -> item.progress.season
++                                is ContinueWatchingItem.NextUp -> item.info.seedSeason
++                            }
++                            val episode = when (item) {
++                                is ContinueWatchingItem.InProgress -> item.progress.episode
++                                is ContinueWatchingItem.NextUp -> item.info.seedEpisode
++                            }
++                            onRemoveContinueWatching(contentId, season, episode, item is ContinueWatchingItem.NextUp)
++                        },
++                        onDetailsClick = { item ->
++                            val contentId = when (item) {
++                                is ContinueWatchingItem.InProgress -> item.progress.contentId
++                                is ContinueWatchingItem.NextUp -> item.info.contentId
++                            }
++                            val contentType = when (item) {
++                                is ContinueWatchingItem.InProgress -> item.progress.contentType
++                                is ContinueWatchingItem.NextUp -> item.info.contentType
++                            }
++                            onNavigateToDetail(contentId, contentType, "")
++                        }
++                    )
++                }
++            }
++        }
++
++        // 6. Catalogs & Collections
++        val rows = uiState.homeRows.ifEmpty {
++            uiState.catalogRows.map { HomeRow.Catalog(it) }
++        }
++
++        items(
++            items = rows,
++            key = { homeRow ->
++                when (homeRow) {
++                    is HomeRow.Catalog -> "cat_${homeRow.row.addonId}_${homeRow.row.catalogId}_${homeRow.row.apiType}"
++                    is HomeRow.CollectionRow -> "col_${homeRow.collection.id}"
++                    is HomeRow.PlaceholderCatalog -> "ph_${homeRow.catalogKey}"
++                }
++            }
++        ) { homeRow ->
++            when (homeRow) {
++                is HomeRow.Catalog -> {
++                    val catalog = homeRow.row
++                    if (catalog.items.isNotEmpty()) {
++                        Column(
++                            modifier = Modifier
++                                .fillMaxWidth()
++                                .padding(vertical = 6.dp),
++                            verticalArrangement = Arrangement.spacedBy(10.dp)
++                        ) {
++                            Text(
++                                text = catalog.catalogName.ifBlank { catalog.addonName },
++                                style = MaterialTheme.typography.titleMedium,
++                                fontWeight = FontWeight.SemiBold,
++                                color = Color.White,
++                                modifier = Modifier.padding(horizontal = 36.dp)
++                            )
++                            LazyRow(
++                                horizontalArrangement = Arrangement.spacedBy(14.dp),
++                                contentPadding = PaddingValues(horizontal = 36.dp)
++                            ) {
++                                items(catalog.items, key = { it.id }) { item ->
++                                    MiraTvPosterCard(
++                                        item = item,
++                                        onClick = {
++                                            onNavigateToDetail(item.id, item.apiType, catalog.addonBaseUrl)
++                                        },
++                                        onLongPress = {
++                                            onCatalogItemLongPress(item, catalog.addonBaseUrl)
++                                        },
++                                        isWatched = isCatalogItemWatched(item)
++                                    )
++                                }
++                            }
++                        }
++                    }
++                }
++                is HomeRow.CollectionRow -> {
++                    if (homeRow.collection.folders.isNotEmpty()) {
++                        CollectionRowSection(
++                            collection = homeRow.collection,
++                            onFolderClick = onNavigateToFolderDetail
++                        )
++                    }
++                }
++                is HomeRow.PlaceholderCatalog -> {
++                    // Shimmer or skip until loaded
++                }
++            }
++        }
++    }
++}
+diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHomeHeader.kt b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHomeHeader.kt
+new file mode 100644
+--- /dev/null
++++ b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHomeHeader.kt
+@@ -0,0 +1,169 @@
++@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
++package com.nuvio.tv.ui.screens.home
++
++import androidx.compose.foundation.BorderStroke
++import androidx.compose.foundation.Image
++import androidx.compose.foundation.layout.*
++import androidx.compose.foundation.shape.RoundedCornerShape
++import androidx.compose.material.icons.Icons
++import androidx.compose.material.icons.filled.Search
++import androidx.compose.runtime.Composable
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.draw.clip
++import androidx.compose.ui.graphics.Color
++import androidx.compose.ui.res.painterResource
++import androidx.compose.ui.text.font.FontWeight
++import androidx.compose.ui.unit.dp
++import androidx.compose.ui.unit.sp
++import androidx.tv.material3.*
++import com.nuvio.tv.R
++
++@Composable
++fun MiraTvHomeHeader(
++    onSearchClick: () -> Unit,
++    onSavedClick: () -> Unit,
++    onSettingsClick: () -> Unit,
++    modifier: Modifier = Modifier
++) {
++    Row(
++        modifier = modifier
++            .fillMaxWidth()
++            .padding(horizontal = 36.dp, vertical = 18.dp),
++        verticalAlignment = Alignment.CenterVertically,
++        horizontalArrangement = Arrangement.SpaceBetween
++    ) {
++        // Mira Brand (App icon + Wordmark)
++        Row(
++            verticalAlignment = Alignment.CenterVertically,
++            horizontalArrangement = Arrangement.spacedBy(12.dp)
++        ) {
++            Image(
++                painter = painterResource(R.drawable.app_logo_mark),
++                contentDescription = "Mira",
++                modifier = Modifier
++                    .size(36.dp)
++                    .clip(RoundedCornerShape(10.dp))
++            )
++            Text(
++                text = "Mira",
++                color = Color.White,
++                fontSize = 28.sp,
++                fontWeight = FontWeight.SemiBold,
++                letterSpacing = (-1).sp
++            )
++        }
++
++        // Top Navigation Actions
++        Row(
++            verticalAlignment = Alignment.CenterVertically,
++            horizontalArrangement = Arrangement.spacedBy(10.dp)
++        ) {
++            // Search
++            Card(
++                onClick = onSearchClick,
++                shape = CardDefaults.shape(RoundedCornerShape(50)),
++                colors = CardDefaults.colors(
++                    containerColor = Color(0xFF1C1C1E),
++                    focusedContainerColor = Color.White.copy(alpha = 0.22f),
++                    contentColor = Color.White,
++                    focusedContentColor = Color.White
++                ),
++                scale = CardDefaults.scale(focusedScale = 1.06f),
++                border = CardDefaults.border(
++                    focusedBorder = Border(
++                        BorderStroke(2.dp, Color.White),
++                        shape = RoundedCornerShape(50)
++                    )
++                )
++            ) {
++                Row(
++                    modifier = Modifier
++                        .height(40.dp)
++                        .padding(horizontal = 16.dp),
++                    verticalAlignment = Alignment.CenterVertically,
++                    horizontalArrangement = Arrangement.spacedBy(8.dp)
++                ) {
++                    Icon(
++                        imageVector = Icons.Default.Search,
++                        contentDescription = "Search",
++                        modifier = Modifier.size(18.dp),
++                        tint = Color.White
++                    )
++                    Text(
++                        text = "Search",
++                        fontSize = 14.sp,
++                        fontWeight = FontWeight.Medium
++                    )
++                }
++            }
++
++            // Saved (Library)
++            Card(
++                onClick = onSavedClick,
++                shape = CardDefaults.shape(RoundedCornerShape(50)),
++                colors = CardDefaults.colors(
++                    containerColor = Color(0xFF1C1C1E),
++                    focusedContainerColor = Color.White.copy(alpha = 0.22f),
++                    contentColor = Color.White,
++                    focusedContentColor = Color.White
++                ),
++                scale = CardDefaults.scale(focusedScale = 1.06f),
++                border = CardDefaults.border(
++                    focusedBorder = Border(
++                        BorderStroke(2.dp, Color.White),
++                        shape = RoundedCornerShape(50)
++                    )
++                )
++            ) {
++                Row(
++                    modifier = Modifier
++                        .height(40.dp)
++                        .padding(horizontal = 16.dp),
++                    verticalAlignment = Alignment.CenterVertically,
++                    horizontalArrangement = Arrangement.spacedBy(8.dp)
++                ) {
++                    Text(
++                        text = "Saved",
++                        fontSize = 14.sp,
++                        fontWeight = FontWeight.Medium
++                    )
++                }
++            }
++
++            // Settings
++            Card(
++                onClick = onSettingsClick,
++                shape = CardDefaults.shape(RoundedCornerShape(50)),
++                colors = CardDefaults.colors(
++                    containerColor = Color(0xFF1C1C1E),
++                    focusedContainerColor = Color.White.copy(alpha = 0.22f),
++                    contentColor = Color.White,
++                    focusedContentColor = Color.White
++                ),
++                scale = CardDefaults.scale(focusedScale = 1.06f),
++                border = CardDefaults.border(
++                    focusedBorder = Border(
++                        BorderStroke(2.dp, Color.White),
++                        shape = RoundedCornerShape(50)
++                    )
++                )
++            ) {
++                Row(
++                    modifier = Modifier
++                        .height(40.dp)
++                        .padding(horizontal = 16.dp),
++                    verticalAlignment = Alignment.CenterVertically,
++                    horizontalArrangement = Arrangement.spacedBy(8.dp)
++                ) {
++                    Text(
++                        text = "Settings",
++                        fontSize = 14.sp,
++                        fontWeight = FontWeight.Medium
++                    )
++                }
++            }
++        }
++    }
++}
++
+diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvPosterCard.kt b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvPosterCard.kt
+new file mode 100644
+--- /dev/null
++++ b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvPosterCard.kt
+@@ -0,0 +1,145 @@
++@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
++package com.nuvio.tv.ui.screens.home
++
++import android.view.KeyEvent as AndroidKeyEvent
++import androidx.compose.foundation.BorderStroke
++import androidx.compose.foundation.background
++import androidx.compose.foundation.layout.*
++import androidx.compose.foundation.shape.RoundedCornerShape
++import androidx.compose.runtime.*
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.draw.clip
++import androidx.compose.ui.graphics.Color
++import androidx.compose.ui.input.key.onPreviewKeyEvent
++import androidx.compose.ui.layout.ContentScale
++import androidx.compose.ui.platform.LocalContext
++import androidx.compose.ui.text.font.FontWeight
++import androidx.compose.ui.text.style.TextOverflow
++import androidx.compose.ui.unit.Dp
++import androidx.compose.ui.unit.dp
++import androidx.compose.ui.unit.sp
++import androidx.tv.material3.*
++import coil3.compose.AsyncImage
++import coil3.request.CachePolicy
++import coil3.request.ImageRequest
++import coil3.request.crossfade
++import com.nuvio.tv.domain.model.MetaPreview
++import com.nuvio.tv.ui.components.WatchedMarker
++
++@Composable
++fun MiraTvPosterCard(
++    item: MetaPreview,
++    onClick: () -> Unit,
++    modifier: Modifier = Modifier,
++    isWatched: Boolean = false,
++    cardWidth: Dp = 126.dp,
++    cardHeight: Dp = 189.dp,
++    onLongPress: (() -> Unit)? = null
++) {
++    val cardShape = remember { RoundedCornerShape(12.dp) }
++    val context = LocalContext.current
++    var isFocused by remember { mutableStateOf(false) }
++
++    val imageUrl = item.poster ?: item.background ?: item.rawPosterUrl
++
++    val imageRequest = remember<ImageRequest>(imageUrl) {
++        ImageRequest.Builder(context)
++            .data(imageUrl)
++            .size(252, 378) // Fast fixed 2x downsampling for 1080p density
++            .memoryCachePolicy(CachePolicy.ENABLED)
++            .diskCachePolicy(CachePolicy.ENABLED)
++            .crossfade(false)
++            .build()
++    }
++
++    Column(
++        modifier = modifier.width(cardWidth)
++    ) {
++        Card(
++            onClick = onClick,
++            modifier = Modifier
++                .width(cardWidth)
++                .height(cardHeight)
++                .onPreviewKeyEvent { event ->
++                    val native = event.nativeKeyEvent
++                    if (native.action == AndroidKeyEvent.ACTION_DOWN &&
++                        (native.keyCode == AndroidKeyEvent.KEYCODE_MENU || native.isLongPress) &&
++                        onLongPress != null
++                    ) {
++                        onLongPress()
++                        true
++                    } else false
++                },
++            shape = CardDefaults.shape(shape = cardShape),
++            colors = CardDefaults.colors(
++                containerColor = Color(0xFF161618),
++                focusedContainerColor = Color(0xFF222226)
++            ),
++            scale = CardDefaults.scale(focusedScale = 1.05f),
++            border = CardDefaults.border(
++                focusedBorder = Border(
++                    BorderStroke(2.dp, Color.White),
++                    shape = cardShape
++                )
++            )
++        ) {
++            Box(
++                modifier = Modifier
++                    .fillMaxSize()
++                    .clip(cardShape)
++            ) {
++                if (!imageUrl.isNullOrBlank()) {
++                    AsyncImage(
++                        model = imageRequest,
++                        contentDescription = item.name,
++                        modifier = Modifier.fillMaxSize(),
++                        contentScale = ContentScale.Crop
++                    )
++                } else {
++                    Box(
++                        modifier = Modifier
++                            .fillMaxSize()
++                            .background(Color(0xFF202024)),
++                        contentAlignment = Alignment.Center
++                    ) {
++                        Text(
++                            text = item.name.take(2).uppercase(),
++                            color = Color.White.copy(alpha = 0.5f),
++                            fontWeight = FontWeight.Bold,
++                            fontSize = 20.sp
++                        )
++                    }
++                }
++
++                if (isWatched) {
++                    WatchedMarker(
++                        modifier = Modifier
++                            .align(Alignment.TopEnd)
++                            .padding(end = 6.dp, top = 6.dp)
++                    )
++                }
++            }
++        }
++
++        // Title & metadata below card
++        Spacer(modifier = Modifier.height(6.dp))
++        Text(
++            text = item.name,
++            color = if (isFocused) Color.White else Color(0xFFE8E9EC),
++            fontSize = 13.sp,
++            fontWeight = FontWeight.Medium,
++            maxLines = 1,
++            overflow = TextOverflow.Ellipsis
++        )
++        item.releaseInfo?.takeIf { it.isNotBlank() }?.let { release ->
++            Text(
++                text = release,
++                color = Color(0xFF8E8E93),
++                fontSize = 11.sp,
++                maxLines = 1,
++                overflow = TextOverflow.Ellipsis
++            )
++        }
++    }
++}
+diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerAutomaticSubtitleSync.kt b/app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerAutomaticSubtitleSync.kt
+--- a/app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerAutomaticSubtitleSync.kt
++++ b/app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerAutomaticSubtitleSync.kt
+@@ -167,11 +167,21 @@
+                 selectedSubtitleBodyDeferred = selectedBodyDeferred,
+                 preferredLanguage = selectedSubtitle.lang,
+                 alternativeSubtitles = if (candidateScope == AutoSyncCandidateScope.STARTUP_SEARCH) {
+-                    candidatesAtStart.map { subtitle ->
++                    val streamContextText = listOfNotNull(streamName, currentStreamDescription, currentFilename, currentStreamUrl).joinToString(" ")
++                    val rankedCandidatesAtStart = com.nuvio.tv.core.player.StreamAutoPlaySelector.rankSubtitlesForStreamText(
++                        subtitles = candidatesAtStart,
++                        streamText = streamContextText,
++                        preferredLanguage = selectedSubtitle.lang
++                    )
++                    rankedCandidatesAtStart.map { subtitle ->
+                         AutoSyncSubtitleCandidate(
+                             url = subtitle.url,
+                             language = subtitle.lang,
+-                            name = subtitle.addonName.ifBlank { subtitle.id },
++                            name = if (subtitle.id.isNotBlank() && subtitle.addonName.isNotBlank() && subtitle.id != subtitle.addonName) {
++                                "${subtitle.addonName} ${subtitle.id}"
++                            } else {
++                                subtitle.id.ifBlank { subtitle.addonName }
++                            },
+                         )
+                     }
+                 } else {
+@@ -181,11 +191,21 @@
+                     candidateScope == AutoSyncCandidateScope.STARTUP_SEARCH
+                 ) {
+                     {
+-                        _uiState.value.addonSubtitles.map { subtitle ->
++                        val streamContextText = listOfNotNull(streamName, currentStreamDescription, currentFilename, currentStreamUrl).joinToString(" ")
++                        val rankedAddons = com.nuvio.tv.core.player.StreamAutoPlaySelector.rankSubtitlesForStreamText(
++                            subtitles = _uiState.value.addonSubtitles,
++                            streamText = streamContextText,
++                            preferredLanguage = selectedSubtitle.lang
++                        )
++                        rankedAddons.map { subtitle ->
+                             AutoSyncSubtitleCandidate(
+                                 url = subtitle.url,
+                                 language = subtitle.lang,
+-                                name = subtitle.addonName.ifBlank { subtitle.id },
++                                name = if (subtitle.id.isNotBlank() && subtitle.addonName.isNotBlank() && subtitle.id != subtitle.addonName) {
++                                    "${subtitle.addonName} ${subtitle.id}"
++                                } else {
++                                    subtitle.id.ifBlank { subtitle.addonName }
++                                },
+                             )
+                         }
+                     }
+diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerTracks.kt b/app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerTracks.kt
+--- a/app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerTracks.kt
++++ b/app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerTracks.kt
+@@ -1690,7 +1690,13 @@
+         // If internal match is secondary and a primary addon match exists, prefer the addon.
+         if (matchedTargetPosition > 0 && addonSubtitlesLoaded) {
+             val primaryTarget = targets.first()
+-            val primaryAddonMatch = state.addonSubtitles.firstOrNull { subtitle ->
++            val streamContextText = listOfNotNull(streamName, currentStreamDescription, currentFilename, currentStreamUrl).joinToString(" ")
++            val rankedAddons = com.nuvio.tv.core.player.StreamAutoPlaySelector.rankSubtitlesForStreamText(
++                subtitles = state.addonSubtitles,
++                streamText = streamContextText,
++                preferredLanguage = primaryTarget,
++            )
++            val primaryAddonMatch = rankedAddons.firstOrNull { subtitle ->
+                 PlayerSubtitleUtils.matchesLanguageCode(subtitle.lang, primaryTarget)
+             }
+             if (primaryAddonMatch != null) {
+@@ -1790,10 +1796,17 @@
+         return
+     }
+ 
++    val streamContextText = listOfNotNull(streamName, currentStreamDescription, currentFilename, currentStreamUrl).joinToString(" ")
++    val rankedAddons = com.nuvio.tv.core.player.StreamAutoPlaySelector.rankSubtitlesForStreamText(
++        subtitles = state.addonSubtitles,
++        streamText = streamContextText,
++        preferredLanguage = targets.firstOrNull(),
++    )
++
+     val addonMatch = run {
+         // Try each target in priority order so primary language is preferred over secondary.
+         for (target in targets) {
+-            val match = state.addonSubtitles.firstOrNull { subtitle ->
++            val match = rankedAddons.firstOrNull { subtitle ->
+                 (!useForcedSubtitles || !addonSubtitleIsForced(subtitle)) &&
+                     PlayerSubtitleUtils.matchesLanguageCode(subtitle.lang, target)
+             }
+diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncSubtitleCueParser.kt b/app/src/main/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncSubtitleCueParser.kt
+--- a/app/src/main/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncSubtitleCueParser.kt
++++ b/app/src/main/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncSubtitleCueParser.kt
+@@ -399,6 +399,7 @@
+ 
+     private fun normalizeCueText(text: String): String {
+         return text
++            .replace(Regex("""[\u200E\u200F\u202A-\u202E\u2066-\u2069\uFEFF]"""), "")
+             .replace(Regex("""<(?:\d+:)?\d{1,2}:\d{2}(?:[.,]\d+)?>"""), "")
+             .replace(Regex("""</?[a-zA-Z0-9._-]+(?: [^>]*)?>"""), "")
+             .replace("&nbsp;", " ")
+diff --git a/app/src/test/java/com/nuvio/tv/core/player/StreamAutoPlaySelectorTest.kt b/app/src/test/java/com/nuvio/tv/core/player/StreamAutoPlaySelectorTest.kt
+--- a/app/src/test/java/com/nuvio/tv/core/player/StreamAutoPlaySelectorTest.kt
++++ b/app/src/test/java/com/nuvio/tv/core/player/StreamAutoPlaySelectorTest.kt
+@@ -10,6 +10,7 @@
+ import com.nuvio.tv.domain.model.StreamDebridCacheStatus
+ import org.junit.Assert.assertEquals
+ import org.junit.Assert.assertNull
++import org.junit.Assert.assertTrue
+ import org.junit.Test
+ 
+ class StreamAutoPlaySelectorTest {
+@@ -335,6 +336,223 @@
+         )
+ 
+         assertEquals(listOf(regular, cachedDebrid), ordered)
++    }
++
++    @Test
++    fun `extractReleaseTokens identifies groups sources codecs and resolutions`() {
++        val tokens = StreamAutoPlaySelector.extractReleaseTokens("Inception.2010.1080p.BluRay.x264-SPARKS")
++        assertEquals(setOf("1080p", "bluray", "x264", "sparks"), tokens)
++
++        val tokens2 = StreamAutoPlaySelector.extractReleaseTokens("Dune.Part.Two.2024.2160p.UHD.WEBRip.x265-[YTS.MX]")
++        assertEquals(setOf("2160p", "uhd", "webrip", "x265", "yts"), tokens2)
++    }
++
++    @Test
++    fun `extractFps identifies standard rates and PAL NTSC tags`() {
++        assertEquals(23.976, StreamAutoPlaySelector.extractFps("Movie 23.976 fps")!!, 0.001)
++        assertEquals(23.976, StreamAutoPlaySelector.extractFps("Movie 23.98fps")!!, 0.001)
++        assertEquals(25.0, StreamAutoPlaySelector.extractFps("Show S01E01 25.0 fps")!!, 0.001)
++        assertEquals(25.0, StreamAutoPlaySelector.extractFps("Show S01E01 PAL")!!, 0.001)
++        assertEquals(23.976, StreamAutoPlaySelector.extractFps("Show S01E01 NTSC")!!, 0.001)
++        assertEquals(29.97, StreamAutoPlaySelector.extractFps("Broadcast 29.97fps")!!, 0.001)
++        assertNull(StreamAutoPlaySelector.extractFps("No fps mentioned"))
++    }
++
++    @Test
++    fun `scoreSubtitleForStream scores matching release group and FPS higher`() {
++        val stream = Stream(
++            name = "SPARKS",
++            title = "Inception.2010.1080p.BluRay.x264-SPARKS",
++            description = "23.976fps",
++            url = "https://example.com/video.mkv",
++            ytId = null,
++            infoHash = null,
++            fileIdx = null,
++            externalUrl = null,
++            behaviorHints = null,
++            addonName = "Torrentio",
++            addonLogo = null
++        )
++
++        val matchSameGroup = StreamAutoPlaySelector.scoreSubtitleForStream(
++            stream = stream,
++            subtitleName = "OpenSubtitles",
++            subtitleId = "Inception.2010.1080p.BluRay.x264-SPARKS.srt",
++            subtitleUrl = "https://example.com/sub1.srt"
++        )
++
++        val matchDifferentGroup = StreamAutoPlaySelector.scoreSubtitleForStream(
++            stream = stream,
++            subtitleName = "OpenSubtitles",
++            subtitleId = "Inception.2010.720p.HDTV.x264-YIFY.srt 25fps",
++            subtitleUrl = "https://example.com/sub2.srt"
++        )
++
++        org.junit.Assert.assertTrue("Expected matchSameGroup.score (${matchSameGroup.score}) > matchDifferentGroup.score (${matchDifferentGroup.score})",
++            matchSameGroup.score > matchDifferentGroup.score)
++        org.junit.Assert.assertTrue(matchSameGroup.matchedTokens.contains("sparks"))
++        org.junit.Assert.assertTrue(matchSameGroup.matchedTokens.contains("bluray"))
++    }
++
++    @Test
++    fun `rankSubtitlesForStream prioritizes matching release and preferred language for Arabic and English`() {
++        val stream = Stream(
++            name = "SPARKS",
++            title = "Oppenheimer.2023.1080p.BluRay.x264-SPARKS",
++            description = "23.976 fps",
++            url = "https://example.com/oppenheimer.mkv",
++            ytId = null,
++            infoHash = null,
++            fileIdx = null,
++            externalUrl = null,
++            behaviorHints = null,
++            addonName = "Torrentio",
++            addonLogo = null
++        )
++
++        val arMatchingSparks = com.nuvio.tv.domain.model.Subtitle(
++            id = "Oppenheimer.2023.1080p.BluRay.x264-SPARKS.ar.srt",
++            url = "https://example.com/ar_sparks.srt",
++            lang = "ar",
++            addonName = "OpenSubtitles",
++            addonLogo = null
++        )
++        val arGeneric = com.nuvio.tv.domain.model.Subtitle(
++            id = "Oppenheimer.2023.720p.HDTV.x264-UNKNOWN.ar.srt",
++            url = "https://example.com/ar_generic.srt",
++            lang = "ar",
++            addonName = "Subscene",
++            addonLogo = null
++        )
++        val enMatchingSparks = com.nuvio.tv.domain.model.Subtitle(
++            id = "Oppenheimer.2023.1080p.BluRay.x264-SPARKS.en.srt",
++            url = "https://example.com/en_sparks.srt",
++            lang = "en",
++            addonName = "OpenSubtitles",
++            addonLogo = null
++        )
++        val enGeneric = com.nuvio.tv.domain.model.Subtitle(
++            id = "Oppenheimer.2023.WEBRip.x264-YTS.en.srt",
++            url = "https://example.com/en_generic.srt",
++            lang = "en",
++            addonName = "Subscene",
++            addonLogo = null
++        )
++
++        val allSubs = listOf(arGeneric, enGeneric, arMatchingSparks, enMatchingSparks)
++
++        // Preferred Arabic: arMatchingSparks must be first
++        val rankedArabic = StreamAutoPlaySelector.rankSubtitlesForStream(allSubs, stream, preferredLanguage = "ar")
++        assertEquals(arMatchingSparks, rankedArabic.first())
++
++        // Preferred English: enMatchingSparks must be first
++        val rankedEnglish = StreamAutoPlaySelector.rankSubtitlesForStream(allSubs, stream, preferredLanguage = "en")
++        assertEquals(enMatchingSparks, rankedEnglish.first())
++    }
++
++    @Test
++    fun `equivalentLanguageCodesDoNotOverrideReleaseMatchReviewSample`() {
++        // Exact reviewer test case: en vs eng aliases
++        val stream = Stream(
++            name = "SPARKS",
++            title = "Movie.1080p.BluRay.SPARKS",
++            description = null,
++            url = "https://example.com/movie.mkv",
++            ytId = null,
++            infoHash = null,
++            fileIdx = null,
++            externalUrl = null,
++            behaviorHints = null,
++            addonName = "Torrentio",
++            addonLogo = null
++        )
++
++        val candidateA = com.nuvio.tv.domain.model.Subtitle(
++            id = "Movie.HDTV.720p.srt",
++            url = "https://example.com/a.srt",
++            lang = "en",
++            addonName = "AddonA",
++            addonLogo = null
++        )
++        val candidateB = com.nuvio.tv.domain.model.Subtitle(
++            id = "Movie.1080p.BluRay.SPARKS.srt",
++            url = "https://example.com/b.srt",
++            lang = "eng",
++            addonName = "AddonB",
++            addonLogo = null
++        )
++
++        // When preferred language is "en", candidateB (release match with "eng") must rank first
++        val rankedWithEn = StreamAutoPlaySelector.rankSubtitlesForStream(listOf(candidateA, candidateB), stream, preferredLanguage = "en")
++        assertEquals(candidateB, rankedWithEn.first())
++
++        // When preferred language is "eng", candidateB must also rank first
++        val rankedWithEng = StreamAutoPlaySelector.rankSubtitlesForStream(listOf(candidateA, candidateB), stream, preferredLanguage = "eng")
++        assertEquals(candidateB, rankedWithEng.first())
++    }
++
++    @Test
++    fun `arabicLanguageCodesAliasMatchAndRankReleaseAccurately`() {
++        val stream = Stream(
++            name = "SPARKS",
++            title = "Movie.1080p.BluRay.SPARKS",
++            description = null,
++            url = "https://example.com/movie.mkv",
++            ytId = null,
++            infoHash = null,
++            fileIdx = null,
++            externalUrl = null,
++            behaviorHints = null,
++            addonName = "Torrentio",
++            addonLogo = null
++        )
++
++        val candidateA = com.nuvio.tv.domain.model.Subtitle(
++            id = "Movie.HDTV.720p.srt",
++            url = "https://example.com/a.srt",
++            lang = "ar",
++            addonName = "AddonA",
++            addonLogo = null
++        )
++        val candidateB = com.nuvio.tv.domain.model.Subtitle(
++            id = "Movie.1080p.BluRay.SPARKS.srt",
++            url = "https://example.com/b.srt",
++            lang = "ara",
++            addonName = "AddonB",
++            addonLogo = null
++        )
++        val candidateC = com.nuvio.tv.domain.model.Subtitle(
++            id = "Movie.1080p.BluRay.SPARKS.es.srt",
++            url = "https://example.com/c.srt",
++            lang = "es",
++            addonName = "AddonC",
++            addonLogo = null
++        )
++
++        // With preferred "ar", candidateB (lang "ara" + release match) ranks first, candidateA ("ar") ranks second, candidateC ("es") ranks last
++        val ranked = StreamAutoPlaySelector.rankSubtitlesForStream(listOf(candidateA, candidateB, candidateC), stream, preferredLanguage = "ar")
++        assertEquals(candidateB, ranked[0])
++        assertEquals(candidateA, ranked[1])
++        assertEquals(candidateC, ranked[2])
++    }
++
++    @Test
++    fun `canonicalizeCompoundReleaseTagsAndCodecSynonyms`() {
++        val tokens1 = StreamAutoPlaySelector.extractReleaseTokens("Movie.1080p.WEB-DL.x265")
++        assertTrue("Tokens must contain webdl: $tokens1", tokens1.contains("webdl"))
++        assertTrue("Tokens must contain 1080p: $tokens1", tokens1.contains("1080p"))
++        assertTrue("Tokens must contain x265: $tokens1", tokens1.contains("x265"))
++
++        val tokens2 = StreamAutoPlaySelector.extractReleaseTokens("Movie.1080p.WEB.DL.H.264")
++        assertTrue("Tokens must contain webdl: $tokens2", tokens2.contains("webdl"))
++        assertTrue("Tokens must contain h264: $tokens2", tokens2.contains("h264"))
++
++        val match = StreamAutoPlaySelector.scoreSubtitleForStreamText(
++            streamText = "Movie.1080p.WEB-DL.x265",
++            subtitleName = "Movie.1080p.WEBDL.HEVC.srt"
++        )
++        // 1080p (5) + webdl (20) + codec synonym hevc/x265 (10) = 35.0
++        assertTrue("Expected score >= 35.0 but was ${match.score}", match.score >= 35.0)
+     }
+ 
+     private fun stream(
+diff --git a/app/src/test/java/com/nuvio/tv/core/player/SubtitleCharsetDetectorTest.kt b/app/src/test/java/com/nuvio/tv/core/player/SubtitleCharsetDetectorTest.kt
+--- a/app/src/test/java/com/nuvio/tv/core/player/SubtitleCharsetDetectorTest.kt
++++ b/app/src/test/java/com/nuvio/tv/core/player/SubtitleCharsetDetectorTest.kt
+@@ -76,6 +76,81 @@
+ 
+         val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = "ara")
+         assertEquals(arabicText, decoded)
++    }
++
++    @Test
++    fun decodesArabicWindows1256WithoutLanguageHintAutoDetectionWithAl() {
++        val arabicText = "1\n00:00:01,000 --> 00:00:04,000\nالسلام عليكم ورحمة الله وبركاته، أهلا وسهلا بكم في المدينة"
++        val win1256Charset = Charset.forName("windows-1256")
++        val rawBytes = arabicText.toByteArray(win1256Charset)
++
++        val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
++        assertEquals(arabicText, decoded)
++    }
++
++    @Test
++    fun decodesArabicWindows1256WithoutLanguageHintAutoDetectionWithoutAl() {
++        val arabicText = "1\n00:00:01,000 --> 00:00:04,000\nمرحبا بكم يا رفاق كيف حالكم اليوم"
++        val win1256Charset = Charset.forName("windows-1256")
++        val rawBytes = arabicText.toByteArray(win1256Charset)
++
++        val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
++        assertEquals(arabicText, decoded)
++    }
++
++    @Test
++    fun decodesArabicWindows1256WithAsciiHeaderAndTimestamps() {
++        val srtText = """
++            1
++            00:00:01,000 --> 00:00:04,000
++            Sync by SubScene Team
++
++            2
++            00:00:05,000 --> 00:00:08,000
++            مرحبا بكم في هذا العرض الخاص
++        """.trimIndent()
++        val win1256Charset = Charset.forName("windows-1256")
++        val rawBytes = srtText.toByteArray(win1256Charset)
++
++        val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
++        assertEquals(srtText, decoded)
++    }
++
++    @Test
++    fun decodesArabicUtf8WithAndWithoutBom() {
++        val arabicText = "1\n00:00:01,000 --> 00:00:04,000\nمرحبا بالعالم! ترجمة عربية دقيقة."
++        val bom = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
++        val withBom = bom + arabicText.toByteArray(Charsets.UTF_8)
++        val withoutBom = arabicText.toByteArray(Charsets.UTF_8)
++
++        assertEquals(arabicText, SubtitleCharsetDetector.decode(withBom, languageHint = "ara"))
++        assertEquals(arabicText, SubtitleCharsetDetector.decode(withoutBom, languageHint = null))
++    }
++
++    @Test
++    fun decodesDoubleEncodedArabicUtf8WithLanguageHint() {
++        val originalArabic = "1\n00:00:01,000 --> 00:00:04,000\nمرحبا بكم في هذا المكان الرائع"
++        val win1256Charset = Charset.forName("windows-1256")
++        val win1252Charset = Charset.forName("windows-1252")
++        val win1256Bytes = originalArabic.toByteArray(win1256Charset)
++        val mojibakeString = String(win1256Bytes, win1252Charset)
++        val mojibakeUtf8Bytes = mojibakeString.toByteArray(Charsets.UTF_8)
++
++        val decoded = SubtitleCharsetDetector.decode(mojibakeUtf8Bytes, languageHint = "ara")
++        assertEquals(originalArabic, decoded)
++    }
++
++    @Test
++    fun decodesDoubleEncodedArabicUtf8WithoutLanguageHint() {
++        val originalArabic = "1\n00:00:01,000 --> 00:00:04,000\nمرحبا بكم في هذا المكان الرائع، شكرا جزيلا"
++        val win1256Charset = Charset.forName("windows-1256")
++        val win1252Charset = Charset.forName("windows-1252")
++        val win1256Bytes = originalArabic.toByteArray(win1256Charset)
++        val mojibakeString = String(win1256Bytes, win1252Charset)
++        val mojibakeUtf8Bytes = mojibakeString.toByteArray(Charsets.UTF_8)
++
++        val decoded = SubtitleCharsetDetector.decode(mojibakeUtf8Bytes, languageHint = null)
++        assertEquals(originalArabic, decoded)
+     }
+ 
+     @Test
+@@ -350,4 +425,55 @@
+         val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
+         assertEquals(elText, decoded)
+     }
++
++    @Test
++    fun decodesRussianWindows1251WithoutLanguageHintReviewSample() {
++        // Review regression sample: mixed uppercase/lowercase with common Russian words
++        val ruText = "ПРИВЕТ! где он? он тут"
++        val win1251Charset = Charset.forName("windows-1251")
++        val rawBytes = ruText.toByteArray(win1251Charset)
++
++        val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
++        assertEquals(ruText, decoded)
++    }
++
++    @Test
++    fun decodesRussianWindows1251MixedCaseAndQuestionsWithoutLanguageHint() {
++        val ruText = "Где ты был вчера вечером? Спасибо за помощь, друг!"
++        val win1251Charset = Charset.forName("windows-1251")
++        val rawBytes = ruText.toByteArray(win1251Charset)
++
++        val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
++        assertEquals(ruText, decoded)
++    }
++
++    @Test
++    fun decodesRussianWindows1251AllCapsWithoutLanguageHint() {
++        val ruText = "ПРИВЕТ МИР ЭТО ТЕСТ"
++        val win1251Charset = Charset.forName("windows-1251")
++        val rawBytes = ruText.toByteArray(win1251Charset)
++
++        val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
++        assertEquals(ruText, decoded)
++    }
++
++    @Test
++    fun decodesArabicWindows1256WithoutLanguageHintWithPunctuation() {
++        val arText = "نعم، أين هو؟ هو هنا"
++        val win1256Charset = Charset.forName("windows-1256")
++        val rawBytes = arText.toByteArray(win1256Charset)
++
++        val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
++        assertEquals(arText, decoded)
++    }
++
++    @Test
++    fun decodesArabicWindows1256WithoutLanguageHintWithoutAlOrPunctuation() {
++        val arText = "شكرا جزيلا يا صديقي"
++        val win1256Charset = Charset.forName("windows-1256")
++        val rawBytes = arText.toByteArray(win1256Charset)
++
++        val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
++        assertEquals(arText, decoded)
++    }
+ }
+diff --git a/app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncSubtitleCueParserTest.kt b/app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncSubtitleCueParserTest.kt
+--- a/app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncSubtitleCueParserTest.kt
++++ b/app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncSubtitleCueParserTest.kt
+@@ -44,4 +44,37 @@
+         assertEquals(10_500L, cue!!.startTimeMs)
+         assertEquals(11_000L, cue.endTimeMs)
+     }
++
++    @Test
++    fun srtParsesArabicWithBidiControlsAndStripsThem() {
++        val srt = """
++            1
++            00:01:20,000 --> 00:01:23,500
++            \u200F<i>مرحبا بك في العالم</i>\u200E
++
++            2
++            00:01:24,000 --> 00:01:25,000
++            \u200E\u200F   \u202B\u202C
++
++            3
++            00:01:26,000 --> 00:01:28,000
++            English and Arabic: \u200Fشكراً لك\u200E
++        """.trimIndent()
++            .replace("\\u200F", "\u200F")
++            .replace("\\u200E", "\u200E")
++            .replace("\\u202B", "\u202B")
++            .replace("\\u202C", "\u202C")
++
++        val cues = AutoSyncSubtitleCueParser.parse(text = srt, sourceUrl = "test.srt")
++        assertEquals(2, cues.size)
++
++        assertEquals(80_000L, cues[0].startTimeMs)
++        assertEquals(83_500L, cues[0].endTimeMs)
++        assertEquals("مرحبا بك في العالم", cues[0].text)
++
++        // Cue 2 was pure bidi whitespace, so it must be skipped completely
++        assertEquals(86_000L, cues[1].startTimeMs)
++        assertEquals(88_000L, cues[1].endTimeMs)
++        assertEquals("English and Arabic: شكراً لك", cues[1].text)
++    }
+ }
+diff --git a/app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncTimelineRetimeTest.kt b/app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncTimelineRetimeTest.kt
+--- a/app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncTimelineRetimeTest.kt
++++ b/app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncTimelineRetimeTest.kt
+@@ -793,6 +793,47 @@
+         assertEquals(null, preferTighterFitOnDisagreement(precise, agreeing))
+     }
+ 
++    @Test
++    fun arabicSubtitleWithPalDriftAlignsAgainstEnglishReference() {
++        // Embedded English reference cues at standard 23.976 fps
++        val englishReference = irregularTimeline(240).mapIndexed { idx, cue ->
++            cue.copy(text = "English speech cue $idx")
++        }
++
++        // Arabic subtitle sourced from a 25.0 fps PAL release (drift scale ~ 25.0 / 23.976)
++        // with initial delay offset of 3200ms and Arabic dialogue containing bidi characters
++        val scale = 25.0 / 23.976
++        val initialDelayMs = 3_200L
++        val arabicTarget = englishReference.mapIndexed { idx, cue ->
++            val scaledStart = ((cue.startTimeMs - initialDelayMs) / scale).toLong()
++            val scaledEnd = ((cue.endTimeMs - initialDelayMs) / scale).toLong()
++            SubtitleSyncCue(
++                startTimeMs = scaledStart,
++                endTimeMs = scaledEnd,
++                text = "\u200Fحوار باللغة العربية $idx\u200E",
++            )
++        }
++
++        val result = assertNotNull(
++            AutoSyncTimelineRetimer.retime(
++                reference = englishReference,
++                target = arabicTarget,
++                coarseScale = 1.0,
++                coarseInterceptMs = 0.0,
++                discoverAlignment = true,
++            ),
++        )
++
++        assertTrue(result.confident, result.rejectReason)
++        assertEquals("activity-correlation", result.alignmentSource)
++        assertTrue(abs(result.alignmentScale - scale) <= 0.015)
++        assertTrue(result.cues.isNotEmpty())
++        // Verify cues are re-timed back close to reference cues
++        val firstRetimed = result.cues.first()
++        val firstRef = englishReference.first()
++        assertTrue(abs(firstRetimed.startTimeMs - firstRef.startTimeMs) <= 300L)
++    }
++
+     private fun shift(cues: List<SubtitleSyncCue>, deltaMs: Long) = cues.map { cue ->
+         cue.copy(startTimeMs = cue.startTimeMs + deltaMs, endTimeMs = cue.endTimeMs + deltaMs)
+     }

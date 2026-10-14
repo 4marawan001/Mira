@@ -1,0 +1,1498 @@
+diff --git a/composeApp/Configuration/DesktopVersion.properties b/composeApp/Configuration/DesktopVersion.properties
+--- a/composeApp/Configuration/DesktopVersion.properties
++++ b/composeApp/Configuration/DesktopVersion.properties
+@@ -1,2 +1,2 @@
+-VERSION_NAME=0.5.10
+-VERSION_CODE=155
++VERSION_NAME=0.5.17
++VERSION_CODE=162
+diff --git a/composeApp/build.gradle.kts b/composeApp/build.gradle.kts
+--- a/composeApp/build.gradle.kts
++++ b/composeApp/build.gradle.kts
+@@ -669,6 +669,7 @@
+           -framework Metal \
+           -framework Security \
+           -framework MediaPlayer \
++          -framework VideoToolbox \
+           -lswiftCompatibility56 \
+           -lswiftCompatibilityConcurrency \
+           -lswiftCompatibilityPacks \
+@@ -1267,6 +1268,7 @@
+             // Keep AWT from loading its own GTK (Swing L&F/file dialogs): the
+             // bridge owns the process's GTK via initGtkEarly (skoruppa's fix).
+             "-Djdk.gtk.version=0",
++            "-Xmx2048m",
+             "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+             "--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED",
+             "--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED",
+@@ -1692,3 +1694,10 @@
+     exclude(group = "androidx.media3", module = "media3-datasource-okhttp")
+     exclude(group = "androidx.media3", module = "media3-extractor")
+ }
++
++// Compose's shared runtime-image output must not reuse the other Mac architecture.
++// Both DMGs are built sequentially on an Apple Silicon host using separate JDKs.
++tasks.matching { it.name == "createRuntimeImage" }.configureEach {
++    inputs.property("miraRuntimeArchitecture", System.getProperty("os.arch"))
++    inputs.property("miraRuntimeJavaHome", System.getProperty("java.home"))
++}
+diff --git a/composeApp/src/androidMain/kotlin/com/nuvio/app/features/home/components/MiraPreviewPlatformSurface.android.kt b/composeApp/src/androidMain/kotlin/com/nuvio/app/features/home/components/MiraPreviewPlatformSurface.android.kt
+new file mode 100644
+--- /dev/null
++++ b/composeApp/src/androidMain/kotlin/com/nuvio/app/features/home/components/MiraPreviewPlatformSurface.android.kt
+@@ -0,0 +1,18 @@
++package com.nuvio.app.features.home.components
++
++import androidx.compose.runtime.Composable
++import androidx.compose.ui.Modifier
++import com.nuvio.app.features.player.*
++
++@Composable
++internal actual fun MiraPreviewPlatformSurface(
++    source: MiraPreviewSource, modifier: Modifier,
++    onControllerReady: (PlayerEngineController) -> Unit,
++    onSnapshot: (PlayerPlaybackSnapshot) -> Unit,
++    onError: (String?) -> Unit,
++) {
++    PlatformPlayerSurface(sourceUrl = source.videoUrl, sourceAudioUrl = source.audioUrl,
++        sourceHeaders = source.headers, modifier = modifier, playWhenReady = false,
++        useNativeController = false, onControllerReady = onControllerReady,
++        onSnapshot = onSnapshot, onError = onError)
++}
+diff --git a/composeApp/src/commonMain/composeResources/values/strings_mira.xml b/composeApp/src/commonMain/composeResources/values/strings_mira.xml
+--- a/composeApp/src/commonMain/composeResources/values/strings_mira.xml
++++ b/composeApp/src/commonMain/composeResources/values/strings_mira.xml
+@@ -4,7 +4,7 @@
+     <string name="mira_low_data_play">Low Data</string>
+     <string name="mira_low_data_description">Prefer smaller 720p copies and efficient codecs. Uses provider file-size estimates, not a guaranteed data limit.</string>
+     <string name="mira_balanced_play">Balanced</string>
+-    <string name="mira_balanced_play_description">Excellent picture without huge files. On iPhone, favor 1080p Blu-ray encodes and HEVC; avoid oversized remuxes.</string>
++    <string name="mira_balanced_play_description">On this Mac, prefer hardware-friendly 4K within 30 GB per two hours, scaled to known runtime. Unknown or oversized files stay available for manual selection. Your iPhone keeps its own preference.</string>
+     <string name="mira_highest_play">Highest</string>
+     <string name="mira_highest_description">Highest available resolution first, then disc sources and original-quality remuxes. May use very large files and more data.</string>
+     <string name="mira_choosing_source">Choosing the best source…</string>
+@@ -20,4 +20,5 @@
+     <string name="mira_available_sources">Available sources</string>
+     <string name="mira_sources_loading">More sources are loading…</string>
+     <string name="mira_sources_empty">No sources available. Try refreshing or checking your add-ons.</string>
++<string name="mira_mac_balanced_budget">Balanced: up to 30 GB per two hours, scaled to known runtime. Unknown-size and oversized sources are manual choices.</string>
+ </resources>
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/App.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/App.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/App.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/App.kt
+@@ -77,7 +77,7 @@
+     if (!platformProvidesImageLoader) {
+         setSingletonImageLoaderFactory { context ->
+             ImageLoader.Builder(context)
+-                .crossfade(true)
++                .crossfade(!isDesktop)
+                 .diskCachePolicy(CachePolicy.ENABLED)
+                 .memoryCachePolicy(CachePolicy.ENABLED)
+                 .components {
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/core/ui/CardDepthEffect.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/core/ui/CardDepthEffect.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/core/ui/CardDepthEffect.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/core/ui/CardDepthEffect.kt
+@@ -5,7 +5,7 @@
+ import androidx.compose.runtime.collectAsState
+ import androidx.compose.runtime.getValue
+ import androidx.compose.ui.Modifier
+-import androidx.compose.ui.draw.drawWithContent
++import androidx.compose.ui.draw.drawWithCache
+ import androidx.compose.ui.geometry.Size
+ import androidx.compose.ui.graphics.Brush
+ import androidx.compose.ui.graphics.Color
+@@ -75,24 +75,17 @@
+     }
+ 
+     return if (sheen > 0f) {
+-        withEdge.drawWithContent {
+-            drawContent()
++        withEdge.drawWithCache {
+             val sheenHeight = size.height * 0.22f
+-            if (sheenHeight > 0f) {
+-                val outline = shape.createOutline(size, layoutDirection, this)
+-                val shapePath = outline.toPath()
+-                clipPath(shapePath) {
+-                    drawRect(
+-                        brush = Brush.verticalGradient(
+-                            colors = listOf(
+-                                Color.White.copy(alpha = sheen),
+-                                Color.Transparent,
+-                            ),
+-                            startY = 0f,
+-                            endY = sheenHeight,
+-                        ),
+-                        size = Size(size.width, sheenHeight),
+-                    )
++            val shapePath = shape.createOutline(size, layoutDirection, this).toPath()
++            val brush = Brush.verticalGradient(
++                colors = listOf(Color.White.copy(alpha = sheen), Color.Transparent),
++                startY = 0f, endY = sheenHeight.coerceAtLeast(1f),
++            )
++            onDrawWithContent {
++                drawContent()
++                if (sheenHeight > 0f) clipPath(shapePath) {
++                    drawRect(brush = brush, size = Size(size.width, sheenHeight))
+                 }
+             }
+         }
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/core/ui/PosterLift.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/core/ui/PosterLift.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/core/ui/PosterLift.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/core/ui/PosterLift.kt
+@@ -28,14 +28,15 @@
+ internal val LocalPosterClickAnchor = staticCompositionLocalOf<((PosterZoomAnchor) -> Unit)?> { null }
+ 
+ internal class PosterLiftSource(private val graphicsContext: GraphicsContext) : RememberObserver {
+-    val layer = graphicsContext.createGraphicsLayer()
++    private val lazyLayer = lazy { graphicsContext.createGraphicsLayer() }
++    val layer get() = lazyLayer.value
+     var bounds: Rect? = null
+     var isLifted by mutableStateOf(false)
+         private set
+     private var rememberCount = 0
+ 
+     val canLift: Boolean
+-        get() = rememberCount > 0 && !layer.isReleased && layer.size.width > 0 && layer.size.height > 0
++        get() = rememberCount > 0 && lazyLayer.isInitialized() && !layer.isReleased && layer.size.width > 0 && layer.size.height > 0
+ 
+     fun lift(): Boolean {
+         if (!canLift) return false
+@@ -62,7 +63,7 @@
+     }
+ 
+     private fun release() {
+-        if (!layer.isReleased) graphicsContext.releaseGraphicsLayer(layer)
++        if (lazyLayer.isInitialized() && !layer.isReleased) graphicsContext.releaseGraphicsLayer(layer)
+     }
+ }
+ 
+@@ -80,8 +81,14 @@
+     val onPosterClickAnchor = LocalPosterClickAnchor.current
+     val posterModifier = Modifier
+         .drawWithContent {
+-            source.layer.record { this@drawWithContent.drawContent() }
+-            if (!source.isLifted) drawLayer(source.layer)
++            if (isDesktop) {
++                // Desktop zoom uses the artwork fallback. Avoid recording a duplicate GPU layer
++                // for every poster on every scroll frame just to support an infrequent menu.
++                drawContent()
++            } else {
++                source.layer.record { this@drawWithContent.drawContent() }
++                if (!source.isLifted) drawLayer(source.layer)
++            }
+         }
+         .onGloballyPositioned { coordinates ->
+             val position = coordinates.positionInRoot()
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/core/ui/ShelfComponents.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/core/ui/ShelfComponents.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/core/ui/ShelfComponents.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/core/ui/ShelfComponents.kt
+@@ -567,8 +567,8 @@
+     if (!enabled || !isDesktop) return this
+ 
+     val hovered by interactionSource.collectIsHoveredAsState()
+-    val scale by animateFloatAsState(
+-        targetValue = if (hovered) DesktopPosterHoverScale else 1f,
++    val scale = animateFloatAsState(
++        targetValue = if (hovered && LocalPosterBrowsingMotion.current?.value != true) DesktopPosterHoverScale else 1f,
+         animationSpec = spring(
+             dampingRatio = Spring.DampingRatioNoBouncy,
+             stiffness = Spring.StiffnessMediumLow,
+@@ -576,20 +576,11 @@
+         label = "desktop_poster_hover_scale",
+     )
+ 
+-    val isScaling = hovered || scale != 1f
+-
+     return this
+-        .then(
+-            if (isScaling) {
+-                Modifier
+-                    .graphicsLayer {
+-                        scaleX = scale
+-                        scaleY = scale
+-                    }
+-                    .zIndex(1f)
+-            } else {
+-                Modifier
+-            },
+-        )
++        .graphicsLayer {
++            scaleX = scale.value
++            scaleY = scale.value
++        }
++        .zIndex(if (hovered) 1f else 0f)
+         .hoverable(interactionSource)
+ }
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/HomePosterCard.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/HomePosterCard.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/HomePosterCard.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/HomePosterCard.kt
+@@ -62,7 +62,7 @@
+             onLongClick = holdAction,
+         )
+     }
+-    if (previewOpen) MiraVideoPreviewSheet(item, onDismiss = { previewOpen = false }, onOpen = onClick)
++    if (previewOpen && browsingMode == com.nuvio.app.features.settings.MiraBrowsingMode.VIDEOS) MiraVideoPreviewSheet(item, onDismiss = { previewOpen = false }, onOpen = onClick)
+ }
+ 
+ private fun PosterShape.toNuvioPosterShape(): NuvioPosterShape =
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/HomePosterHoverPreview.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/HomePosterHoverPreview.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/HomePosterHoverPreview.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/HomePosterHoverPreview.kt
+@@ -152,7 +152,7 @@
+     var trailerRequestId by remember(item.type, item.id) { mutableIntStateOf(0) }
+     var trailerResolutionPending by remember(item.type, item.id) { mutableStateOf(false) }
+     var trailerPlaybackSource by remember(item.type, item.id) {
+-        mutableStateOf<TrailerPlaybackSource?>(null)
++        mutableStateOf<MiraPreviewSource?>(null)
+     }
+     var previewIsSaved by remember(item.type, item.id) { mutableStateOf(false) }
+     var pendingTrackingRemoval by remember(item.type, item.id) {
+@@ -220,19 +220,22 @@
+ 
+     LaunchedEffect(
+         trailerRequestId,
++        anchorHovered,
++        previewHovered,
++        videosMode,
+         trailerPlaybackEnabled,
+         scrolling,
+         item.type,
+         item.id,
+     ) {
+-        if (!trailerPlaybackEnabled || scrolling) {
++        if (!trailerPlaybackEnabled || scrolling || (!anchorHovered && !previewHovered)) {
+             trailerPlaybackSource = null
+             trailerResolutionPending = false
+             return@LaunchedEffect
+         }
+         if (trailerRequestId == 0) return@LaunchedEffect
+         try {
+-            trailerPlaybackSource = resolveMiraVideoPreview(item)
++            trailerPlaybackSource = resolveMiraVideoPreview(item, allowExcerpt = videosMode)
+         } finally {
+             trailerResolutionPending = false
+         }
+@@ -336,7 +339,7 @@
+                         isWatched = isWatched,
+                         isSaved = previewIsSaved,
+                         trailerEnabled = trailerPlaybackEnabled,
+-                        trailerSoundEnabled = posterCardStyle.hoverPreviewTrailerSoundEnabled,
++                        trailerSoundEnabled = !videosMode && posterCardStyle.hoverPreviewTrailerSoundEnabled,
+                         trailerStartSeconds = posterCardStyle.hoverPreviewTrailerStartSeconds,
+                         trailerPlaybackSource = trailerPlaybackSource,
+                         modifier = Modifier
+@@ -372,7 +375,7 @@
+     trailerEnabled: Boolean,
+     trailerSoundEnabled: Boolean,
+     trailerStartSeconds: Int,
+-    trailerPlaybackSource: TrailerPlaybackSource?,
++    trailerPlaybackSource: MiraPreviewSource?,
+     modifier: Modifier,
+     onClick: (() -> Unit)?,
+     onLongClick: (() -> Unit)?,
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/HomePosterHoverTrailer.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/HomePosterHoverTrailer.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/HomePosterHoverTrailer.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/HomePosterHoverTrailer.kt
+@@ -24,7 +24,7 @@
+ 
+ @Composable
+ internal fun HomePosterHoverTrailer(
+-    playbackSource: TrailerPlaybackSource?,
++    playbackSource: MiraPreviewSource?,
+     soundEnabled: Boolean,
+     startPositionSeconds: Int,
+     modifier: Modifier = Modifier,
+@@ -48,7 +48,13 @@
+     }
+ 
+     playbackSource?.takeIf { playerMounted }?.let { source ->
+-        HeroTrailerPlayerSurface(
++        if (source.isExcerpt) {
++            MiraPreviewPlayer(source = source,
++                modifier = modifier.graphicsLayer { alpha = trailerAlpha },
++                onReady = { if (!trailerFinished) trailerReady = true },
++                onEnded = { trailerReady = false; trailerFinished = true },
++                onError = { trailerReady = false; trailerFinished = true })
++        } else HeroTrailerPlayerSurface(
+             sourceUrl = source.videoUrl,
+             sourceAudioUrl = source.audioUrl,
+             playWhenReady = !trailerFinished,
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/MiraVideoPreview.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/MiraVideoPreview.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/MiraVideoPreview.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/MiraVideoPreview.kt
+@@ -7,44 +7,195 @@
+ import androidx.compose.ui.Alignment
+ import androidx.compose.ui.unit.dp
+ import com.nuvio.app.core.ui.NuvioModalBottomSheet
++import com.nuvio.app.features.addons.*
+ import com.nuvio.app.features.details.MetaDetailsRepository
+ import com.nuvio.app.features.details.MetaTrailer
+-import com.nuvio.app.features.details.components.HeroTrailerPlayerSurface
+ import com.nuvio.app.features.details.selectHeroTrailer
+ import com.nuvio.app.features.details.youtubePlaybackUrl
+ import com.nuvio.app.features.home.MetaPreview
++import com.nuvio.app.features.player.*
++import com.nuvio.app.features.streams.*
+ import com.nuvio.app.features.trailer.TrailerPlaybackResolver
+-import com.nuvio.app.features.trailer.TrailerPlaybackSource
+-import kotlinx.coroutines.CancellationException
+-import kotlinx.coroutines.withTimeoutOrNull
+-
+-/** Previews never resolve or download a full movie stream. */
++import kotlinx.coroutines.*
++import kotlinx.coroutines.channels.Channel
++import kotlinx.coroutines.sync.Semaphore
++import kotlinx.coroutines.sync.withPermit
++import kotlin.random.Random
++
++internal const val MiraExcerptDurationMs = 30_000L
++internal data class MiraPreviewSource(
++    val videoUrl: String,
++    val audioUrl: String? = null,
++    val headers: Map<String, String> = emptyMap(),
++    val isExcerpt: Boolean = false,
++)
++
+ internal fun miraDirectPreviewUrl(trailers: List<MetaTrailer>): String? = trailers.firstOrNull {
+     !it.site.equals("YouTube", true) && it.key.startsWith("https://") &&
+         Regex("\\.(mp4|m3u8|webm)(?:[?#]|$)", RegexOption.IGNORE_CASE).containsMatchIn(it.key)
+ }?.key
+ 
+-internal suspend fun resolveMiraVideoPreview(item: MetaPreview): TrailerPlaybackSource? = withTimeoutOrNull(12_000) {
++internal fun miraExcerptStartMs(durationMs: Long, fraction: Double): Long {
++    if (durationMs <= MiraExcerptDurationMs) return 0L
++    val lastStart = durationMs - MiraExcerptDurationMs
++    val first = minOf(durationMs / 10, lastStart)
++    val last = minOf(durationMs * 4 / 5, lastStart)
++    return first + ((last - first) * fraction.coerceIn(0.0, 1.0)).toLong()
++}
++
++internal fun miraExcerptStream(streams: List<StreamItem>): StreamItem? = streams
++    .filter { stream ->
++        val url = stream.playableDirectUrl.orEmpty()
++        (url.startsWith("https://", true) || url.startsWith("http://", true))
++    }
++    .minByOrNull { stream ->
++        val label = listOfNotNull(stream.name, stream.title, stream.description, stream.behaviorHints.filename).joinToString(" ").lowercase()
++        when {
++            "720" in label -> 0
++            "1080" in label -> 1
++            "2160" in label || "remux" in label -> 3
++            else -> 2
++        }
++    }
++
++/** Isolated preview requests never change the main source list or watch progress. */
++internal suspend fun firstMiraExcerpt(
++    loaders: List<suspend () -> List<StreamItem>>,
++): StreamItem? = supervisorScope {
++    val completions = Channel<StreamItem?>(Channel.UNLIMITED)
++    val slots = Semaphore(3)
++    val jobs = loaders.map { load -> launch {
++        val result = slots.withPermit {
++            try { withTimeoutOrNull(7_000) { miraExcerptStream(load()) } }
++            catch (cancelled: CancellationException) { throw cancelled }
++            catch (_: Exception) { null }
++        }
++        completions.send(result)
++    } }
+     try {
+-    val meta = MetaDetailsRepository.peek(item.type, item.id) ?: MetaDetailsRepository.fetch(item.type, item.id)
++        withTimeoutOrNull(9_000) {
++            repeat(loaders.size) { completions.receive()?.let { return@withTimeoutOrNull it } }
++            null
++        }
++    } finally { jobs.forEach { it.cancel() }; completions.close() }
++}
++
++internal suspend fun resolveMiraVideoPreview(item: MetaPreview, allowExcerpt: Boolean = false): MiraPreviewSource? {
++    val meta = MetaDetailsRepository.peek(item.type, item.id) ?: try {
++        withTimeoutOrNull(4_000) { MetaDetailsRepository.fetch(item.type, item.id) }
++    } catch (cancelled: CancellationException) { throw cancelled }
++      catch (_: Exception) { null }
+     val trailers = meta?.trailers.orEmpty()
+-    miraDirectPreviewUrl(trailers)?.let { return@withTimeoutOrNull TrailerPlaybackSource(videoUrl = it) }
+-    val trailer = selectHeroTrailer(trailers) ?: return@withTimeoutOrNull null
+-    TrailerPlaybackResolver.resolveFromYouTubeUrl(trailer.youtubePlaybackUrl())
+-    } catch (cancelled: CancellationException) { throw cancelled }
+-    catch (_: Exception) { null }
++    miraDirectPreviewUrl(trailers)?.let { return MiraPreviewSource(videoUrl = it) }
++    val trailer = selectHeroTrailer(trailers)
++    if (trailer != null) {
++        val resolved = try { withTimeoutOrNull(4_000) {
++            TrailerPlaybackResolver.resolveFromYouTubeUrl(trailer.youtubePlaybackUrl())
++        } } catch (cancelled: CancellationException) { throw cancelled }
++          catch (_: Exception) { null }
++        if (resolved != null) return MiraPreviewSource(resolved.videoUrl, resolved.audioUrl)
++    }
++    if (!allowExcerpt) return null
++    val videoId = meta?.defaultVideoId ?: if (item.type == "series") meta?.videos?.firstOrNull()?.id ?: item.id else item.id
++    val embedded = meta?.videos?.firstOrNull { it.id == videoId }?.streams.orEmpty()
++    var stream = miraExcerptStream(embedded)
++    if (stream == null) {
++        val loaders = AddonRepository.uiState.value.addons.enabledAddons().mapNotNull { addon ->
++            val manifest = addon.manifest ?: return@mapNotNull null
++            if (!manifest.supportsStream(item.type, videoId)) return@mapNotNull null
++            val load: suspend () -> List<StreamItem> = {
++                StreamParser.parse(
++                    payload = fetchAddonResponseText(buildAddonResourceUrl(manifest.transportUrl, "stream", item.type, videoId)),
++                    addonName = addon.displayTitle.ifBlank { manifest.name },
++                    addonId = addon.streamAddonInstanceId(manifest.id),
++                    addonLogo = manifest.logoUrl,
++                )
++            }
++            load
++        }
++        stream = firstMiraExcerpt(loaders)
++    }
++    return stream?.let { MiraPreviewSource(it.playableDirectUrl!!,
++        headers = sanitizePlaybackHeaders(it.behaviorHints.proxyHeaders?.request), isExcerpt = true) }
++}
++
++@Composable
++internal expect fun MiraPreviewPlatformSurface(
++    source: MiraPreviewSource,
++    modifier: Modifier,
++    onControllerReady: (PlayerEngineController) -> Unit,
++    onSnapshot: (PlayerPlaybackSnapshot) -> Unit,
++    onError: (String?) -> Unit,
++)
++
++/** Playback lives only inside the preview, with no resume/history updates. */
++@Composable
++internal fun MiraPreviewPlayer(
++    source: MiraPreviewSource,
++    modifier: Modifier,
++    onReady: () -> Unit,
++    onEnded: () -> Unit,
++    onError: () -> Unit,
++) = key(source) {
++    var controller by remember { mutableStateOf<PlayerEngineController?>(null) }
++    var started by remember { mutableStateOf(false) }
++    var ready by remember { mutableStateOf(false) }
++    var finished by remember { mutableStateOf(false) }
++    var startMs by remember { mutableLongStateOf(0L) }
++    val fraction = remember { Random.nextDouble() }
++    val latestReady = rememberUpdatedState(onReady)
++    val latestEnded = rememberUpdatedState(onEnded)
++    val latestError = rememberUpdatedState(onError)
++    fun finish(error: Boolean) {
++        if (finished) return
++        finished = true
++        controller?.pause()
++        if (error) latestError.value() else latestEnded.value()
++    }
++    LaunchedEffect(source) {
++        delay(12_000)
++        if (!ready && !finished) finish(true)
++    }
++    // A frozen/failed server cannot leave a preview player alive indefinitely.
++    LaunchedEffect(ready) {
++        if (ready) { delay(45_000); finish(false) }
++    }
++    DisposableEffect(controller) {
++        val activeController = controller
++        onDispose { activeController?.pause() }
++    }
++    if (!finished) MiraPreviewPlatformSurface(source, modifier,
++        onControllerReady = { player -> controller = player; player.setMuted(true) },
++        onSnapshot = { snapshot ->
++            val player = controller
++            if (!finished && player != null && !snapshot.isLoading) {
++                if (!started && (!source.isExcerpt || snapshot.durationMs > 0L)) {
++                    startMs = if (source.isExcerpt) miraExcerptStartMs(snapshot.durationMs, fraction) else 0L
++                    player.setMuted(true)
++                    if (startMs > 0L) player.seekTo(startMs)
++                    player.play()
++                    started = true
++                }
++                if (started && snapshot.isPlaying && snapshot.positionMs >= startMs - 1_000L) {
++                    if (!ready) { ready = true; latestReady.value() }
++                    if (source.isExcerpt && snapshot.positionMs >= startMs + MiraExcerptDurationMs) finish(false)
++                }
++                if (snapshot.isEnded && started) finish(false)
++            }
++        }, onError = { if (!it.isNullOrBlank()) finish(true) })
+ }
+ 
+ @OptIn(ExperimentalMaterial3Api::class)
+ @Composable
+ internal fun MiraVideoPreviewSheet(item: MetaPreview, onDismiss: () -> Unit, onOpen: (() -> Unit)?) {
+     var retry by remember { mutableIntStateOf(0) }
+-    var source by remember(item.id, item.type) { mutableStateOf<TrailerPlaybackSource?>(null) }
++    var source by remember(item.id, item.type) { mutableStateOf<MiraPreviewSource?>(null) }
+     var loading by remember { mutableStateOf(true) }
+     var failed by remember { mutableStateOf(false) }
++    var ended by remember { mutableStateOf(false) }
+     LaunchedEffect(item.type, item.id, retry) {
+-        loading = true; failed = false; source = null
+-        try { source = resolveMiraVideoPreview(item) }
++        loading = true; failed = false; ended = false; source = null
++        try { source = resolveMiraVideoPreview(item, allowExcerpt = true) }
+         catch (cancelled: CancellationException) { throw cancelled }
+         catch (_: Exception) { failed = true }
+         finally { loading = false }
+@@ -59,19 +210,18 @@
+                 val playable = source
+                 when {
+                     loading -> CircularProgressIndicator(Modifier.size(28.dp))
+-                    playable != null -> HeroTrailerPlayerSurface(
+-                        sourceUrl = playable.videoUrl, sourceAudioUrl = playable.audioUrl,
+-                        playWhenReady = true, muted = true, fillFrame = true, modifier = Modifier.fillMaxSize(),
+-                        onReady = {}, onEnded = {},
++                    ended -> Text("Preview finished")
++                    playable != null -> MiraPreviewPlayer(playable, Modifier.fillMaxSize(),
++                        onReady = {}, onEnded = { ended = true },
+                         onError = { source = null; failed = true })
+-                    else -> Text(if (failed) "Couldn’t load the preview." else "No preview is available for this title.",
++                    else -> Text(if (failed) "Couldn’t load the preview." else "No playable preview is available.",
+                         style = MaterialTheme.typography.bodyMedium)
+                 }
+             }
+-            Text("Muted preview · Uses a supplied trailer or preview clip", style = MaterialTheme.typography.bodySmall,
+-                color = MaterialTheme.colorScheme.onSurfaceVariant)
++            Text(if (source?.isExcerpt == true) "Muted · Random excerpt, up to 30 seconds" else "Muted trailer or preview clip",
++                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+-                if (!loading && source == null) TextButton(onClick = { retry++ }) { Text("Retry") }
++                if (!loading && (source == null || ended)) TextButton(onClick = { retry++ }) { Text(if (ended) "Replay" else "Retry") }
+                 if (onOpen != null) Button(onClick = { onDismiss(); onOpen() }) { Text("View details") }
+             }
+             Spacer(Modifier.height(18.dp))
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerNextEpisodeAutoPlay.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerNextEpisodeAutoPlay.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerNextEpisodeAutoPlay.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerNextEpisodeAutoPlay.kt
+@@ -193,6 +193,9 @@
+             StreamAutoPlaySelector.selectAutoPlayStream(
+                 streams = streams,
+                 mode = effectiveMode,
++                devicePolicy = com.nuvio.app.features.streams.StreamDevicePolicy.current(
++                    com.nuvio.app.features.streams.MiraPlaybackPreferences.targetHeight(),
++                    nextVideo.runtime?.toString()),
+                 regexPattern = effectiveRegex,
+                 source = effectiveSource,
+                 installedAddonNames = installedAddonNames,
+@@ -210,6 +213,9 @@
+             return StreamAutoPlaySelector.selectAutoPlayStream(
+                 streams = streams,
+                 mode = effectiveMode,
++                devicePolicy = com.nuvio.app.features.streams.StreamDevicePolicy.current(
++                    com.nuvio.app.features.streams.MiraPlaybackPreferences.targetHeight(),
++                    nextVideo.runtime?.toString()),
+                 regexPattern = effectiveRegex,
+                 source = effectiveSource,
+                 installedAddonNames = installedAddonNames,
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/AppearanceSettingsPage.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/AppearanceSettingsPage.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/AppearanceSettingsPage.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/AppearanceSettingsPage.kt
+@@ -136,7 +136,7 @@
+             SettingsGroup(isTablet = isTablet) {
+                 androidx.compose.foundation.layout.Column(Modifier.padding(16.dp)) {
+                     Text("Choose your experience", style = MaterialTheme.typography.titleSmall)
+-                    Text("Videos enables muted hover previews on Mac and press-and-hold previews on iPhone. Only supplied trailers or preview clips are used.",
++                    Text("Videos enables muted hover previews on Mac and press-and-hold previews on iPhone. When no trailer is available, a playable stream provides a muted 30-second excerpt.",
+                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                         modifier = Modifier.padding(vertical = 8.dp))
+                     androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/BalancedStreamRanking.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/BalancedStreamRanking.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/BalancedStreamRanking.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/BalancedStreamRanking.kt
+@@ -1,6 +1,32 @@
+ package com.nuvio.app.features.streams
+ 
+ /** Metadata-based ranking, not a bandwidth measurement or a guarantee of a working URL. */
++data class StreamDevicePolicy(
++    val macBalanced: Boolean = false,
++    val durationMinutes: Int = 120,
++    val hardwareAvc: Boolean = false,
++    val hardwareHevc: Boolean = false,
++    val hardwareAv1: Boolean = false,
++) {
++    val balancedBudgetBytes: Long get() = 30_000_000_000L * durationMinutes.coerceIn(1, 1440) / 120
++    companion object {
++        internal fun current(targetHeight: Int, runtime: String? = null): StreamDevicePolicy = StreamDevicePolicy(
++            macBalanced = com.nuvio.app.isDesktop && targetHeight >= 2160,
++            durationMinutes = parseRuntimeMinutes(runtime) ?: 120,
++            hardwareAvc = MiraPlaybackPreferences.hardwareDecodes("avc"),
++            hardwareHevc = MiraPlaybackPreferences.hardwareDecodes("hevc"),
++            hardwareAv1 = MiraPlaybackPreferences.hardwareDecodes("av1"),
++        )
++        fun parseRuntimeMinutes(value: String?): Int? {
++            val text = value?.trim()?.lowercase() ?: return null
++            text.toIntOrNull()?.let { return it.takeIf { n -> n in 1..1440 } }
++            val hours = Regex("([0-9]+)\\s*h").find(text)?.groupValues?.get(1)?.toIntOrNull() ?: 0
++            val minutes = Regex("([0-9]+)\\s*m").find(text)?.groupValues?.get(1)?.toIntOrNull() ?: 0
++            return (hours * 60 + minutes).takeIf { it in 1..1440 }
++        }
++    }
++}
++
+ internal object BalancedStreamRanking {
+     private val resolution = Regex("(?i)(?<![0-9])(2160|1440|1080|720|576|480)[pi](?![0-9])")
+     private val fourK = Regex("(?i)\\b(4k|uhd)\\b")
+@@ -34,11 +60,17 @@
+     fun rank(
+         streams: List<StreamItem>, targetHeight: Int,
+         mode: StreamAutoPlayMode = StreamAutoPlayMode.BALANCED,
++        device: StreamDevicePolicy = StreamDevicePolicy.current(targetHeight),
+     ): List<StreamItem> = streams
+         .filter { it.playableDirectUrl?.let { url ->
+             url.startsWith("https://", true) || url.startsWith("http://", true)
+         } ?: true }
+-        .map { it to score(it, targetHeight, mode) }
++        .filter { stream ->
++            if (device.macBalanced && mode == StreamAutoPlayMode.BALANCED) {
++                fileSizeBytes(stream)?.let { it <= device.balancedBudgetBytes } == true
++            } else true
++        }
++        .map { it to score(it, targetHeight, mode, device) }
+         .sortedWith(compareByDescending<Pair<StreamItem, Int>> {
+             // Samples/camera copies never win just because they advertise more pixels.
+             if (poorCopy.containsMatchIn(metadata(it.first))) 0 else 1
+@@ -53,13 +85,14 @@
+     fun score(
+         stream: StreamItem, targetHeight: Int,
+         mode: StreamAutoPlayMode = StreamAutoPlayMode.BALANCED,
++        device: StreamDevicePolicy = StreamDevicePolicy.current(targetHeight),
+     ): Int {
+         val text = metadata(stream)
+         val structured = stream.clientResolve?.stream?.raw?.parsed
+         val height = height(stream)
+         val preferredHeight = if (mode == StreamAutoPlayMode.LOW_DATA) 720 else targetHeight
+         var score = when {
+-            height == preferredHeight -> 400
++            height == preferredHeight -> if (device.macBalanced) 500 else 400
+             height == 1080 -> if (mode == StreamAutoPlayMode.LOW_DATA) 160 else 340
+             height == 720 -> 240
+             height == null -> 180
+@@ -71,28 +104,19 @@
+         if (stream.needsLocalDebridResolve && !stream.isCachedDebridTorrentStream) score -= 220
+         val codecText = text + " " + structured?.codec.orEmpty()
+         score += when {
+-            av1.containsMatchIn(codecText) -> -80
+-            hevc.containsMatchIn(codecText) -> 35
+-            avc.containsMatchIn(codecText) -> 30
++            av1.containsMatchIn(codecText) -> if (device.hardwareAv1) 40 else -180
++            hevc.containsMatchIn(codecText) -> if (device.hardwareHevc || !device.macBalanced) 35 else -160
++            avc.containsMatchIn(codecText) -> if (device.hardwareAvc) 30 else 0
+             else -> 0
+         }
+         // Prefer a disc-sourced encode at a reasonable size, without requiring a remux.
+         if (discSource.containsMatchIn(text)) score += 65
+         if (text.contains("remux", true)) score += if (mode == StreamAutoPlayMode.HIGHEST) 90 else -90
+         if (poorCopy.containsMatchIn(text)) score -= 1000
+-        val bytes = stream.behaviorHints.videoSize?.takeIf { it > 0 }
+-            ?: stream.clientResolve?.stream?.raw?.size?.takeIf { it > 0 }
+-            ?: stream.debridCacheStatus?.cachedSize?.takeIf { it > 0 }
+-        val gib = bytes?.toDouble()?.div(1024.0 * 1024 * 1024) ?: size.find(text)?.let {
+-            val n = it.groupValues[1].replace(',', '.').toDoubleOrNull() ?: return@let null
+-            when (it.groupValues[2].uppercase()) {
+-                "TB", "TIB" -> n * 1024
+-                "MB", "MIB" -> n / 1024
+-                else -> n
+-            }
+-        }
++        val gib = fileSizeBytes(stream)?.toDouble()?.div(1024.0 * 1024 * 1024)
+         score -= when {
+             mode == StreamAutoPlayMode.HIGHEST -> if (gib != null && gib > 30) 20 else 0
++            device.macBalanced && mode == StreamAutoPlayMode.BALANCED -> 0
+             mode == StreamAutoPlayMode.LOW_DATA && gib != null && gib > 3 -> 300
+             mode == StreamAutoPlayMode.LOW_DATA && gib != null && gib > 1.5 -> 100
+             gib == null -> 0
+@@ -103,4 +127,21 @@
+         }
+         return score
+     }
++    /** Prefer explicit per-video bytes; raw torrent/cache sizes can describe an entire pack. */
++    fun fileSizeBytes(stream: StreamItem): Long? {
++        stream.behaviorHints.videoSize?.takeIf { it > 0 }?.let { return it }
++        size.find(metadata(stream))?.let {
++            val number = it.groupValues[1].replace(',', '.').toDoubleOrNull()
++            val multiplier = when (it.groupValues[2].uppercase()) {
++                "GB" -> 1e9; "GIB" -> 1073741824.0
++                "MB" -> 1e6; "MIB" -> 1048576.0
++                "TB" -> 1e12; "TIB" -> 1099511627776.0
++                else -> 0.0
++            }
++            if (number != null && number > 0 && number.isFinite()) return (number * multiplier).toLong()
++        }
++        return stream.clientResolve?.stream?.raw?.size?.takeIf { it > 0 }
++            ?: stream.debridCacheStatus?.cachedSize?.takeIf { it > 0 }
++    }
++
+ }
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/MiraPlaybackPreferences.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/MiraPlaybackPreferences.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/MiraPlaybackPreferences.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/MiraPlaybackPreferences.kt
+@@ -5,4 +5,5 @@
+     fun selectionMode(): String?
+     fun saveSelectionMode(mode: String): Boolean
+     fun targetHeight(): Int
++    fun hardwareDecodes(codec: String): Boolean
+ }
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/MiraSourcePicker.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/MiraSourcePicker.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/MiraSourcePicker.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/MiraSourcePicker.kt
+@@ -49,13 +49,15 @@
+     onRefresh: () -> Unit,
+     onBack: () -> Unit,
+     nativeNavigation: Boolean,
++    runtime: String? = null,
+ ) {
+     var showQualityMenu by remember { mutableStateOf(false) }
+     var showSourcesMenu by remember { mutableStateOf(false) }
+     val mode = settings.streamAutoPlayMode.takeIf { it.isQualityMode } ?: StreamAutoPlayMode.BALANCED
+     val available = remember(uiState.filteredGroups) { uiState.filteredGroups.flatMap { it.streams } }
+-    val recommended = remember(available, mode, settings, debrid) {
++    val recommended = remember(available, mode, settings, debrid, runtime) {
+         StreamAutoPlaySelector.selectAutoPlayStream(
++            devicePolicy = StreamDevicePolicy.current(MiraPlaybackPreferences.targetHeight(), runtime),
+             streams = available, mode = mode, regexPattern = "", source = settings.streamAutoPlaySource,
+             installedAddonNames = uiState.groups.filter { it.addonId.startsWith("addon:") }.map { it.addonName }.toSet(),
+             selectedAddons = settings.streamAutoPlaySelectedAddons,
+@@ -140,6 +142,10 @@
+                     }
+                 }
+             }
++            if (mode == StreamAutoPlayMode.BALANCED && com.nuvio.app.isDesktop) item(key = "budget") {
++                Text(stringResource(Res.string.mira_mac_balanced_budget), color = SourceSecondary,
++                    style = MaterialTheme.typography.bodySmall)
++            }
+             if (recommended != null) item(key = "recommended") {
+                 val summary = remember(recommended) { recommended.miraSummary() }
+                 Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(SourceSurface).padding(20.dp),
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/StreamAutoPlaySelector.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/StreamAutoPlaySelector.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/StreamAutoPlaySelector.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/StreamAutoPlaySelector.kt
+@@ -51,6 +51,7 @@
+         debridEnabled: Boolean = true,
+         activeResolverProviderId: String? = null,
+         targetHeight: Int = MiraPlaybackPreferences.targetHeight(),
++        devicePolicy: StreamDevicePolicy = StreamDevicePolicy.current(targetHeight),
+     ): StreamItem? =
+         evaluateAutoPlayStream(
+             streams = streams,
+@@ -66,6 +67,7 @@
+             debridEnabled = debridEnabled,
+             activeResolverProviderId = activeResolverProviderId,
+             targetHeight = targetHeight,
++            devicePolicy = devicePolicy,
+         ).stream
+ 
+     fun evaluateAutoPlayStream(
+@@ -82,6 +84,7 @@
+         debridEnabled: Boolean = true,
+         activeResolverProviderId: String? = null,
+         targetHeight: Int = MiraPlaybackPreferences.targetHeight(),
++        devicePolicy: StreamDevicePolicy = StreamDevicePolicy.current(targetHeight),
+     ): StreamAutoPlayEvaluation {
+         if (streams.isEmpty()) return StreamAutoPlayEvaluation()
+ 
+@@ -192,7 +195,7 @@
+                 .forEach(::add)
+         }
+         val rankedStreams = if (mode.isQualityMode) {
+-            BalancedStreamRanking.rank(readyStreams, targetHeight, mode)
++            BalancedStreamRanking.rank(readyStreams, targetHeight, mode, devicePolicy)
+         } else readyStreams
+         val selected = rankedStreams.firstOrNull()
+         if (selected != null) {
+@@ -203,7 +206,7 @@
+         }
+ 
+         return StreamAutoPlayEvaluation(
+-            readyStreams = readyStreams,
++            readyStreams = rankedStreams,
+             hasPendingDebridCandidate = matchingStreams.any {
+                 it.isPendingDebridAutoPlay(debridEnabled, activeResolverProviderId)
+             },
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/StreamsRepository.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/StreamsRepository.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/StreamsRepository.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/StreamsRepository.kt
+@@ -109,6 +109,10 @@
+         val playerSettings = PlayerSettingsRepository.uiState.value
+         val debridSettings = DebridSettingsRepository.snapshot()
+         val streamBadgeRules = StreamBadgeSettingsRepository.snapshot()
++        val requestMeta = MetaDetailsRepository.peek(type, parentMetaId ?: videoId)
++        val requestRuntime = requestMeta?.videos?.firstOrNull { it.id == videoId }?.runtime?.toString()
++            ?: requestMeta?.runtime
++        val devicePolicy = StreamDevicePolicy.current(MiraPlaybackPreferences.targetHeight(), requestRuntime)
+         val autoPlayMode = playerSettings.streamAutoPlayMode
+         val isAutoPlayEnabled = !manualSelection && autoPlayMode != StreamAutoPlayMode.MANUAL &&
+             !(autoPlayMode == StreamAutoPlayMode.REGEX_MATCH &&
+@@ -154,6 +158,7 @@
+             val selection = if (isAutoPlayEnabled) StreamAutoPlaySelector.evaluateAutoPlayStream(
+                 streams = presentedGroup.streams,
+                 mode = autoPlayMode,
++                devicePolicy = devicePolicy,
+                 regexPattern = playerSettings.streamAutoPlayRegex,
+                 source = StreamAutoPlaySource.ALL_SOURCES,
+                 installedAddonNames = emptySet(),
+@@ -270,6 +275,7 @@
+                 StreamAutoPlaySelector.evaluateAutoPlayStream(
+                     streams = _uiState.value.groups.flatMap { it.streams },
+                     mode = autoPlayMode,
++                devicePolicy = devicePolicy,
+                     regexPattern = playerSettings.streamAutoPlayRegex,
+                     source = playerSettings.streamAutoPlaySource,
+                     installedAddonNames = installedAddonNames,
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/StreamsScreen.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/StreamsScreen.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/StreamsScreen.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/StreamsScreen.kt
+@@ -307,6 +307,7 @@
+                 onRefresh = reloadStreams,
+                 onBack = onBack,
+                 nativeNavigation = false,
++                runtime = com.nuvio.app.features.details.MetaDetailsRepository.peek(parentMetaType, parentMetaId)?.runtime,
+             )
+             }
+             }
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/AppUpdater.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/AppUpdater.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/AppUpdater.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/AppUpdater.kt
+@@ -17,6 +17,8 @@
+ import kotlinx.coroutines.flow.asStateFlow
+ import kotlinx.coroutines.flow.update
+ import kotlinx.coroutines.launch
++import kotlinx.coroutines.isActive
++import com.nuvio.app.isDesktop
+ import nuvio.composeapp.generated.resources.*
+ import org.jetbrains.compose.resources.getString
+ 
+@@ -80,6 +82,15 @@
+         }
+         autoCheckStarted = true
+         checkForUpdates(force = false, showNoUpdateFeedback = false)
++        if (isDesktop) scope.launch {
++            while (isActive) {
++                delay(60 * 60 * 1_000L)
++                val state = _uiState.value
++                if (!state.isChecking && !state.isDownloading && state.downloadedUpdatePath == null) {
++                    checkForUpdates(force = false, showNoUpdateFeedback = false)
++                }
++            }
++        }
+     }
+ 
+     fun checkForUpdates(force: Boolean, showNoUpdateFeedback: Boolean) {
+@@ -241,7 +252,8 @@
+                         errorMessage = null,
+                     )
+                 }
+-                installDownloadedUpdate()
++                // Desktop updates are ready for an explicit restart, including during playback.
++                if (!isDesktop) installDownloadedUpdate()
+             }.onFailure { error ->
+                 _uiState.update { state ->
+                     state.copy(
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/AppUpdaterBanner.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/AppUpdaterBanner.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/AppUpdaterBanner.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/AppUpdaterBanner.kt
+@@ -279,7 +279,7 @@
+                 ) {
+                     Text(
+                         if (state.downloadedUpdatePath != null) {
+-                            stringResource(Res.string.action_install)
++                            if (com.nuvio.app.isDesktop) "Install & Restart" else stringResource(Res.string.action_install)
+                         } else if (state.errorMessage != null) {
+                             stringResource(Res.string.action_retry)
+                         } else {
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/AppUpdaterPlatform.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/AppUpdaterPlatform.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/AppUpdaterPlatform.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/AppUpdaterPlatform.kt
+@@ -13,6 +13,7 @@
+     val contentTypes: List<String> = emptyList(),
+     val preferredNameFragments: List<String> = emptyList(),
+     val fallbackNameFragments: List<String> = emptyList(),
++    val excludedNameFragments: List<String> = emptyList(),
+ )
+ 
+ expect object AppUpdaterPlatform {
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/AppUpdaterRepository.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/AppUpdaterRepository.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/AppUpdaterRepository.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/AppUpdaterRepository.kt
+@@ -42,7 +42,9 @@
+     assets: List<AppUpdateAssetCandidate>,
+     selector: AppUpdateAssetSelector,
+ ): AppUpdateAssetCandidate? {
+-    val updateAssets = assets.filter { asset ->
++    val updateAssets = assets.filterNot { asset ->
++        selector.excludedNameFragments.any { asset.name.contains(it, ignoreCase = true) }
++    }.filter { asset ->
+         selector.fileExtensions.any { extension -> asset.name.endsWith(extension, ignoreCase = true) } ||
+             selector.contentTypes.any { it.equals(asset.contentType, ignoreCase = true) }
+     }
+diff --git a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/MiraReleaseFeed.kt b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/MiraReleaseFeed.kt
+--- a/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/MiraReleaseFeed.kt
++++ b/composeApp/src/commonMain/kotlin/com/nuvio/app/features/updater/MiraReleaseFeed.kt
+@@ -9,10 +9,15 @@
+     const val releasesUrl = "https://github.com/$repository/releases"
+     const val manifestUrl = "$releasesUrl/latest/download/mira-updates.json"
+ 
+-    fun parse(body: String, platform: String): MiraReleaseAsset {
++    fun parse(body: String, platform: String, architecture: String? = null): MiraReleaseAsset {
+         val root = Json.parseToJsonElement(body).jsonObject
+         require(root["schema"]?.jsonPrimitive?.intOrNull == 1) { "Unsupported update feed" }
+-        val asset = root["artifacts"]?.jsonObject?.get(platform)?.jsonObject ?: error("No update for this platform")
++        val platformAsset = root["artifacts"]?.jsonObject?.get(platform)?.jsonObject ?: error("No update for this platform")
++        val asset = if (architecture != null) {
++            platformAsset["architectures"]?.jsonObject?.get(architecture)?.jsonObject
++                ?: platformAsset.takeIf { architecture == "arm64" }
++                ?: error("No update for this Mac architecture")
++        } else platformAsset
+         val build = asset.getValue("build").jsonPrimitive.int
+         val version = asset.getValue("version").jsonPrimitive.content
+         val url = asset.getValue("url").jsonPrimitive.content
+diff --git a/composeApp/src/commonTest/kotlin/com/nuvio/app/features/home/components/MiraVideoPreviewTest.kt b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/home/components/MiraVideoPreviewTest.kt
+--- a/composeApp/src/commonTest/kotlin/com/nuvio/app/features/home/components/MiraVideoPreviewTest.kt
++++ b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/home/components/MiraVideoPreviewTest.kt
+@@ -3,6 +3,11 @@
+ import com.nuvio.app.features.details.MetaTrailer
+ import com.nuvio.app.features.settings.MiraBrowsingMode
+ import kotlin.test.*
++import com.nuvio.app.features.streams.StreamItem
++import com.nuvio.app.features.streams.StreamBehaviorHints
++import com.nuvio.app.features.streams.StreamProxyHeaders
++import kotlinx.coroutines.*
++import kotlinx.coroutines.test.runTest
+ 
+ class MiraVideoPreviewTest {
+     private fun clip(url: String, site: String = "Provider") = MetaTrailer("preview", url, "Preview", site)
+@@ -20,4 +25,62 @@
+         assertEquals(MiraBrowsingMode.MOVIES, MiraBrowsingMode.fromKey("unknown"))
+         assertEquals(MiraBrowsingMode.VIDEOS, MiraBrowsingMode.fromKey("videos"))
+     }
++
++    private fun stream(url: String, label: String = "720p") = StreamItem(
++        url = url, name = label, addonName = "Test", addonId = "test")
++
++    @Test fun randomExcerptNeverRunsPastEndAndAvoidsLongIntro() {
++        for (duration in listOf(1_000L, 29_000L, 30_000L, 31_000L, 120_000L, 7_200_000L)) {
++            for (fraction in listOf(-1.0, 0.0, 0.5, 1.0, 2.0)) {
++                val start = miraExcerptStartMs(duration, fraction)
++                assertTrue(start >= 0)
++                assertTrue(start + minOf(duration, MiraExcerptDurationMs) <= duration)
++            }
++        }
++        assertEquals(0L, miraExcerptStartMs(20_000L, 0.5))
++        assertNotEquals(miraExcerptStartMs(600_000L, 0.1), miraExcerptStartMs(600_000L, 0.9))
++    }
++
++    @Test fun excerptSelectsEfficientDirectStreamAndRejectsExternalOrTorrent() {
++        val large = stream("https://example.com/huge.mkv", "2160p REMUX")
++        val small = stream("https://example.com/video.mp4?sig=test", "720p")
++        assertEquals(small, miraExcerptStream(listOf(large, small)))
++        assertNull(miraExcerptStream(listOf(stream("magnet:?xt=test"), stream("file:///video.mp4"),
++            StreamItem(externalUrl = "https://example.com/watch", addonName = "Test", addonId = "test"))))
++    }
++
++    @Test fun noProvidersReturnsImmediately() = runTest {
++        assertNull(firstMiraExcerpt(emptyList()))
++    }
++
++    @Test fun fastProviderWinsAndSlowProviderIsCancelled() = runTest {
++        var slowCancelled = false
++        val expected = stream("https://example.com/video.mp4")
++        assertEquals(expected, firstMiraExcerpt(listOf(
++            { try { delay(60_000); emptyList() } finally { slowCancelled = true } },
++            { delay(50); listOf(expected) },
++        )))
++        assertTrue(slowCancelled)
++    }
++
++    @Test fun stalledAndFailedProvidersFinishWithoutHanging() = runTest {
++        assertNull(firstMiraExcerpt(listOf(
++            { error("provider failed") },
++            { delay(60_000); emptyList() },
++        )))
++    }
++
++    @Test fun parentCancellationStopsPreviewFetches() = runTest {
++        var cancelled = false
++        val started = CompletableDeferred<Unit>()
++        val job = launch {
++            firstMiraExcerpt(listOf({
++                try { started.complete(Unit); awaitCancellation() }
++                finally { cancelled = true }
++            }))
++        }
++        started.await()
++        job.cancelAndJoin()
++        assertTrue(cancelled)
++    }
+ }
+diff --git a/composeApp/src/commonTest/kotlin/com/nuvio/app/features/streams/MacStreamDevicePolicyTest.kt b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/streams/MacStreamDevicePolicyTest.kt
+new file mode 100644
+--- /dev/null
++++ b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/streams/MacStreamDevicePolicyTest.kt
+@@ -0,0 +1,57 @@
++package com.nuvio.app.features.streams
++
++import kotlin.test.*
++
++class MacStreamDevicePolicyTest {
++    private val m1 = StreamDevicePolicy(macBalanced = true, hardwareAvc = true, hardwareHevc = true)
++    private val intelWithoutHevc = m1.copy(hardwareHevc = false)
++    private fun stream(name: String, bytes: Long? = null) = StreamItem(
++        name = name, url = "https://example.com/$name", addonName = "Test", addonId = "addon:test",
++        behaviorHints = StreamBehaviorHints(videoSize = bytes))
++    private fun rank(vararg streams: StreamItem, device: StreamDevicePolicy = m1,
++                     mode: StreamAutoPlayMode = StreamAutoPlayMode.BALANCED) =
++        BalancedStreamRanking.rank(streams.toList(), 2160, mode, device)
++
++    @Test fun `mac prefers efficient 4k to 1080 bluray within budget`() {
++        val fourK = stream("2160p WEB-DL HEVC 18 GB")
++        assertEquals(fourK, rank(stream("1080p BluRay AVC 8 GB"), fourK).first())
++    }
++    @Test fun `decimal 30 GB boundary is inclusive and GiB is converted`() {
++        val edge = stream("2160p HEVC", 30_000_000_000)
++        assertEquals(listOf(edge), rank(edge, stream("2160p HEVC", 30_000_000_001), stream("2160p HEVC 30 GiB")))
++    }
++    @Test fun `oversized 4k falls back to suitable 1080`() {
++        val hd = stream("1080p BluRay HEVC 8 GB")
++        assertEquals(listOf(hd), rank(stream("2160p REMUX 54 GB"), hd))
++    }
++    @Test fun `no automatic oversized or unknown size fallback`() {
++        assertTrue(rank(stream("2160p HEVC"), stream("2160p REMUX 54 GB")).isEmpty())
++    }
++    @Test fun `highest keeps original disc option outside balanced budget`() {
++        val disc = stream("2160p BluRay REMUX HEVC 54 GB")
++        assertEquals(disc, rank(stream("1080p AVC 5 GB"), disc, mode = StreamAutoPlayMode.HIGHEST).first())
++    }
++    @Test fun `older intel favors hardware AVC over software HEVC 4k`() {
++        val hd = stream("1080p AVC 8 GB")
++        assertEquals(hd, rank(stream("2160p HEVC 18 GB"), hd, device = intelWithoutHevc).first())
++    }
++    @Test fun `M1 does not prefer software AV1 over hardware HEVC`() {
++        val efficient = stream("2160p HEVC 18 GB")
++        assertEquals(efficient, rank(stream("2160p AV1 10 GB"), efficient).first())
++    }
++    @Test fun `runtime scales the budget for episodes and long movies`() {
++        val episode = m1.copy(durationMinutes = 48)
++        assertEquals(12_000_000_000, episode.balancedBudgetBytes)
++        assertTrue(rank(stream("2160p HEVC 13 GB"), device = episode).isEmpty())
++        assertEquals(45_000_000_000, m1.copy(durationMinutes = 180).balancedBudgetBytes)
++    }
++    @Test fun `runtime accepts minutes and hour minute labels safely`() {
++        assertEquals(120, StreamDevicePolicy.parseRuntimeMinutes("120 min"))
++        assertEquals(123, StreamDevicePolicy.parseRuntimeMinutes("2h 3m"))
++        assertNull(StreamDevicePolicy.parseRuntimeMinutes("unknown"))
++        assertNull(StreamDevicePolicy.parseRuntimeMinutes("0"))
++    }
++    @Test fun `explicit video bytes override unreliable display label`() {
++        assertTrue(rank(stream("2160p HEVC 1 GB", 31_000_000_000)).isEmpty())
++    }
++}
+diff --git a/composeApp/src/commonTest/kotlin/com/nuvio/app/features/updater/MacArchitectureUpdateTest.kt b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/updater/MacArchitectureUpdateTest.kt
+new file mode 100644
+--- /dev/null
++++ b/composeApp/src/commonTest/kotlin/com/nuvio/app/features/updater/MacArchitectureUpdateTest.kt
+@@ -0,0 +1,31 @@
++package com.nuvio.app.features.updater
++
++import kotlin.test.*
++
++class MacArchitectureUpdateTest {
++    private val arm = AppUpdateAssetCandidate("Mira-macOS-arm64.dmg", "https://example.com/arm")
++    private val intel = AppUpdateAssetCandidate("Mira-macOS-x86_64.dmg", "https://example.com/intel")
++    private val intelSelector = AppUpdateAssetSelector(listOf(".dmg"),
++        preferredNameFragments = listOf("x86_64", "macos"), excludedNameFragments = listOf("arm64", "aarch64"))
++    @Test fun `intel updater rejects lone ARM asset`() {
++        assertNull(selectBestUpdateAsset(listOf(arm), intelSelector))
++    }
++    @Test fun `intel updater picks Intel regardless of release asset order`() {
++        assertEquals(intel, selectBestUpdateAsset(listOf(arm, intel), intelSelector))
++        assertEquals(intel, selectBestUpdateAsset(listOf(intel, arm), intelSelector))
++    }
++    @Test fun `ARM updater rejects lone Intel asset`() {
++        assertNull(selectBestUpdateAsset(listOf(intel), AppUpdateAssetSelector(listOf(".dmg"),
++            preferredNameFragments = listOf("arm64"), excludedNameFragments = listOf("x86_64", "x64", "intel"))))
++    }
++    @Test fun `manifest chooses architecture and preserves older ARM feed`() {
++        val hash = "a".repeat(64)
++        val old = """{"schema":1,"artifacts":{"macos":{"build":157,"version":"0.5.12","url":"https://github.com/4marawan001/Mira/releases/download/v0.5.12/Mira-macOS-arm64.dmg","sha256":"$hash"}}}"""
++        assertEquals(157, MiraReleaseFeed.parse(old, "macos", "arm64").build)
++        assertFails { MiraReleaseFeed.parse(old, "macos", "x86_64") }
++        val intelAsset = """{"build":162,"version":"0.5.17","url":"https://github.com/4marawan001/Mira/releases/download/v0.5.17/Mira-macOS-x86_64.dmg","sha256":"$hash"}"""
++        val feed = old.replace("\"sha256\":\"$hash\"", "\"architectures\":{\"x86_64\":$intelAsset},\"sha256\":\"$hash\"")
++        assertEquals(162, MiraReleaseFeed.parse(feed, "macos", "x86_64").build)
++        assertEquals(157, MiraReleaseFeed.parse(feed, "macos", "arm64").build)
++    }
++}
+diff --git a/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/home/components/MiraPreviewPlatformSurface.desktop.kt b/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/home/components/MiraPreviewPlatformSurface.desktop.kt
+new file mode 100644
+--- /dev/null
++++ b/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/home/components/MiraPreviewPlatformSurface.desktop.kt
+@@ -0,0 +1,18 @@
++package com.nuvio.app.features.home.components
++
++import androidx.compose.runtime.Composable
++import androidx.compose.ui.Modifier
++import com.nuvio.app.features.player.*
++
++@Composable
++internal actual fun MiraPreviewPlatformSurface(
++    source: MiraPreviewSource, modifier: Modifier,
++    onControllerReady: (PlayerEngineController) -> Unit,
++    onSnapshot: (PlayerPlaybackSnapshot) -> Unit,
++    onError: (String?) -> Unit,
++) {
++    PlatformPlayerSurface(sourceUrl = source.videoUrl, sourceAudioUrl = source.audioUrl,
++        sourceHeaders = source.headers, modifier = modifier, playWhenReady = false,
++        playerControlsState = PlayerControlsState(controlsVisible = false, pauseOverlayEnabled = false),
++        onControllerReady = onControllerReady, onSnapshot = onSnapshot, onError = onError)
++}
+diff --git a/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/player/desktop/NativePlayerBridge.kt b/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/player/desktop/NativePlayerBridge.kt
+--- a/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/player/desktop/NativePlayerBridge.kt
++++ b/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/player/desktop/NativePlayerBridge.kt
+@@ -33,6 +33,9 @@
+      * main() calls. Approach from skoruppa's linux-webkitgtk branch.
+      */
+     external fun initGtkEarly(): Boolean
++
++    /** macOS VideoToolbox hardware decoder support: AVC=1, HEVC=2, AV1=4. */
++    external fun hardwareDecodeCapabilities(): Int
+ 
+     external fun create(
+         hostViewPtr: Long,
+@@ -347,8 +350,15 @@
+         DesktopHostOs.current == DesktopHostOs.WINDOWS ||
+         DesktopHostOs.current == DesktopHostOs.LINUX
+     ) {
+-        runCatching {
+-            NativePlayerBridge.preloadAsync()
+-        }
++        // Loading/extracting the native libraries must not block the first UI frame.
++        Thread({
++            runCatching {
++                NativePlayerBridge.preloadAsync()
++                if (DesktopHostOs.current == DesktopHostOs.MACOS) {
++                    com.nuvio.app.features.streams.MiraPlaybackPreferences.setHardwareDecodeCapabilities(
++                        NativePlayerBridge.hardwareDecodeCapabilities())
++                }
++            }
++        }, "mira-native-runtime-preload").apply { isDaemon = true; start() }
+     }
+ }
+diff --git a/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/player/desktop/NativePlayerController.kt b/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/player/desktop/NativePlayerController.kt
+--- a/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/player/desktop/NativePlayerController.kt
++++ b/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/player/desktop/NativePlayerController.kt
+@@ -50,9 +50,12 @@
+ 
+ internal class NativePlayerController(
+     private val host: NativePlayerHost,
+-    private val nativeCreate: NativePlayerCreate = NativePlayerBridge::create,
+-    private val nativeDispose: (Long) -> Unit = NativePlayerBridge::dispose,
+-    private val nativeSeekTo: (Long, Long) -> Unit = NativePlayerBridge::seekTo,
++    private val nativeCreate: NativePlayerCreate = { host, url, headers, play, position, controls, decoder, superResolution, sink ->
++        NativePlayerBridge.create(host, url, headers, play, position, controls, decoder, superResolution, sink)
++    },
++    private val nativeDispose: (Long) -> Unit = { NativePlayerBridge.dispose(it) },
++    private val nativeSeekTo: (Long, Long) -> Unit = { handle, position -> NativePlayerBridge.seekTo(handle, position) },
++    private val controlsPageUrl: () -> String = { NativePlayerBridge.controlsPageUrl },
+     private val isHostDisplayable: () -> Boolean = { host.isDisplayable },
+     private val resolveHostView: () -> Long = { AwtNativeViewResolver.resolveNativeViewPointer(host) },
+     private val createWaitTimeoutMs: Long = 5_000L,
+@@ -304,7 +307,7 @@
+                         pending.headerLines.toTypedArray(),
+                         pending.playWhenReady,
+                         pending.initialPositionMs,
+-                        NativePlayerBridge.controlsPageUrl,
++                        controlsPageUrl(),
+                         pending.decoderPriority,
+                         pending.nvidiaRtxSuperResolutionEnabled,
+                         eventSink,
+@@ -934,6 +937,10 @@
+         handle.takeIf { it != 0L }?.let { NativePlayerBridge.setPaused(it, true) }
+     }
+ 
++    override fun setMuted(muted: Boolean) {
++        setTemporaryVolume(if (muted) 0f else rememberedVolumeLevel)
++    }
++
+     override fun seekTo(positionMs: Long) {
+         log.d { "seekTo positionMs=$positionMs handle=$handle" }
+         handle.takeIf { it != 0L }?.let { nativeSeekTo(it, positionMs) }
+diff --git a/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/streams/MiraPlaybackPreferences.desktop.kt b/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/streams/MiraPlaybackPreferences.desktop.kt
+--- a/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/streams/MiraPlaybackPreferences.desktop.kt
++++ b/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/streams/MiraPlaybackPreferences.desktop.kt
+@@ -1,7 +1,27 @@
+ package com.nuvio.app.features.streams
+ 
++import com.nuvio.app.core.storage.DesktopStorage
++
+ internal actual object MiraPlaybackPreferences {
+-    actual fun selectionMode(): String? = null
+-    actual fun saveSelectionMode(mode: String): Boolean = false
+-    actual fun targetHeight(): Int = 1080
++    private val store by lazy { DesktopStorage.store("mira_device_playback") }
++    actual fun selectionMode(): String? {
++        store.getString("mode")?.let { return it }
++        val previous = com.nuvio.app.features.player.PlayerSettingsStorage.loadStreamAutoPlayMode()
++            ?: StreamAutoPlayMode.MANUAL.name
++        store.putString("mode", previous)
++        return previous
++    }
++    actual fun saveSelectionMode(mode: String): Boolean {
++        store.putString("mode", mode)
++        return true
++    }
++    actual fun targetHeight(): Int = 2160
++    @Volatile private var capabilities: Int = 0
++    fun setHardwareDecodeCapabilities(value: Int) { capabilities = value }
++    actual fun hardwareDecodes(codec: String): Boolean = when (codec) {
++        "avc" -> capabilities and 1 != 0
++        "hevc" -> capabilities and 2 != 0
++        "av1" -> capabilities and 4 != 0
++        else -> false
++    }
+ }
+diff --git a/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/updater/AppUpdaterPlatform.desktop.kt b/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/updater/AppUpdaterPlatform.desktop.kt
+--- a/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/updater/AppUpdaterPlatform.desktop.kt
++++ b/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/updater/AppUpdaterPlatform.desktop.kt
+@@ -95,7 +95,8 @@
+                 HttpRequest.newBuilder().uri(URI(MiraReleaseFeed.manifestUrl)).timeout(Duration.ofSeconds(30)).GET().build(),
+                 HttpResponse.BodyHandlers.ofString())
+             check(manifestResponse.statusCode() == 200) { "Couldn’t verify the update manifest" }
+-            val manifestAsset = MiraReleaseFeed.parse(manifestResponse.body(), "macos")
++            val manifestAsset = MiraReleaseFeed.parse(manifestResponse.body(), "macos",
++                if (desktopArchitectureFragments().contains("arm64")) "arm64" else "x86_64")
+             check(manifestAsset.url == assetUrl) { "Release changed. Check for updates again." }
+             clearDir(updatesDir())
+             val safeName = assetName.replace(Regex("[^a-zA-Z0-9._-]"), "_")
+@@ -223,6 +224,7 @@
+             MACOS -> AppUpdateAssetSelector(
+                 fileExtensions = listOf(".dmg", ".pkg"),
+                 preferredNameFragments = archFragments + listOf("macos", "mac", "darwin"),
++                excludedNameFragments = if ("arm64" in archFragments) listOf("x86_64", "x64", "intel") else listOf("arm64", "aarch64"),
+                 fallbackNameFragments = listOf("universal", "all"),
+             )
+             LINUX -> AppUpdateAssetSelector(
+diff --git a/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/updater/MiraMacInstaller.kt b/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/updater/MiraMacInstaller.kt
+--- a/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/updater/MiraMacInstaller.kt
++++ b/composeApp/src/desktopMain/kotlin/com/nuvio/app/features/updater/MiraMacInstaller.kt
+@@ -56,10 +56,14 @@
+ """.trimIndent()
+ 
+ internal fun launchMiraMacInstaller(update: File, work: File) {
+-    val home = System.getProperty("compose.application.home")?.let(::File)
+-        ?: error("Install Mira in Applications before updating.")
+-    val target = generateSequence(home) { it.parentFile }.firstOrNull { it.name == "Mira.app" }
+-        ?: error("Could not locate the installed Mira app.")
++    val target = locateMiraMacApp(
++        listOfNotNull(
++            System.getProperty("jpackage.app-path"),
++            System.getProperty("compose.application.resources.dir"),
++            System.getProperty("compose.application.home"),
++            ProcessHandle.current().info().command().orElse(null),
++        ),
++    ) ?: error("Install Mira in Applications before updating.")
+     check(!Files.isSymbolicLink(target.toPath()) && target.parentFile.canWrite()) {
+         "Move Mira to a writable Applications folder before updating."
+     }
+@@ -69,3 +73,8 @@
+     ProcessBuilder("/bin/sh", script.absolutePath, ProcessHandle.current().pid().toString(),
+         target.absolutePath, update.absolutePath, work.absolutePath).start()
+ }
++
++/** jpackage supplies launcher/resources paths, not compose.application.home on every build. */
++internal fun locateMiraMacApp(paths: List<String>): File? = paths.firstNotNullOfOrNull { path ->
++    generateSequence(File(path).absoluteFile) { it.parentFile }.firstOrNull { it.name == "Mira.app" }
++}
+diff --git a/composeApp/src/desktopMain/native/macos/player_bridge.mm b/composeApp/src/desktopMain/native/macos/player_bridge.mm
+--- a/composeApp/src/desktopMain/native/macos/player_bridge.mm
++++ b/composeApp/src/desktopMain/native/macos/player_bridge.mm
+@@ -2,6 +2,7 @@
+ #import <IOKit/IOKitLib.h>
+ #import <IOKit/hidsystem/ev_keymap.h>
+ #import <MediaPlayer/MediaPlayer.h>
++#import <VideoToolbox/VideoToolbox.h>
+ #define GL_SILENCE_DEPRECATION
+ #import <OpenGL/OpenGL.h>
+ #import <OpenGL/gl3.h>
+@@ -3649,3 +3650,13 @@
+                                         stripSdh:stripSdh == JNI_TRUE];
+     });
+ }
++
++extern "C" JNIEXPORT jint JNICALL
++Java_com_nuvio_app_features_player_desktop_NativePlayerBridge_hardwareDecodeCapabilities(JNIEnv *, jobject) {
++    jint capabilities = 0;
++    if (VTIsHardwareDecodeSupported(kCMVideoCodecType_H264)) capabilities |= 1;
++    if (VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC)) capabilities |= 2;
++    // FourCC avoids requiring a newer SDK enum on the macOS 12 deployment target.
++    if (VTIsHardwareDecodeSupported(static_cast<CMVideoCodecType>(0x61763031))) capabilities |= 4;
++    return capabilities;
++}
+diff --git a/composeApp/src/desktopTest/kotlin/com/nuvio/app/core/ui/PosterCardClickTest.kt b/composeApp/src/desktopTest/kotlin/com/nuvio/app/core/ui/PosterCardClickTest.kt
+--- a/composeApp/src/desktopTest/kotlin/com/nuvio/app/core/ui/PosterCardClickTest.kt
++++ b/composeApp/src/desktopTest/kotlin/com/nuvio/app/core/ui/PosterCardClickTest.kt
+@@ -22,6 +22,7 @@
+ import kotlin.test.assertNotNull
+ import kotlin.test.assertNull
+ import kotlin.test.assertTrue
++import kotlin.test.assertFalse
+ 
+ class PosterCardClickTest {
+     @get:Rule
+@@ -128,6 +129,8 @@
+         assertEquals(12.dp, anchor.cornerRadius)
+         assertTrue(anchor.boundsInRoot.width > 0f)
+         assertTrue(anchor.boundsInRoot.height > 0f)
+-        assertTrue(assertNotNull(anchor.source).canLift)
++        // Desktop menus use their artwork fallback; browsing must not allocate a captured
++        // GPU layer for every poster just to support an occasional context menu.
++        assertFalse(assertNotNull(anchor.source).canLift)
+     }
+ }
+diff --git a/composeApp/src/desktopTest/kotlin/com/nuvio/app/features/player/desktop/NativePlayerControllerTeardownTest.kt b/composeApp/src/desktopTest/kotlin/com/nuvio/app/features/player/desktop/NativePlayerControllerTeardownTest.kt
+--- a/composeApp/src/desktopTest/kotlin/com/nuvio/app/features/player/desktop/NativePlayerControllerTeardownTest.kt
++++ b/composeApp/src/desktopTest/kotlin/com/nuvio/app/features/player/desktop/NativePlayerControllerTeardownTest.kt
+@@ -102,6 +102,7 @@
+                     else -> error("unexpected handle: $handle")
+                 }
+             },
++            controlsPageUrl = { "about:blank" },
+             isHostDisplayable = { true },
+             resolveHostView = { 1L },
+         )
+@@ -156,6 +157,7 @@
+             host = NativePlayerHost(),
+             nativeCreate = failNativeCreate,
+             nativeDispose = {},
++            controlsPageUrl = { "about:blank" },
+             isHostDisplayable = { true },
+             resolveHostView = { error("host resolution must remain deferred") },
+             createWaitTimeoutMs = 50L,
+@@ -215,6 +217,7 @@
+             host = NativePlayerHost(),
+             nativeCreate = failNativeCreate,
+             nativeDispose = {},
++            controlsPageUrl = { "about:blank" },
+             isHostDisplayable = { true },
+             resolveHostView = { error("host resolution must remain deferred") },
+             createWaitTimeoutMs = 50L,
+@@ -273,6 +276,7 @@
+             host = NativePlayerHost(),
+             nativeCreate = failNativeCreate,
+             nativeDispose = {},
++            controlsPageUrl = { "about:blank" },
+             isHostDisplayable = { true },
+             resolveHostView = {
+                 resolvedHosts.incrementAndGet()
+@@ -320,6 +324,7 @@
+             host = NativePlayerHost(),
+             nativeCreate = failNativeCreate,
+             nativeDispose = {},
++            controlsPageUrl = { "about:blank" },
+             isHostDisplayable = { true },
+             resolveHostView = { resolvedHosts.incrementAndGet().toLong() },
+         )
+@@ -452,6 +457,7 @@
+                 allowDisposeFailure.await()
+                 error("dispose failed")
+             },
++            controlsPageUrl = { "about:blank" },
+             isHostDisplayable = { true },
+             resolveHostView = {
+                 hostResolutions.incrementAndGet()
+diff --git a/composeApp/src/desktopTest/kotlin/com/nuvio/app/features/updater/MiraMacInstallerTest.kt b/composeApp/src/desktopTest/kotlin/com/nuvio/app/features/updater/MiraMacInstallerTest.kt
+new file mode 100644
+--- /dev/null
++++ b/composeApp/src/desktopTest/kotlin/com/nuvio/app/features/updater/MiraMacInstallerTest.kt
+@@ -0,0 +1,72 @@
++package com.nuvio.app.features.updater
++
++import java.io.File
++import java.nio.file.Files
++import kotlin.test.*
++
++class MiraMacInstallerTest {
++    private fun run(vararg args: String): Pair<Int, String> {
++        val process = ProcessBuilder(*args).redirectErrorStream(true).start()
++        val output = process.inputStream.bufferedReader().readText()
++        return process.waitFor() to output
++    }
++    private fun fixture(root: File, identifier: String): File {
++        val contents = File(root, "payload/Mira.app/Contents").apply { mkdirs() }
++        File(contents, "MacOS").mkdirs()
++        File("/usr/bin/true").copyTo(File(contents, "MacOS/Mira"))
++        File(contents, "MacOS/Mira").setExecutable(true)
++        File(contents, "Info.plist").writeText("""
++            <?xml version="1.0" encoding="UTF-8"?>
++            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
++            <plist version="1.0"><dict>
++            <key>CFBundleIdentifier</key><string>$identifier</string>
++            <key>CFBundleExecutable</key><string>Mira</string>
++            <key>CFBundlePackageType</key><string>APPL</string>
++            <key>CFBundleVersion</key><string>156</string>
++            </dict></plist>
++        """.trimIndent())
++        val signed = run("/usr/bin/codesign", "--force", "--sign", "-", contents.parent)
++        assertEquals(0, signed.first, signed.second)
++        val image = File(root, "Mira update.dmg")
++        val made = run("/usr/bin/hdiutil", "create", "-volname", "Mira-test", "-srcfolder", File(root, "payload").path,
++            "-format", "UDZO", image.path)
++        assertEquals(0, made.first, made.second)
++        return image
++    }
++    private fun exercise(identifier: String, succeeds: Boolean) {
++        if (!System.getProperty("os.name").startsWith("Mac")) return
++        val root = Files.createTempDirectory("mira update test ").toFile()
++        try {
++            val image = fixture(root, identifier)
++            val target = File(root, "Applications/Mira.app").apply { mkdirs() }
++            File(target, "old-marker").writeText("previous app")
++            val work = File(root, "work").apply { mkdirs() }
++            // Test the real replacement/rollback path without launching any app.
++            val script = File(root, "install.sh")
++            script.writeText(miraMacInstallScript().replace("/usr/bin/open", "/usr/bin/true"))
++            assertEquals(0, run("/bin/sh", "-n", script.path).first)
++            val result = run("/bin/sh", script.path, "2147483647", target.path, image.path, work.path)
++            if (succeeds) {
++                assertEquals(0, result.first, File(work, "install.log").readText())
++                assertTrue(File(target, "Contents/Info.plist").isFile)
++                assertTrue(File(work, "previous/Mira.app/old-marker").isFile)
++                assertFalse(File(target, "old-marker").exists())
++            } else {
++                assertNotEquals(0, result.first)
++                assertEquals("previous app", File(target, "old-marker").readText())
++                assertFalse(File(work, "previous/Mira.app").exists())
++            }
++        } finally { root.deleteRecursively() }
++    }
++    @Test fun installsSignedMiraAndRetainsPreviousAppWithSpacesInPaths() = exercise("app.mira.desktop", true)
++    @Test fun rejectsDifferentBundleWithoutReplacingInstalledApp() = exercise("app.other.desktop", false)
++    @Test fun findsJpackageLauncherWithoutComposeHomeProperty() {
++        assertEquals(File("/Applications/Mira.app"), locateMiraMacApp(listOf("/Applications/Mira.app/Contents/MacOS/Mira")))
++    }
++    @Test fun findsResourcesPathWithSpacesAndSkipsUnrelatedRuntime() {
++        assertEquals(File("/Users/test/My Apps/Mira.app"), locateMiraMacApp(listOf("/usr/bin/java", "/Users/test/My Apps/Mira.app/Contents/app/resources")))
++    }
++    @Test fun missingAppAncestorDoesNotGuessApplications() {
++        assertNull(locateMiraMacApp(listOf("/usr/bin/java", "/tmp/resources")))
++    }
++}
+diff --git a/composeApp/src/iosMain/kotlin/com/nuvio/app/features/home/components/MiraPreviewPlatformSurface.ios.kt b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/home/components/MiraPreviewPlatformSurface.ios.kt
+new file mode 100644
+--- /dev/null
++++ b/composeApp/src/iosMain/kotlin/com/nuvio/app/features/home/components/MiraPreviewPlatformSurface.ios.kt
+@@ -0,0 +1,18 @@
++package com.nuvio.app.features.home.components
++
++import androidx.compose.runtime.Composable
++import androidx.compose.ui.Modifier
++import com.nuvio.app.features.player.*
++
++@Composable
++internal actual fun MiraPreviewPlatformSurface(
++    source: MiraPreviewSource, modifier: Modifier,
++    onControllerReady: (PlayerEngineController) -> Unit,
++    onSnapshot: (PlayerPlaybackSnapshot) -> Unit,
++    onError: (String?) -> Unit,
++) {
++    PlatformPlayerSurface(sourceUrl = source.videoUrl, sourceAudioUrl = source.audioUrl,
++        sourceHeaders = source.headers, modifier = modifier, playWhenReady = false,
++        useNativeController = false, onControllerReady = onControllerReady,
++        onSnapshot = onSnapshot, onError = onError)
++}
