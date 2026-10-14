@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="#download">Download</a> · <a href="#inside-mira">Inside Mira</a> · <a href="docs/INSTALL.md">Installation</a> · <a href="docs/BUILD-163.md">Latest changes</a>
+  <a href="#download">Download</a> · <a href="#inside-mira">Inside Mira</a> · <a href="docs/INSTALL.md">Installation</a> · <a href="docs/BUILD-164.md">Latest changes</a>
 </p>
 
 ![Mira Home on Mac, with cinematic artwork, genre shortcuts, IMDb Top 250 and floating navigation](docs/assets/home.jpg)
@@ -22,11 +22,11 @@
 
 ## Download
 
-Latest releases: **iPhone 0.5.16 · build 161**, **Fire TV 0.5.17 · build 162**, and **Mac 0.5.18 · build 163**. These are Release packages.
+Latest releases: **iPhone 0.5.19 · build 164**, **Fire TV 0.5.17 · build 162**, and **Mac 0.5.18 · build 163**. These are Release packages.
 
 | Device | Download | Installation |
 | --- | --- | --- |
-| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.16/Mira-ios-161.ipa) | Sign and install with Sideloadly on your Mac. |
+| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.19/Mira-ios-164.ipa) | Sign and install with Sideloadly on your Mac. |
 | Fire TV | [APK](https://github.com/4marawan001/Mira/releases/download/v0.5.17/Mira-FireTV-universal.apk) | Install on a compatible Android-based Fire TV. Remote controls are supported. |
 | Apple Silicon Mac (macOS 12+) | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.18/Mira-macOS-arm64.dmg) | Open the disk image and copy Mira to Applications. |
 | Intel Mac (macOS 12+) | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.18/Mira-macOS-x86_64.dmg) | Open the disk image and copy Mira to Applications. |
@@ -39,7 +39,7 @@ Mira is a personal fork of the open-source Nuvio apps. Home puts artwork first, 
 
 Search shows results as individual add-ons respond and loads more on demand. Queries stay intact when opening View All and later pages. Duplicate detection and repeated-page protection keep providers from filling the list endlessly. The app has no fixed total-result cap, but results still depend on each provider's search support and available pages.
 
-Playback preferences include Low Data, Balanced and Highest. Balanced favors good 1080p sources for the iPhone 12 mini while reducing the preference for oversized files. Highest favors resolution and disc sources. These choices rank the metadata providers return; they do not measure your internet speed or guarantee playback quality.
+Playback preferences include Low Data, Balanced and Highest. On iPhone, Mira checks H.264, HEVC and AV1 hardware support and favors compatible codecs. Balanced favors good 1080p sources for the iPhone 12 mini while reducing the preference for oversized files. Highest then favors resolution and disc sources. On Mac, Low Data targets 1080p and Balanced favors suitable 4K within its size budget. These choices rank the metadata providers return; they do not measure your internet speed or guarantee playback quality.
 
 ### Movies or videos
 
@@ -56,6 +56,12 @@ Choose an accent color, change the app icon, or adjust the browsing layout. The 
 ![Mira appearance settings with accent colors and Movies or Videos browsing modes](docs/assets/appearance.jpg)
 
 <p align="center"><sub>Real screenshot from the Mac app, build 155 (appearance settings).</sub></p>
+
+## What's new in iPhone build 164
+
+Autoplay and recommended sources now consider the iPhone's **hardware decoder support**, along with resolution, file size and source readiness. Low Data keeps its **720p** target; Balanced keeps **1080p**. Highest prioritizes hardware-compatible codecs before resolution and disc source. Software-only copies remain fallbacks, and a slow provider can still return a compatible alternative before selection settles.
+
+115 regression checks passed, including 13 hardware-specific checks. The Debug iPhone 12 mini preview and physical-device arm64 source compilation passed; physical iPhone playback testing remains outstanding. [iPhone 164 details and package verification](docs/BUILD-164.md).
 
 ## What's new in Mac build 163
 

@@ -50,7 +50,7 @@
     "base_archive": "Mira-FireTV-source.zip",
     "base_sha256": "de7e0c776f009d1efc0d5a8f40c47216a9eadc9a17fc7b9ab1254997bdd02c76",
     "patch": "Mira-FireTV-changes-from-155.patch",
-    "changed_files": 18,
+    "changed_files": 19,
     "kind": "Fire TV Release 162"
   }
 }
