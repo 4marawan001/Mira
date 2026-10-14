@@ -1,0 +1,29 @@
+{
+  "type": "Manual D-pad emulator smoke check",
+  "device": "Dedicated API 31 Android TV ARM64 emulator",
+  "finalPackageSHA256": "01aed84c951a39812faa4c7019a1ee79482e4f7ca9d3e847650040079e48bc11",
+  "checks": {
+    "upgradeFrom170PreservedGuestAndAddon": true,
+    "finalPackageReinstalledAndPlayedFixture": true,
+    "restoredArabicSelectionRetained": true,
+    "invalidArabicCandidateSkipped": true,
+    "arabicCueVisibleAt48Seconds": true,
+    "englishLanguageSelectedAndCueRendered": true,
+    "subtitlesOffClearedCues": true,
+    "cueRemainsAfterClosingSubtitlePanel": true
+  },
+  "screenshots": [
+    "171-arabic.png",
+    "171-arabic-render.png",
+    "171-english-render.png",
+    "171-off.png"
+  ],
+  "realDeviceTested": false,
+  "privateProviderURLsUsed": false,
+  "timingReferenceInFixture": false,
+  "notes": [
+    "The fixture is a local 150-second generated H.264 video with synthetic Arabic/English SRT cues.",
+    "One scripted panel reopen sent navigation before focus had settled and selected the intentional invalid row; the focus-aware retry selected English and rendered its cue.",
+    "Full-film retiming/reference confidence is covered with synthetic JVM timelines, not this reference-free rendering fixture."
+  ]
+}

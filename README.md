@@ -5,10 +5,10 @@
 <p align="center">
   <img src="https://img.shields.io/badge/iPhone-168-9fabbc?style=flat-square" alt="iPhone stable build 168" />
   <img src="https://img.shields.io/badge/Mac-169-9fabbc?style=flat-square" alt="Mac build 169" />
-  <img src="https://img.shields.io/badge/Fire_TV-170-9fabbc?style=flat-square" alt="Fire TV build 170" />
+  <img src="https://img.shields.io/badge/Fire_TV-171-9fabbc?style=flat-square" alt="Fire TV build 171" />
   <img src="https://img.shields.io/badge/status-personal_testing-242830?style=flat-square" alt="Personal testing builds" />
 </p>
-<p align="center"><a href="#download">Download</a> · <a href="#inside-mira">Explore</a> · <a href="docs/INSTALL.md">Install</a> · <a href="docs/BUILD-170.md">Latest checks</a> · <a href="docs/RELEASING.md">Build & publish</a></p>
+<p align="center"><a href="#download">Download</a> · <a href="#inside-mira">Explore</a> · <a href="docs/INSTALL.md">Install</a> · <a href="docs/BUILD-171.md">Latest checks</a> · <a href="docs/RELEASING.md">Build & publish</a></p>
 
 ![Mira Home on Mac](docs/assets/home.jpg)
 
@@ -21,7 +21,7 @@
 | iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.24/Mira.ipa) | 0.5.24 / 168 | Sign with Sideloadly; iOS 16.1+. |
 | Apple Silicon Mac | [ARM64 DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.25/Mira-macOS-arm64.dmg) | 0.5.25 / 169 | macOS 12+. |
 | Intel Mac | [Intel DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.25/Mira-macOS-x86_64.dmg) | 0.5.25 / 169 | macOS 12+. |
-| Fire TV | [Universal APK](https://github.com/4marawan001/Mira/releases/download/v0.5.26/Mira-FireTV-universal.apk) | 0.5.26 / 170 | Android-based Fire TV, API 24+. |
+| Fire TV | [Universal APK](https://github.com/4marawan001/Mira/releases/download/v0.5.27/Mira-FireTV-universal.apk) | 0.5.27 / 171 | Android-based Fire TV, API 24+. |
 | iPhone update helper for Mac | [Universal Mac ZIP](https://github.com/4marawan001/Mira/releases/download/v0.5.22/Mira-iPhone-Updates-1.1.1-macOS.zip) | Helper 1.1.1 / 169 | Apple Silicon or Intel; macOS 13+. |
 
 Keep Mira installed when updating, and use the same signing identity to retain local data. Mac packages are ad-hoc signed, without Apple notarization. [Installation guide](docs/INSTALL.md) · [All releases](https://github.com/4marawan001/Mira/releases).
@@ -73,7 +73,19 @@ Choose an accent color, alternate icon and layout. The default uses Mira’s sil
 
 Build 167 introduced bounded poster decoding, removed duplicate catalog presentation work and avoided live source-menu blur. Focus scrolls when a card needs room. Empty Home retains navigation and setup. Provider responses are serialized to prevent competing autoplay selections. Build 170 raises the Balanced ceiling to 40 GB/two hours, reduces the preference for over-compressed copies, and prevents cached links or early binge groups from bypassing current quality selection. [TV changes and validation](docs/BUILD-167.md).
 
-## Latest quality update
+## Better Arabic and English subtitles
+
+On Fire TV 171, open the subtitle panel and click **Arabic** or **English** to request the best available track. A matching full-dialogue embedded track is preferred. Otherwise Mira considers add-on release names, filenames, frame rate and provider-reported hash matches, validates a few downloads, and tries another if one is broken. Choosing an individual row keeps that exact track.
+
+Subtitle loading no longer restarts when sync analysis begins. Downloads cancel when you switch, recreated views repaint active cues, and repeated synchronization uses original timing instead of compounding corrections. The video buffer stays intact on the sidecar path.
+
+Automatic timing correction needs a suitable embedded subtitle reference and passes confidence checks before applying. It cannot guarantee alignment for every cut or provider file; unsupported MPV/libass paths and missing references are reported. Embedded tracks, manual track selection and timing controls remain available. **202 focused tests passed**, including 25 new matching, Arabic HTTP, cancellation and lifecycle checks. [Checks and remaining TV tests](docs/BUILD-171.md).
+
+<p align="center"><img src="docs/assets/firetv-171-subtitles.png" width="800" alt="Fire TV 171 automatically selects the valid Arabic test subtitle" /></p>
+
+*Final signed 171 APK in the TV emulator, using a locally generated video and synthetic subtitle files. The unusable first candidate is skipped. This image does not demonstrate real-film synchronization.*
+
+## Previous quality update
 
 Mac 169 and Fire TV 170 improve Balanced selection while preserving iPhone 168. For a two-hour movie, an 18 GB 4K Blu-ray HEVC encode beats a 2 GB 4K copy; a 39 GB REMUX does not win automatically. The maximum is 40 GB, rather than a target download size.
 
