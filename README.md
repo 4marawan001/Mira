@@ -22,12 +22,12 @@
 
 ## Download
 
-Latest releases: **iPhone 0.5.19 · build 164**, **Fire TV 0.5.17 · build 162**, and **Mac 0.5.20 · build 165**. These are Release packages.
+Latest releases: **iPhone 0.5.21 · build 166**, **Fire TV 0.5.22 · build 167**, and **Mac 0.5.20 · build 165**. These are Release packages.
 
 | Device | Download | Installation |
 | --- | --- | --- |
-| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.19/Mira-ios-164.ipa) | Sign and install with Sideloadly on your Mac. |
-| Fire TV | [APK](https://github.com/4marawan001/Mira/releases/download/v0.5.17/Mira-FireTV-universal.apk) | Install on a compatible Android-based Fire TV. Remote controls are supported. |
+| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.21/Mira-ios-166.ipa) | Sign and install with Sideloadly on your Mac. |
+| Fire TV | [APK](https://github.com/4marawan001/Mira/releases/download/v0.5.22/Mira-FireTV-universal.apk) | Install on a compatible Android-based Fire TV. Remote controls are supported. |
 | Apple Silicon Mac (macOS 12+) | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.20/Mira-macOS-arm64.dmg) | Open the disk image and copy Mira to Applications. |
 | Intel Mac (macOS 12+) | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.20/Mira-macOS-x86_64.dmg) | Open the disk image and copy Mira to Applications. |
 
@@ -56,6 +56,18 @@ Choose an accent color, change the app icon, or adjust the browsing layout. The 
 ![Mira appearance settings with accent colors and Movies or Videos browsing modes](docs/assets/appearance.jpg)
 
 <p align="center"><sub>Real screenshot from the Mac app, build 155 (appearance settings).</sub></p>
+
+## What's new in Fire TV build 167
+
+TV now has **Low Data, Balanced and Highest** with Android hardware-decoder and display checks. Balanced favors suitable 4K on a capable TV, with a 30 GB-per-two-hour budget scaled by known runtime. Existing installations can choose it in **Settings → Automatic quality**.
+
+Home and the source picker use Mira’s dark, compact styling. Browsing avoids duplicate catalog processing, large poster decoding, live source-menu blur and unnecessary focus scrolling. A fresh account can reach Settings and add sources even before any catalogs exist.
+
+![Mira Fire TV 167 Home in an Android TV emulator](docs/assets/firetv-167-home.png)
+
+*Signed Release APK running in the Android TV emulator with a local metadata-only fixture using public Cinemeta movie artwork. Physical Insignia performance remains untested.*
+
+[TV 167 changes, checks, installation and limitations](docs/BUILD-167.md) · [Download TV 167](https://github.com/4marawan001/Mira/releases/tag/v0.5.22)
 
 ## What's new in Mac build 165
 

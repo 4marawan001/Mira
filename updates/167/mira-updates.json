@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "artifacts": {
+    "ios": {
+      "version": "0.5.21",
+      "build": 166,
+      "url": "https://github.com/4marawan001/Mira/releases/download/v0.5.21/Mira-ios-166.ipa",
+      "sha256": "d5c0d667d3c494e13a745722b3fb40e27fa0fd44ea6ed508206cd15229800e16",
+      "size": 90988927
+    },
+    "macos": {
+      "version": "0.5.20",
+      "build": 165,
+      "url": "https://github.com/4marawan001/Mira/releases/download/v0.5.20/Mira-macOS-arm64.dmg",
+      "sha256": "f20693e0c0816882beaf294287cda30a41b7b1c4cd8df9d4f13101a928279aba",
+      "size": 195719623,
+      "architectures": {
+        "arm64": {
+          "version": "0.5.20",
+          "build": 165,
+          "url": "https://github.com/4marawan001/Mira/releases/download/v0.5.20/Mira-macOS-arm64.dmg",
+          "sha256": "f20693e0c0816882beaf294287cda30a41b7b1c4cd8df9d4f13101a928279aba",
+          "size": 195719623
+        },
+        "x86_64": {
+          "version": "0.5.20",
+          "build": 165,
+          "url": "https://github.com/4marawan001/Mira/releases/download/v0.5.20/Mira-macOS-x86_64.dmg",
+          "sha256": "4f20588a56c7b1d95b876bfed4f92be911d8a7166ad1e291e11750f4dbeb84f4",
+          "size": 201413838
+        }
+      }
+    },
+    "firetv": {
+      "version": "0.5.22",
+      "build": 167,
+      "url": "https://github.com/4marawan001/Mira/releases/download/v0.5.22/Mira-FireTV-universal.apk",
+      "sha256": "13947b25a96ac69d74b0acb23005e500c77859c1db45c5b2c656a3ab93832ec4",
+      "size": 134516563
+    }
+  }
+}
