@@ -3,7 +3,7 @@
 <p align="center">Your media, with room to breathe.</p>
 <p align="center">iPhone · Apple Silicon & Intel Mac · Fire TV</p>
 <p align="center">
-  <img src="https://img.shields.io/badge/iPhone-165-9fabbc?style=flat-square" alt="iPhone stable build 165" />
+  <img src="https://img.shields.io/badge/iPhone-168-9fabbc?style=flat-square" alt="iPhone stable build 168" />
   <img src="https://img.shields.io/badge/Mac-165-9fabbc?style=flat-square" alt="Mac build 165" />
   <img src="https://img.shields.io/badge/Fire_TV-167-9fabbc?style=flat-square" alt="Fire TV build 167" />
   <img src="https://img.shields.io/badge/status-personal_testing-242830?style=flat-square" alt="Personal testing builds" />
@@ -18,7 +18,7 @@
 
 | Device | Release package | Version | Setup |
 | --- | --- | --- | --- |
-| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.23/Mira.ipa) | 0.5.22 / 165 | Sign with Sideloadly; iOS 16.1+. |
+| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.24/Mira.ipa) | 0.5.24 / 168 | Sign with Sideloadly; iOS 16.1+. |
 | Apple Silicon Mac | [ARM64 DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.20/Mira-macOS-arm64.dmg) | 0.5.20 / 165 | macOS 12+. |
 | Intel Mac | [Intel DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.20/Mira-macOS-x86_64.dmg) | 0.5.20 / 165 | macOS 12+. |
 | Fire TV | [Universal APK](https://github.com/4marawan001/Mira/releases/download/v0.5.22/Mira-FireTV-universal.apk) | 0.5.22 / 167 | Android-based Fire TV, API 24+. |
@@ -26,7 +26,7 @@
 
 Keep Mira installed when updating, and use the same signing identity to retain local data. Mac packages are ad-hoc signed, without Apple notarization. [Installation guide](docs/INSTALL.md) · [All releases](https://github.com/4marawan001/Mira/releases).
 
-**iPhone version correction:** the current v0.5.23 download contains internal version **0.5.22 / build 165**. The earlier release advertised as 166 actually contains **0.5.19 / build 164**. The shared channel now uses the newest verified package, including its lookup changes. The next source version is 168, pending preview review. [Audit and package status](docs/AUDIT-2026-10-14.md).
+**iPhone 168 is published:** the reviewed lookup, profile-cache and query fixes are in a verified Release IPA, with actual internal version **0.5.24 / 168**. Earlier mislabeled packages remain archived. [Changes and checks](docs/BUILD-168.md).
 
 GitHub’s “Latest” points to the shared Fire TV release, which carries the update manifest for every platform. Platform versions can differ; use the table for downloads.
 
@@ -38,7 +38,7 @@ Search displays results as add-ons respond. View All keeps the original query an
 
 <p align="center"><img src="docs/assets/iphone-168-preview.png" width="330" alt="Mira 168 Home on the iPhone 12 mini simulator" /></p>
 
-*Current iPhone 168 Debug preview. The source fixes are awaiting preview review before a new Release IPA.*
+*iPhone 168 on the dedicated Debug iPhone 12 mini simulator. The reviewed source is now packaged in the separate Release IPA.*
 
 ### Choose playback quality
 
@@ -93,7 +93,7 @@ Earlier broad suites retain known failures: two vendored TV Media3 tests and fiv
 
 ## Source and earlier changes
 
-App source archives and patches are attached to their platform releases. The source repositories contain local changes beyond those archives; the audit document identifies which fixes are awaiting an app package. The update helper’s source and checks are in [companion](companion), with a read-only [release channel validator](tools/check-release-channel.py).
+App source archives and patches are attached to their platform releases. The source repositories contain local changes beyond those archives; the audit and build documents identify the delivered versions. The update helper’s source and checks are in [companion](companion), with a read-only [release channel validator](tools/check-release-channel.py).
 
 [Mac 165](docs/BUILD-165.md) · [iPhone 164](docs/BUILD-164.md) · [TV 167](docs/BUILD-167.md) · [Earlier release history](https://github.com/4marawan001/Mira/releases).
 

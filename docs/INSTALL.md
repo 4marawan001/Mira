@@ -1,6 +1,6 @@
 # Install Mira
 
-Use the device-specific [download table](../README.md#download). The shared channel currently lists iPhone 165, Mac 165 and Fire TV 167. The [audit](AUDIT-2026-10-14.md) explains the corrected iPhone version labels and the next preview.
+Use the device-specific [download table](../README.md#download). The shared channel currently lists iPhone 168, Mac 165 and Fire TV 167. The [audit](AUDIT-2026-10-14.md) explains the corrected iPhone version labels and the delivered iPhone 168 update.
 
 ## iPhone
 
