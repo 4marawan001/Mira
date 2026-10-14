@@ -708,7 +708,7 @@ diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/HomeScreen.kt b/app/
 diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt
 --- a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt
 +++ b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt
-@@ -11,10 +11,12 @@
+@@ -11,10 +11,14 @@
  import androidx.compose.runtime.saveable.rememberSaveable
  import androidx.compose.ui.Alignment
  import androidx.compose.ui.Modifier
@@ -718,26 +718,22 @@ diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt b/app/
  import androidx.compose.ui.text.font.FontWeight
  import androidx.compose.ui.unit.dp
 +import androidx.compose.ui.unit.sp
++import androidx.compose.material.icons.Icons
++import androidx.compose.material.icons.automirrored.filled.ArrowBack
  import androidx.tv.material3.*
  import com.nuvio.tv.domain.model.*
  import com.nuvio.tv.ui.components.GridContentCard
-@@ -30,41 +32,165 @@
+@@ -30,41 +34,170 @@
  val LocalMiraBrowse = staticCompositionLocalOf<(String) -> Unit> { {} }
  internal val miraGenres = listOf("Action", "Adventure", "Animation", "Comedy", "Crime", "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Thriller")
  
--@Composable
--internal fun MiraBrowseShelves() {
--    val navigate = LocalMiraBrowse.current
--    Column(Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
--        Text("Genres", style = MaterialTheme.typography.titleLarge, color = Color.White)
--        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(4.dp)) {
 +val genreGradients = listOf(
-+    Color(0xFFB83DF5),
-+    Color(0xFFFF4D2F),
-+    Color(0xFFB4DB00),
-+    Color(0xFF00CCA7),
-+    Color(0xFF497CFF),
-+    Color(0xFFF756BF)
++    listOf(Color(0xFFB83DF5), Color(0xFFFF2864)),
++    listOf(Color(0xFFFF4D2F), Color(0xFFFFB800)),
++    listOf(Color(0xFFB4DB00), Color(0xFF16BD65)),
++    listOf(Color(0xFF00CCA7), Color(0xFF008EFF)),
++    listOf(Color(0xFF497CFF), Color(0xFFA14EF5)),
++    listOf(Color(0xFFF756BF), Color(0xFFFF335A))
 +)
 +
 +@Composable
@@ -748,7 +744,7 @@ diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt b/app/
 +    Column(
 +        modifier = modifier
 +            .fillMaxWidth()
-+            .padding(horizontal = 36.dp, vertical = 10.dp),
++            .padding(horizontal = 36.dp, vertical = 8.dp),
 +        verticalArrangement = Arrangement.spacedBy(10.dp)
 +    ) {
 +        Text(
@@ -761,17 +757,16 @@ diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt b/app/
 +            horizontalArrangement = Arrangement.spacedBy(10.dp),
 +            contentPadding = PaddingValues(horizontal = 2.dp, vertical = 4.dp)
 +        ) {
-             items(miraGenres) { genre ->
-                 val index = miraGenres.indexOf(genre)
--                val colors = listOf(Color(0xFFFF467F), Color(0xFFFF9933), Color(0xFF3CBE8A), Color(0xFF578AFF), Color(0xFFAC67F5))
--                Card(onClick = { navigate(genre) }, modifier = Modifier.size(116.dp, 60.dp),
--                    shape = CardDefaults.shape(RoundedCornerShape(14.dp)),
--                    colors = CardDefaults.colors(containerColor = colors[index % colors.size], focusedContainerColor = colors[index % colors.size]),
--                    scale = CardDefaults.scale(focusedScale = 1.06f),
--                    border = CardDefaults.border(focusedBorder = Border(androidx.compose.foundation.BorderStroke(2.dp, Color.White), shape = RoundedCornerShape(14.dp)))) {
--                    Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color.White.copy(alpha = .14f), Color.Transparent))), contentAlignment = Alignment.Center) {
--                        Text(genre, color = Color.White, fontWeight = FontWeight.SemiBold)
-+                val dotColor = genreGradients[index % genreGradients.size]
++            items(
++                items = miraGenres,
++                key = { it },
++                contentType = { "genre_pill" }
++            ) { genre ->
++                val index = miraGenres.indexOf(genre)
++                val gradient = remember(index) {
++                    val colors = genreGradients[index % genreGradients.size]
++                    Brush.linearGradient(colors)
++                }
 +                Card(
 +                    onClick = { onGenreClick(genre) },
 +                    shape = CardDefaults.shape(RoundedCornerShape(50)),
@@ -800,7 +795,7 @@ diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt b/app/
 +                            modifier = Modifier
 +                                .size(7.dp)
 +                                .clip(RoundedCornerShape(50))
-+                                .background(dotColor)
++                                .background(gradient)
 +                        )
 +                        Text(
 +                            text = genre,
@@ -808,12 +803,10 @@ diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt b/app/
 +                            fontWeight = FontWeight.Medium,
 +                            maxLines = 1
 +                        )
-                     }
-                 }
-             }
-         }
--        Text("IMDb Top 250", style = MaterialTheme.typography.titleLarge, color = Color.White)
--        Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
++                    }
++                }
++            }
++        }
 +    }
 +}
 +
@@ -825,7 +818,7 @@ diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt b/app/
 +    Column(
 +        modifier = modifier
 +            .fillMaxWidth()
-+            .padding(horizontal = 36.dp, vertical = 10.dp),
++            .padding(horizontal = 36.dp, vertical = 8.dp),
 +        verticalArrangement = Arrangement.spacedBy(10.dp)
 +    ) {
 +        Text(
@@ -838,18 +831,13 @@ diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt b/app/
 +            modifier = Modifier.fillMaxWidth(),
 +            horizontalArrangement = Arrangement.spacedBy(14.dp)
 +        ) {
-             listOf("imdb-movies" to "Movies", "imdb-shows" to "TV Shows").forEach { (slug, label) ->
--                Card(onClick = { navigate(slug) }, modifier = Modifier.weight(1f).height(64.dp),
++            listOf("imdb-movies" to "Movies", "imdb-shows" to "TV Shows").forEach { (slug, label) ->
 +                Card(
 +                    onClick = { onChartClick(slug) },
-+                    modifier = Modifier.weight(1f).height(68.dp),
-                     shape = CardDefaults.shape(RoundedCornerShape(16.dp)),
--                    colors = CardDefaults.colors(containerColor = Color(0xFF1C1C1E), focusedContainerColor = Color(0xFF303034))) {
--                    Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
--                        Text("★  $label", color = Color.White, fontWeight = FontWeight.SemiBold)
--                        Text("Rated by IMDb users", color = Color(0xFF98989E), style = MaterialTheme.typography.bodySmall)
++                    modifier = Modifier.weight(1f).height(74.dp),
++                    shape = CardDefaults.shape(RoundedCornerShape(18.dp)),
 +                    colors = CardDefaults.colors(
-+                        containerColor = Color(0xFF1C1C1E),
++                        containerColor = Color(0xFF1B1D21),
 +                        focusedContainerColor = Color(0xFF2C2C30),
 +                        contentColor = Color.White,
 +                        focusedContentColor = Color.White
@@ -858,47 +846,78 @@ diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt b/app/
 +                    border = CardDefaults.border(
 +                        focusedBorder = Border(
 +                            androidx.compose.foundation.BorderStroke(2.dp, Color.White),
-+                            shape = RoundedCornerShape(16.dp)
++                            shape = RoundedCornerShape(18.dp)
 +                        )
 +                    )
 +                ) {
-+                    Column(
++                    Row(
 +                        modifier = Modifier
 +                            .fillMaxSize()
-+                            .padding(horizontal = 20.dp, vertical = 12.dp),
-+                        verticalArrangement = Arrangement.spacedBy(4.dp)
++                            .padding(horizontal = 20.dp, vertical = 14.dp),
++                        verticalAlignment = Alignment.CenterVertically,
++                        horizontalArrangement = Arrangement.spacedBy(14.dp)
 +                    ) {
-+                        Row(
-+                            verticalAlignment = Alignment.CenterVertically,
-+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-+                        ) {
-+                            Text(
-+                                text = "★",
-+                                color = Color(0xFFF5C518),
-+                                fontSize = 16.sp,
-+                                fontWeight = FontWeight.Bold
-+                            )
++                        Text(
++                            text = "★",
++                            color = Color(0xFFF5C518),
++                            fontSize = 22.sp,
++                            fontWeight = FontWeight.Bold
++                        )
++                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
 +                            Text(
 +                                text = label,
 +                                color = Color.White,
 +                                style = MaterialTheme.typography.titleMedium,
 +                                fontWeight = FontWeight.SemiBold
 +                            )
++                            Text(
++                                text = "Rated by IMDb users",
++                                color = Color(0xFF98989E),
++                                style = MaterialTheme.typography.bodySmall
++                            )
 +                        }
-+                        Text(
-+                            text = "Rated by IMDb users",
-+                            color = Color(0xFF98989E),
-+                            style = MaterialTheme.typography.bodySmall
-+                        )
-                     }
-                 }
-             }
-         }
-     }
- }
++                    }
++                }
++            }
++        }
++    }
++}
 +
-+@Composable
-+internal fun MiraBrowseShelves() {
+ @Composable
+ internal fun MiraBrowseShelves() {
+-    val navigate = LocalMiraBrowse.current
+-    Column(Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+-        Text("Genres", style = MaterialTheme.typography.titleLarge, color = Color.White)
+-        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(4.dp)) {
+-            items(miraGenres) { genre ->
+-                val index = miraGenres.indexOf(genre)
+-                val colors = listOf(Color(0xFFFF467F), Color(0xFFFF9933), Color(0xFF3CBE8A), Color(0xFF578AFF), Color(0xFFAC67F5))
+-                Card(onClick = { navigate(genre) }, modifier = Modifier.size(116.dp, 60.dp),
+-                    shape = CardDefaults.shape(RoundedCornerShape(14.dp)),
+-                    colors = CardDefaults.colors(containerColor = colors[index % colors.size], focusedContainerColor = colors[index % colors.size]),
+-                    scale = CardDefaults.scale(focusedScale = 1.06f),
+-                    border = CardDefaults.border(focusedBorder = Border(androidx.compose.foundation.BorderStroke(2.dp, Color.White), shape = RoundedCornerShape(14.dp)))) {
+-                    Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color.White.copy(alpha = .14f), Color.Transparent))), contentAlignment = Alignment.Center) {
+-                        Text(genre, color = Color.White, fontWeight = FontWeight.SemiBold)
+-                    }
+-                }
+-            }
+-        }
+-        Text("IMDb Top 250", style = MaterialTheme.typography.titleLarge, color = Color.White)
+-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+-            listOf("imdb-movies" to "Movies", "imdb-shows" to "TV Shows").forEach { (slug, label) ->
+-                Card(onClick = { navigate(slug) }, modifier = Modifier.weight(1f).height(64.dp),
+-                    shape = CardDefaults.shape(RoundedCornerShape(16.dp)),
+-                    colors = CardDefaults.colors(containerColor = Color(0xFF1C1C1E), focusedContainerColor = Color(0xFF303034))) {
+-                    Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+-                        Text("★  $label", color = Color.White, fontWeight = FontWeight.SemiBold)
+-                        Text("Rated by IMDb users", color = Color(0xFF98989E), style = MaterialTheme.typography.bodySmall)
+-                    }
+-                }
+-            }
+-        }
+-    }
+-}
 +    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
 +        TvHomeGenreSection()
 +        TvMiraChartSection()
@@ -908,7 +927,7 @@ diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt b/app/
  
  internal object MiraBrowseData {
      private val client = OkHttpClient.Builder().connectTimeout(15, TimeUnit.SECONDS).readTimeout(20, TimeUnit.SECONDS).callTimeout(25, TimeUnit.SECONDS).build()
-@@ -85,7 +211,7 @@
+@@ -85,7 +218,7 @@
          }
          val payload = client.newCall(request).execute().use { response ->
              check(response.isSuccessful) { "Catalog unavailable (HTTP ${response.code}). Try again." }
@@ -917,11 +936,61 @@ diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraBrowse.kt b/app/
          }
          currentCoroutineContext().ensureActive()
          parse(payload, type, chart)
+@@ -142,7 +275,37 @@
+     LaunchedEffect(nearEnd, items.size, loading) { if (nearEnd && items.isNotEmpty() && !loading && error == null) load() }
+     Column(Modifier.fillMaxSize().background(Color.Black).padding(horizontal = 36.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+-            Button(onClick = onBack) { Text("Back") }
++            Card(
++                onClick = onBack,
++                shape = CardDefaults.shape(RoundedCornerShape(50)),
++                colors = CardDefaults.colors(
++                    containerColor = Color(0xFF1B1D21),
++                    focusedContainerColor = Color(0xFF2C2C30),
++                    contentColor = Color.White,
++                    focusedContentColor = Color.White
++                ),
++                scale = CardDefaults.scale(focusedScale = 1.06f),
++                border = CardDefaults.border(
++                    focusedBorder = Border(
++                        androidx.compose.foundation.BorderStroke(2.dp, Color.White),
++                        shape = RoundedCornerShape(50)
++                    )
++                )
++            ) {
++                Row(
++                    modifier = Modifier.height(38.dp).padding(horizontal = 14.dp),
++                    verticalAlignment = Alignment.CenterVertically,
++                    horizontalArrangement = Arrangement.spacedBy(6.dp)
++                ) {
++                    Icon(
++                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
++                        contentDescription = "Back",
++                        modifier = Modifier.size(16.dp),
++                        tint = Color.White
++                    )
++                    Text("Back", fontSize = 13.sp, fontWeight = FontWeight.Medium)
++                }
++            }
+             Text(when (slug) { "imdb-movies" -> "IMDb Top 250 Movies"; "imdb-shows" -> "IMDb Top 250 TV Shows"; else -> "$slug Movies" }, style = MaterialTheme.typography.headlineMedium)
+         }
+         if (!slug.startsWith("imdb-")) Text("Cinemeta · Movies", color = Color(0xFF98989E), style = MaterialTheme.typography.bodySmall)
+@@ -152,7 +315,9 @@
+         if (loading && items.isEmpty()) Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { LoadingIndicator() }
+         else LazyVerticalGrid(columns = GridCells.Adaptive(126.dp), state = grid, modifier = Modifier.weight(1f),
+             contentPadding = PaddingValues(8.dp), horizontalArrangement = Arrangement.spacedBy(18.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+-            items(items, key = { it.id }) { item -> GridContentCard(item = item, onClick = { onDetail(item.id, item.apiType) }) }
++            items(items, key = { it.id }, contentType = { "poster_card" }) { item ->
++                MiraTvPosterCard(item = item, onClick = { onDetail(item.id, item.apiType) })
++            }
+             if (loading) item(span = { GridItemSpan(maxLineSpan) }) { LoadingIndicator() }
+         }
+     }
 diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHeroSection.kt b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHeroSection.kt
 new file mode 100644
 --- /dev/null
 +++ b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHeroSection.kt
-@@ -0,0 +1,330 @@
+@@ -0,0 +1,339 @@
 +@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 +package com.nuvio.tv.ui.screens.home
 +
@@ -931,9 +1000,8 @@ new file mode 100644
 +import androidx.compose.foundation.background
 +import androidx.compose.foundation.layout.*
 +import androidx.compose.foundation.shape.RoundedCornerShape
-+import androidx.compose.material.icons.Icons
-+import androidx.compose.material.icons.filled.Info
-+import androidx.compose.material.icons.filled.PlayArrow
++import androidx.compose.material.icons.rounded.Info
++import androidx.compose.material.icons.rounded.PlayArrow
 +import androidx.compose.runtime.*
 +import androidx.compose.ui.Alignment
 +import androidx.compose.ui.Modifier
@@ -1007,34 +1075,37 @@ new file mode 100644
 +            }
 +        }
 +
++        val heroHGradient = remember {
++            Brush.horizontalGradient(
++                colors = listOf(
++                    Color.Black.copy(alpha = 0.92f),
++                    Color.Black.copy(alpha = 0.65f),
++                    Color.Transparent
++                ),
++                startX = 0f,
++                endX = 1200f
++            )
++        }
++        val heroVGradient = remember {
++            Brush.verticalGradient(
++                colors = listOf(
++                    Color.Transparent,
++                    Color.Black.copy(alpha = 0.85f)
++                ),
++                startY = 180f
++            )
++        }
++
 +        // Gradient overlays: Left to Right and Bottom to Top for cinema text legibility
 +        Box(
 +            modifier = Modifier
 +                .fillMaxSize()
-+                .background(
-+                    Brush.horizontalGradient(
-+                        colors = listOf(
-+                            Color.Black.copy(alpha = 0.92f),
-+                            Color.Black.copy(alpha = 0.65f),
-+                            Color.Transparent
-+                        ),
-+                        startX = 0f,
-+                        endX = 1200f
-+                    )
-+                )
++                .background(heroHGradient)
 +        )
 +        Box(
 +            modifier = Modifier
 +                .fillMaxSize()
-+                .background(
-+                    Brush.verticalGradient(
-+                        colors = listOf(
-+                            Color.Transparent,
-+                            Color.Black.copy(alpha = 0.85f)
-+                        ),
-+                        startY = 180f
-+                    )
-+                )
++                .background(heroVGradient)
 +        )
 +
 +        // Hero Info & Actions
@@ -1073,61 +1144,68 @@ new file mode 100644
 +                )
 +            }
 +
-+            // Badges row: Year, Rating, Type, Genres
++            // Badges row: Type badge, Year, Rating, Genres (1:1 with iPhone IPA)
 +            Row(
 +                verticalAlignment = Alignment.CenterVertically,
-+                horizontalArrangement = Arrangement.spacedBy(10.dp)
++                horizontalArrangement = Arrangement.spacedBy(8.dp)
 +            ) {
-+                // IMDb Rating
-+                currentItem.imdbRating?.let { rating ->
-+                    Row(
-+                        modifier = Modifier
-+                            .clip(RoundedCornerShape(6.dp))
-+                            .background(Color(0xFF26262A))
-+                            .padding(horizontal = 8.dp, vertical = 3.dp),
-+                        verticalAlignment = Alignment.CenterVertically,
-+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-+                    ) {
-+                        Text("★", color = Color(0xFFF5C518), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-+                        Text(
-+                            text = String.format("%.1f", rating),
-+                            color = Color.White,
-+                            fontSize = 12.sp,
-+                            fontWeight = FontWeight.SemiBold
-+                        )
-+                    }
++                // Content Type badge
++                val typeName = when (currentItem.type.name.lowercase()) {
++                    "series", "tv" -> "Series"
++                    else -> "Movie"
++                }
++                Box(
++                    modifier = Modifier
++                        .clip(RoundedCornerShape(6.dp))
++                        .background(Color.White.copy(alpha = 0.14f))
++                        .padding(horizontal = 8.dp, vertical = 3.dp)
++                ) {
++                    Text(
++                        text = typeName,
++                        color = Color.White,
++                        fontSize = 12.sp,
++                        fontWeight = FontWeight.SemiBold
++                    )
 +                }
 +
-+                // Release Info / Year
-+                currentItem.releaseInfo?.takeIf { it.isNotBlank() }?.let { year ->
++                // First Genre
++                currentItem.genres.firstOrNull()?.let { genre ->
++                    Text("•", color = Color.White.copy(alpha = 0.4f), fontSize = 12.sp)
 +                    Text(
-+                        text = year,
-+                        color = Color(0xFFD1D1D6),
++                        text = genre,
++                        color = Color(0xFFE8E9EC),
 +                        fontSize = 13.sp,
 +                        fontWeight = FontWeight.Medium
 +                    )
 +                }
 +
-+                // Content Type
-+                val typeName = when (currentItem.type.name.lowercase()) {
-+                    "series", "tv" -> "TV Series"
-+                    else -> "Movie"
-+                }
-+                Text(
-+                    text = "•  $typeName",
-+                    color = Color(0xFFAAAAAF),
-+                    fontSize = 13.sp
-+                )
-+
-+                // Genres preview
-+                if (currentItem.genres.isNotEmpty()) {
++                // Release Info / Year
++                currentItem.releaseInfo?.takeIf { it.isNotBlank() }?.let { rawYear ->
++                    val year = Regex("(\\d{4})").find(rawYear)?.value ?: rawYear.split("-").firstOrNull() ?: rawYear
++                    Text("•", color = Color.White.copy(alpha = 0.4f), fontSize = 12.sp)
 +                    Text(
-+                        text = "•  " + currentItem.genres.take(2).joinToString(" / "),
-+                        color = Color(0xFFAAAAAF),
++                        text = year,
++                        color = Color(0xFFE8E9EC),
 +                        fontSize = 13.sp,
-+                        maxLines = 1,
-+                        overflow = TextOverflow.Ellipsis
++                        fontWeight = FontWeight.Medium
 +                    )
++                }
++
++                // IMDb Rating with gold star
++                currentItem.imdbRating?.let { rating ->
++                    Text("•", color = Color.White.copy(alpha = 0.4f), fontSize = 12.sp)
++                    Row(
++                        verticalAlignment = Alignment.CenterVertically,
++                        horizontalArrangement = Arrangement.spacedBy(4.dp)
++                    ) {
++                        Text("★", color = Color(0xFFF5C518), fontSize = 13.sp, fontWeight = FontWeight.Bold)
++                        Text(
++                            text = String.format("%.1f", rating),
++                            color = Color.White,
++                            fontSize = 13.sp,
++                            fontWeight = FontWeight.SemiBold
++                        )
++                    }
 +                }
 +            }
 +
@@ -1135,7 +1213,7 @@ new file mode 100644
 +            currentItem.description?.takeIf { it.isNotBlank() }?.let { overview ->
 +                Text(
 +                    text = overview,
-+                    color = Color(0xFFB0B0B5),
++                    color = Color.White.copy(alpha = 0.72f),
 +                    fontSize = 13.sp,
 +                    maxLines = 2,
 +                    lineHeight = 18.sp,
@@ -1163,7 +1241,7 @@ new file mode 100644
 +                    scale = CardDefaults.scale(focusedScale = 1.08f),
 +                    border = CardDefaults.border(
 +                        focusedBorder = Border(
-+                            BorderStroke(2.dp, Color(0xFF578AFF)),
++                            BorderStroke(2.dp, Color.White),
 +                            shape = RoundedCornerShape(50)
 +                        )
 +                    )
@@ -1176,7 +1254,7 @@ new file mode 100644
 +                        horizontalArrangement = Arrangement.spacedBy(8.dp)
 +                    ) {
 +                        Icon(
-+                            imageVector = Icons.Default.PlayArrow,
++                            imageVector = androidx.compose.material.icons.Icons.Rounded.PlayArrow,
 +                            contentDescription = "Play",
 +                            modifier = Modifier.size(20.dp),
 +                            tint = Color.Black
@@ -1215,7 +1293,7 @@ new file mode 100644
 +                        horizontalArrangement = Arrangement.spacedBy(6.dp)
 +                    ) {
 +                        Icon(
-+                            imageVector = Icons.Default.Info,
++                            imageVector = androidx.compose.material.icons.Icons.Rounded.Info,
 +                            contentDescription = "Details",
 +                            modifier = Modifier.size(18.dp),
 +                            tint = Color.White
@@ -1256,15 +1334,20 @@ diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHomeContent.kt
 new file mode 100644
 --- /dev/null
 +++ b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHomeContent.kt
-@@ -0,0 +1,209 @@
-+@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
+@@ -0,0 +1,214 @@
++@file:OptIn(
++    androidx.tv.material3.ExperimentalTvMaterial3Api::class,
++    androidx.compose.foundation.ExperimentalFoundationApi::class
++)
 +package com.nuvio.tv.ui.screens.home
 +
 +import androidx.compose.foundation.background
++import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
 +import androidx.compose.foundation.layout.*
 +import androidx.compose.foundation.lazy.LazyColumn
 +import androidx.compose.foundation.lazy.LazyRow
 +import androidx.compose.foundation.lazy.items
++import androidx.compose.foundation.lazy.itemsIndexed
 +import androidx.compose.foundation.lazy.rememberLazyListState
 +import androidx.compose.runtime.*
 +import androidx.compose.ui.Modifier
@@ -1277,6 +1360,7 @@ new file mode 100644
 +import com.nuvio.tv.domain.model.MetaPreview
 +import com.nuvio.tv.ui.components.CollectionRowSection
 +import com.nuvio.tv.ui.components.ContinueWatchingSection
++import com.nuvio.tv.ui.components.NuvioScrollDefaults
 +
 +@Composable
 +fun MiraTvHomeContent(
@@ -1304,16 +1388,17 @@ new file mode 100644
 +        }
 +    }
 +
-+    LazyColumn(
-+        state = listState,
-+        modifier = Modifier
-+            .fillMaxSize()
-+            .background(Color.Black),
-+        contentPadding = PaddingValues(bottom = 48.dp),
-+        verticalArrangement = Arrangement.spacedBy(16.dp)
-+    ) {
++    CompositionLocalProvider(LocalBringIntoViewSpec provides NuvioScrollDefaults.smoothScrollSpec) {
++        LazyColumn(
++            state = listState,
++            modifier = Modifier
++                .fillMaxSize()
++                .background(Color.Black),
++            contentPadding = PaddingValues(bottom = 48.dp),
++            verticalArrangement = Arrangement.spacedBy(16.dp)
++        ) {
 +        // 1. Mira Top Header (Brand + Navigation Actions)
-+        item(key = "mira_header") {
++        item(key = "mira_header", contentType = "header") {
 +            MiraTvHomeHeader(
 +                onSearchClick = onSearchClick,
 +                onSavedClick = onSavedClick,
@@ -1323,7 +1408,7 @@ new file mode 100644
 +
 +        // 2. Hero Section (Backdrop Banner + Metadata + Action Buttons)
 +        if (uiState.heroSectionEnabled && uiState.heroItems.isNotEmpty()) {
-+            item(key = "mira_hero") {
++            item(key = "mira_hero", contentType = "hero") {
 +                MiraTvHeroSection(
 +                    items = uiState.heroItems,
 +                    onPlayClick = { item ->
@@ -1337,65 +1422,51 @@ new file mode 100644
 +        }
 +
 +        // 3. Genre Pills Section (1:1 with iPhone IPA)
-+        item(key = "mira_genres") {
++        item(key = "mira_genres", contentType = "genres") {
 +            TvHomeGenreSection()
 +        }
 +
 +        // 4. IMDb Top 250 Section (1:1 with iPhone IPA)
-+        item(key = "mira_charts") {
++        item(key = "mira_charts", contentType = "charts") {
 +            TvMiraChartSection()
 +        }
 +
 +        // 5. Continue Watching
 +        if (uiState.continueWatchingEnabled && uiState.continueWatchingItems.isNotEmpty()) {
-+            item(key = "mira_continue_watching") {
-+                Column(
-+                    modifier = Modifier
-+                        .fillMaxWidth()
-+                        .padding(vertical = 6.dp),
-+                    verticalArrangement = Arrangement.spacedBy(10.dp)
-+                ) {
-+                    Text(
-+                        text = "Continue Watching",
-+                        style = MaterialTheme.typography.titleMedium,
-+                        fontWeight = FontWeight.SemiBold,
-+                        color = Color.White,
-+                        modifier = Modifier.padding(horizontal = 36.dp)
-+                    )
-+                    ContinueWatchingSection(
-+                        items = uiState.continueWatchingItems,
-+                        onItemClick = onContinueWatchingClick,
-+                        onStartFromBeginning = onContinueWatchingStartFromBeginning,
-+                        onPlayManually = onContinueWatchingPlayManually,
-+                        showManualPlayOption = showContinueWatchingManualPlayOption,
-+                        onRemoveItem = { item ->
-+                            val contentId = when (item) {
-+                                is ContinueWatchingItem.InProgress -> item.progress.contentId
-+                                is ContinueWatchingItem.NextUp -> item.info.contentId
-+                            }
-+                            val season = when (item) {
-+                                is ContinueWatchingItem.InProgress -> item.progress.season
-+                                is ContinueWatchingItem.NextUp -> item.info.seedSeason
-+                            }
-+                            val episode = when (item) {
-+                                is ContinueWatchingItem.InProgress -> item.progress.episode
-+                                is ContinueWatchingItem.NextUp -> item.info.seedEpisode
-+                            }
-+                            onRemoveContinueWatching(contentId, season, episode, item is ContinueWatchingItem.NextUp)
-+                        },
-+                        onDetailsClick = { item ->
-+                            val contentId = when (item) {
-+                                is ContinueWatchingItem.InProgress -> item.progress.contentId
-+                                is ContinueWatchingItem.NextUp -> item.info.contentId
-+                            }
-+                            val contentType = when (item) {
-+                                is ContinueWatchingItem.InProgress -> item.progress.contentType
-+                                is ContinueWatchingItem.NextUp -> item.info.contentType
-+                            }
-+                            onNavigateToDetail(contentId, contentType, "")
++            item(key = "mira_continue_watching", contentType = "continue_watching") {
++                ContinueWatchingSection(
++                    items = uiState.continueWatchingItems,
++                    onItemClick = onContinueWatchingClick,
++                    onStartFromBeginning = onContinueWatchingStartFromBeginning,
++                    onPlayManually = onContinueWatchingPlayManually,
++                    showManualPlayOption = showContinueWatchingManualPlayOption,
++                    onRemoveItem = { item ->
++                        val contentId = when (item) {
++                            is ContinueWatchingItem.InProgress -> item.progress.contentId
++                            is ContinueWatchingItem.NextUp -> item.info.contentId
 +                        }
-+                    )
-+                }
++                        val season = when (item) {
++                            is ContinueWatchingItem.InProgress -> item.progress.season
++                            is ContinueWatchingItem.NextUp -> item.info.seedSeason
++                        }
++                        val episode = when (item) {
++                            is ContinueWatchingItem.InProgress -> item.progress.episode
++                            is ContinueWatchingItem.NextUp -> item.info.seedEpisode
++                        }
++                        onRemoveContinueWatching(contentId, season, episode, item is ContinueWatchingItem.NextUp)
++                    },
++                    onDetailsClick = { item ->
++                        val contentId = when (item) {
++                            is ContinueWatchingItem.InProgress -> item.progress.contentId
++                            is ContinueWatchingItem.NextUp -> item.info.contentId
++                        }
++                        val contentType = when (item) {
++                            is ContinueWatchingItem.InProgress -> item.progress.contentType
++                            is ContinueWatchingItem.NextUp -> item.info.contentType
++                        }
++                        onNavigateToDetail(contentId, contentType, "")
++                    }
++                )
 +            }
 +        }
 +
@@ -1411,6 +1482,13 @@ new file mode 100644
 +                    is HomeRow.Catalog -> "cat_${homeRow.row.addonId}_${homeRow.row.catalogId}_${homeRow.row.apiType}"
 +                    is HomeRow.CollectionRow -> "col_${homeRow.collection.id}"
 +                    is HomeRow.PlaceholderCatalog -> "ph_${homeRow.catalogKey}"
++                }
++            },
++            contentType = { homeRow ->
++                when (homeRow) {
++                    is HomeRow.Catalog -> "catalog_row"
++                    is HomeRow.CollectionRow -> "collection_row"
++                    is HomeRow.PlaceholderCatalog -> "placeholder_row"
 +                }
 +            }
 +        ) { homeRow ->
@@ -1433,9 +1511,13 @@ new file mode 100644
 +                            )
 +                            LazyRow(
 +                                horizontalArrangement = Arrangement.spacedBy(14.dp),
-+                                contentPadding = PaddingValues(horizontal = 36.dp)
++                                contentPadding = PaddingValues(horizontal = 36.dp, vertical = 8.dp)
 +                            ) {
-+                                items(catalog.items, key = { it.id }) { item ->
++                                itemsIndexed(
++                                    items = catalog.items,
++                                    key = { index, item -> "${item.id}_${item.apiType}_$index" },
++                                    contentType = { _, _ -> "poster_card" }
++                                ) { _, item ->
 +                                    MiraTvPosterCard(
 +                                        item = item,
 +                                        onClick = {
@@ -1466,11 +1548,12 @@ new file mode 100644
 +        }
 +    }
 +}
++}
 diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHomeHeader.kt b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHomeHeader.kt
 new file mode 100644
 --- /dev/null
 +++ b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHomeHeader.kt
-@@ -0,0 +1,169 @@
+@@ -0,0 +1,183 @@
 +@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 +package com.nuvio.tv.ui.screens.home
 +
@@ -1479,7 +1562,9 @@ new file mode 100644
 +import androidx.compose.foundation.layout.*
 +import androidx.compose.foundation.shape.RoundedCornerShape
 +import androidx.compose.material.icons.Icons
-+import androidx.compose.material.icons.filled.Search
++import androidx.compose.material.icons.rounded.Bookmark
++import androidx.compose.material.icons.rounded.Search
++import androidx.compose.material.icons.rounded.Tune
 +import androidx.compose.runtime.Composable
 +import androidx.compose.ui.Alignment
 +import androidx.compose.ui.Modifier
@@ -1537,8 +1622,8 @@ new file mode 100644
 +                onClick = onSearchClick,
 +                shape = CardDefaults.shape(RoundedCornerShape(50)),
 +                colors = CardDefaults.colors(
-+                    containerColor = Color(0xFF1C1C1E),
-+                    focusedContainerColor = Color.White.copy(alpha = 0.22f),
++                    containerColor = Color(0xFF1B1D21),
++                    focusedContainerColor = Color(0xFF2C2C30),
 +                    contentColor = Color.White,
 +                    focusedContentColor = Color.White
 +                ),
@@ -1558,7 +1643,7 @@ new file mode 100644
 +                    horizontalArrangement = Arrangement.spacedBy(8.dp)
 +                ) {
 +                    Icon(
-+                        imageVector = Icons.Default.Search,
++                        imageVector = Icons.Rounded.Search,
 +                        contentDescription = "Search",
 +                        modifier = Modifier.size(18.dp),
 +                        tint = Color.White
@@ -1576,8 +1661,8 @@ new file mode 100644
 +                onClick = onSavedClick,
 +                shape = CardDefaults.shape(RoundedCornerShape(50)),
 +                colors = CardDefaults.colors(
-+                    containerColor = Color(0xFF1C1C1E),
-+                    focusedContainerColor = Color.White.copy(alpha = 0.22f),
++                    containerColor = Color(0xFF1B1D21),
++                    focusedContainerColor = Color(0xFF2C2C30),
 +                    contentColor = Color.White,
 +                    focusedContentColor = Color.White
 +                ),
@@ -1596,6 +1681,12 @@ new file mode 100644
 +                    verticalAlignment = Alignment.CenterVertically,
 +                    horizontalArrangement = Arrangement.spacedBy(8.dp)
 +                ) {
++                    Icon(
++                        imageVector = Icons.Rounded.Bookmark,
++                        contentDescription = "Saved",
++                        modifier = Modifier.size(18.dp),
++                        tint = Color.White
++                    )
 +                    Text(
 +                        text = "Saved",
 +                        fontSize = 14.sp,
@@ -1609,8 +1700,8 @@ new file mode 100644
 +                onClick = onSettingsClick,
 +                shape = CardDefaults.shape(RoundedCornerShape(50)),
 +                colors = CardDefaults.colors(
-+                    containerColor = Color(0xFF1C1C1E),
-+                    focusedContainerColor = Color.White.copy(alpha = 0.22f),
++                    containerColor = Color(0xFF1B1D21),
++                    focusedContainerColor = Color(0xFF2C2C30),
 +                    contentColor = Color.White,
 +                    focusedContentColor = Color.White
 +                ),
@@ -1629,6 +1720,12 @@ new file mode 100644
 +                    verticalAlignment = Alignment.CenterVertically,
 +                    horizontalArrangement = Arrangement.spacedBy(8.dp)
 +                ) {
++                    Icon(
++                        imageVector = Icons.Rounded.Tune,
++                        contentDescription = "Settings",
++                        modifier = Modifier.size(18.dp),
++                        tint = Color.White
++                    )
 +                    Text(
 +                        text = "Settings",
 +                        fontSize = 14.sp,
@@ -1644,7 +1741,7 @@ diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvPosterCard.kt 
 new file mode 100644
 --- /dev/null
 +++ b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvPosterCard.kt
-@@ -0,0 +1,145 @@
+@@ -0,0 +1,173 @@
 +@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 +package com.nuvio.tv.ui.screens.home
 +
@@ -1657,6 +1754,7 @@ new file mode 100644
 +import androidx.compose.ui.Alignment
 +import androidx.compose.ui.Modifier
 +import androidx.compose.ui.draw.clip
++import androidx.compose.ui.focus.onFocusChanged
 +import androidx.compose.ui.graphics.Color
 +import androidx.compose.ui.input.key.onPreviewKeyEvent
 +import androidx.compose.ui.layout.ContentScale
@@ -1687,13 +1785,33 @@ new file mode 100644
 +    val cardShape = remember { RoundedCornerShape(12.dp) }
 +    val context = LocalContext.current
 +    var isFocused by remember { mutableStateOf(false) }
++    val shape = item.posterShape
++    val effectiveWidth = when (shape) {
++        com.nuvio.tv.domain.model.PosterShape.LANDSCAPE -> 250.dp
++        com.nuvio.tv.domain.model.PosterShape.SQUARE -> 140.dp
++        else -> cardWidth
++    }
++    val effectiveHeight = when (shape) {
++        com.nuvio.tv.domain.model.PosterShape.LANDSCAPE -> 140.dp
++        com.nuvio.tv.domain.model.PosterShape.SQUARE -> 140.dp
++        else -> cardHeight
++    }
 +
-+    val imageUrl = item.poster ?: item.background ?: item.rawPosterUrl
++    val imageUrl = if (shape == com.nuvio.tv.domain.model.PosterShape.LANDSCAPE) {
++        item.landscapePoster ?: item.background ?: item.poster ?: item.rawPosterUrl
++    } else {
++        item.poster ?: item.background ?: item.rawPosterUrl
++    }
 +
-+    val imageRequest = remember<ImageRequest>(imageUrl) {
++    val imageRequest = remember<ImageRequest>(imageUrl, shape) {
++        val (w, h) = when (shape) {
++            com.nuvio.tv.domain.model.PosterShape.LANDSCAPE -> 500 to 280
++            com.nuvio.tv.domain.model.PosterShape.SQUARE -> 280 to 280
++            else -> 252 to 378
++        }
 +        ImageRequest.Builder(context)
 +            .data(imageUrl)
-+            .size(252, 378) // Fast fixed 2x downsampling for 1080p density
++            .size(w, h)
 +            .memoryCachePolicy(CachePolicy.ENABLED)
 +            .diskCachePolicy(CachePolicy.ENABLED)
 +            .crossfade(false)
@@ -1701,13 +1819,14 @@ new file mode 100644
 +    }
 +
 +    Column(
-+        modifier = modifier.width(cardWidth)
++        modifier = modifier.width(effectiveWidth)
 +    ) {
 +        Card(
 +            onClick = onClick,
 +            modifier = Modifier
-+                .width(cardWidth)
-+                .height(cardHeight)
++                .width(effectiveWidth)
++                .height(effectiveHeight)
++                .onFocusChanged { isFocused = it.isFocused }
 +                .onPreviewKeyEvent { event ->
 +                    val native = event.nativeKeyEvent
 +                    if (native.action == AndroidKeyEvent.ACTION_DOWN &&
@@ -1720,8 +1839,8 @@ new file mode 100644
 +                },
 +            shape = CardDefaults.shape(shape = cardShape),
 +            colors = CardDefaults.colors(
-+                containerColor = Color(0xFF161618),
-+                focusedContainerColor = Color(0xFF222226)
++                containerColor = Color(0xFF1B1D21),
++                focusedContainerColor = Color(0xFF2C2C30)
 +            ),
 +            scale = CardDefaults.scale(focusedScale = 1.05f),
 +            border = CardDefaults.border(
@@ -1769,21 +1888,27 @@ new file mode 100644
 +            }
 +        }
 +
-+        // Title & metadata below card
++        // Title & metadata below card (1:1 with iPhone style, static font weight to prevent text relayout)
 +        Spacer(modifier = Modifier.height(6.dp))
 +        Text(
 +            text = item.name,
 +            color = if (isFocused) Color.White else Color(0xFFE8E9EC),
 +            fontSize = 13.sp,
-+            fontWeight = FontWeight.Medium,
++            fontWeight = FontWeight.SemiBold,
 +            maxLines = 1,
 +            overflow = TextOverflow.Ellipsis
 +        )
-+        item.releaseInfo?.takeIf { it.isNotBlank() }?.let { release ->
++        val releaseYear = remember(item.releaseInfo) {
++            item.releaseInfo?.takeIf { it.isNotBlank() }?.let { release ->
++                Regex("(\\d{4})").find(release)?.value ?: release.split("-").firstOrNull() ?: release
++            }
++        }
++        if (!releaseYear.isNullOrBlank()) {
 +            Text(
-+                text = release,
-+                color = Color(0xFF8E8E93),
++                text = releaseYear,
++                color = if (isFocused) Color(0xFFB0B0B5) else Color(0xFF8E8E93),
 +                fontSize = 11.sp,
++                fontWeight = FontWeight.Normal,
 +                maxLines = 1,
 +                overflow = TextOverflow.Ellipsis
 +            )
