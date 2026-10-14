@@ -1,0 +1,67 @@
+{
+  "type": "Final signed APK emulator check",
+  "device": "Dedicated API 31 Android TV ARM64, 1 GB RAM, two cores",
+  "finalPackageSHA256": "d19165bf45145075eedad18450948aaee73cd8ccdd7e7b788454d4ac622ed489",
+  "checks": {
+    "upgradePreservedGuestAndBothTestAddons": true,
+    "installedVersion172Verified": true,
+    "sixActualLanguageProviderSelectionsVerified": true,
+    "invalidArabicCandidateSkippedForOpenSubtitlesFixture": true,
+    "OpenSubtitlesCheckmarkVisible": true,
+    "manualFileUsedSelectedOnlyAnalysis": true,
+    "ArabicRemainsAfterPanelClosed": true,
+    "styleControlsReachable": true,
+    "headerReturnsToLanguages": true,
+    "OffClearedVisibleCue": true,
+    "samePlaybackProcessRetained": true,
+    "noEmulatorCrashRecorded": true
+  },
+  "verifiedSelections": [
+    {
+      "language": "English",
+      "provider": "OpenSubtitles test fixture",
+      "processRetained": true
+    },
+    {
+      "language": "Arabic",
+      "provider": "OpenSubtitles test fixture",
+      "processRetained": true
+    },
+    {
+      "language": "English",
+      "provider": "OpenSubtitles test fixture",
+      "processRetained": true
+    },
+    {
+      "language": "Arabic",
+      "provider": "OpenSubtitles test fixture",
+      "processRetained": true
+    },
+    {
+      "language": "English",
+      "provider": "OpenSubtitles test fixture",
+      "processRetained": true
+    },
+    {
+      "language": "Arabic",
+      "provider": "OpenSubtitles test fixture",
+      "processRetained": true
+    }
+  ],
+  "screenshots": [
+    "172-subtitles.png",
+    "172-open-file.png",
+    "172-arabic-render.png",
+    "172-style.png",
+    "172-off.png"
+  ],
+  "realDeviceTested": false,
+  "realOpenSubtitlesAPITest": false,
+  "privateProviderURLsUsed": false,
+  "timingReferenceInFixture": false,
+  "notes": [
+    "Guest test media and subtitle responses are synthetic.",
+    "Earlier timed-key and signed-package observations are reported separately in PRELIMINARY-UI-OBSERVATIONS.json.",
+    "Physical UHD playback and the Insignia process-exit cause remain unverified."
+  ]
+}

@@ -1,0 +1,153 @@
+{
+  "packageSHA256": "315bd9a07d2c27d0bfc79031e19ea6b1133c1c67996400c49a8fb94cc70535f7",
+  "referenceBudgetCapIncluded": false,
+  "twentyTimedMenuAttempts": {
+    "cycles": 10,
+    "languageSelectionsAttempted": 20,
+    "elapsedSeconds": 37.46,
+    "pidRetained": "8016",
+    "observations": [
+      {
+        "cycle": 1,
+        "direction": "DPAD_UP",
+        "processRetained": true
+      },
+      {
+        "cycle": 1,
+        "direction": "DPAD_DOWN",
+        "processRetained": true
+      },
+      {
+        "cycle": 2,
+        "direction": "DPAD_UP",
+        "processRetained": true
+      },
+      {
+        "cycle": 2,
+        "direction": "DPAD_DOWN",
+        "processRetained": true
+      },
+      {
+        "cycle": 3,
+        "direction": "DPAD_UP",
+        "processRetained": true
+      },
+      {
+        "cycle": 3,
+        "direction": "DPAD_DOWN",
+        "processRetained": true
+      },
+      {
+        "cycle": 4,
+        "direction": "DPAD_UP",
+        "processRetained": true
+      },
+      {
+        "cycle": 4,
+        "direction": "DPAD_DOWN",
+        "processRetained": true
+      },
+      {
+        "cycle": 5,
+        "direction": "DPAD_UP",
+        "processRetained": true
+      },
+      {
+        "cycle": 5,
+        "direction": "DPAD_DOWN",
+        "processRetained": true
+      },
+      {
+        "cycle": 6,
+        "direction": "DPAD_UP",
+        "processRetained": true
+      },
+      {
+        "cycle": 6,
+        "direction": "DPAD_DOWN",
+        "processRetained": true
+      },
+      {
+        "cycle": 7,
+        "direction": "DPAD_UP",
+        "processRetained": true
+      },
+      {
+        "cycle": 7,
+        "direction": "DPAD_DOWN",
+        "processRetained": true
+      },
+      {
+        "cycle": 8,
+        "direction": "DPAD_UP",
+        "processRetained": true
+      },
+      {
+        "cycle": 8,
+        "direction": "DPAD_DOWN",
+        "processRetained": true
+      },
+      {
+        "cycle": 9,
+        "direction": "DPAD_UP",
+        "processRetained": true
+      },
+      {
+        "cycle": 9,
+        "direction": "DPAD_DOWN",
+        "processRetained": true
+      },
+      {
+        "cycle": 10,
+        "direction": "DPAD_UP",
+        "processRetained": true
+      },
+      {
+        "cycle": 10,
+        "direction": "DPAD_DOWN",
+        "processRetained": true
+      }
+    ]
+  },
+  "sixVerifiedChanges": {
+    "verifiedSelections": [
+      {
+        "language": "English",
+        "provider": "OpenSubtitles test fixture",
+        "processRetained": true
+      },
+      {
+        "language": "Arabic",
+        "provider": "OpenSubtitles test fixture",
+        "processRetained": true
+      },
+      {
+        "language": "English",
+        "provider": "OpenSubtitles test fixture",
+        "processRetained": true
+      },
+      {
+        "language": "Arabic",
+        "provider": "OpenSubtitles test fixture",
+        "processRetained": true
+      },
+      {
+        "language": "English",
+        "provider": "OpenSubtitles test fixture",
+        "processRetained": true
+      },
+      {
+        "language": "Arabic",
+        "provider": "OpenSubtitles test fixture",
+        "processRetained": true
+      }
+    ],
+    "pidRetained": "8016"
+  },
+  "styleScreenViewed": true,
+  "offClearedVisibleCue": true,
+  "notes": [
+    "Timed key presses are recorded as attempts, not twenty confirmed language changes. Six focus-aware checks separately verified the active language/provider.",
+    "These checks preceded the final reference-pool cap; final-package observations belong in UI-SMOKE.json."
+  ]
+}
