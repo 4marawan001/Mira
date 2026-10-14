@@ -4,7 +4,7 @@
 
 ### Changes & 1:1 iPhone Replica
 - **1:1 iPhone IPA Visual Replica**: Ported the sleek iPhone home UI directly to Fire TV, including `MiraTvHomeHeader` (Mira branding + D-pad Search, Saved, Settings), `TvHomeGenreSection` (dark rounded pills with vibrant colored dots), `TvMiraChartSection` (IMDb Top 250 with gold stars), and `MiraTvPosterCard` (fixed 126x189dp cards with 1.05x GPU scaling and crisp 2dp focus ring).
-- **Smooth 60fps & Zero Lag on TV Hardware**:
+- **Rendering changes intended to reduce TV lag (physical-device frame rates unverified)**:
   - Replaced heavy dynamic card width animations (`animateDpAsState`) with GPU-layer hardware scaling, completely eliminating layout passes across rows on focus changes.
   - Eliminated background ExoPlayer trailer autoplay on card focus that overwhelmed A53 quad-core TV processors.
   - Fixed-dimension 2x image downsampling (252x378) in Coil with disk and memory cache enabled.
@@ -44,3 +44,9 @@
 - Apple Silicon package: 73 launcher/JVM/playback binaries checked for arm64. Intel package: 75 checked for x86_64. Package names, version 0.5.17/build 162, bundle identity and macOS 12 minimum verified.
 - Both packaged playback bridges loaded successfully and returned decoder capabilities=3 (AVC+HEVC) on this M1, using native ARM Java and Intel Java under Rosetta respectively.
 - Source ZIP integrity and a text patch applied against build 155 were verified.
+
+### Final Mac UI and installation checks
+- Home vertical scrolling and poster-to-details navigation were exercised in the Apple Silicon build on M1. The Intel build launched and responded to Home scrolling under Rosetta. These are smoke checks, not measured frame-rate or physical Intel tests.
+- Both live GitHub DMG asset digests and the complete Mac source ZIP digest match the verified local files.
+- The verified ARM package was installed at `/Applications/Mira.app`, preserving settings and retaining the previous app for rollback.
+- Five previously reported broad-suite failures remain: hero cycling timing, static custom poster patterns, two search-manifest state checks, and legacy completion migration. The final targeted suite passed all 74 checks.

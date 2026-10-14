@@ -5,7 +5,7 @@
 <h1 align="center">Mira</h1>
 
 <p align="center">A personal media app with cinematic browsing and a quieter interface.</p>
-<p align="center">iPhone · Apple Silicon Mac · Fire TV</p>
+<p align="center">iPhone · Apple Silicon & Intel Mac · Fire TV</p>
 
 <p align="center">
   <a href="https://github.com/4marawan001/Mira/releases/latest"><img src="https://img.shields.io/github/v/release/4marawan001/Mira?style=flat-square&label=latest&color=9fabbc" alt="Latest release" /></a>
@@ -66,7 +66,7 @@ Choose an accent color, change the app icon, or adjust the browsing layout. The 
 - **Less rendering work:** poster browsing avoids a duplicate captured graphics layer per card; hover springs update graphics rather than recomposing each frame. Context menus use the artwork fallback.
 - **Startup:** native playback warmup runs off the UI thread, with deferred native-controller loading.
 
-74 targeted regression checks passed. An earlier broad suite exposed five previously reported failures outside these changes. Hands-on scrolling and physical Intel testing remain outstanding; these changes do not constitute an FPS guarantee. [Mac checks and limitations](docs/BUILD-162.md).
+74 targeted regression checks passed. An earlier broad suite exposed five previously reported failures outside these changes. Home scrolling and poster-to-details navigation were checked on M1. The Intel app was smoke-tested under Rosetta; physical Intel testing and measured frame rates remain outstanding. [Mac checks and limitations](docs/BUILD-162.md).
 
 ## What's new in Fire TV build 162
 
