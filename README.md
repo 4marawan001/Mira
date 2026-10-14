@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="#download">Download</a> · <a href="#inside-mira">Inside Mira</a> · <a href="docs/INSTALL.md">Installation</a> · <a href="docs/BUILD-164.md">Latest changes</a>
+  <a href="#download">Download</a> · <a href="#inside-mira">Inside Mira</a> · <a href="docs/INSTALL.md">Installation</a> · <a href="docs/BUILD-165.md">Latest changes</a>
 </p>
 
 ![Mira Home on Mac, with cinematic artwork, genre shortcuts, IMDb Top 250 and floating navigation](docs/assets/home.jpg)
@@ -22,14 +22,14 @@
 
 ## Download
 
-Latest releases: **iPhone 0.5.19 · build 164**, **Fire TV 0.5.17 · build 162**, and **Mac 0.5.18 · build 163**. These are Release packages.
+Latest releases: **iPhone 0.5.19 · build 164**, **Fire TV 0.5.17 · build 162**, and **Mac 0.5.20 · build 165**. These are Release packages.
 
 | Device | Download | Installation |
 | --- | --- | --- |
 | iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.19/Mira-ios-164.ipa) | Sign and install with Sideloadly on your Mac. |
 | Fire TV | [APK](https://github.com/4marawan001/Mira/releases/download/v0.5.17/Mira-FireTV-universal.apk) | Install on a compatible Android-based Fire TV. Remote controls are supported. |
-| Apple Silicon Mac (macOS 12+) | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.18/Mira-macOS-arm64.dmg) | Open the disk image and copy Mira to Applications. |
-| Intel Mac (macOS 12+) | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.18/Mira-macOS-x86_64.dmg) | Open the disk image and copy Mira to Applications. |
+| Apple Silicon Mac (macOS 12+) | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.20/Mira-macOS-arm64.dmg) | Open the disk image and copy Mira to Applications. |
+| Intel Mac (macOS 12+) | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.20/Mira-macOS-x86_64.dmg) | Open the disk image and copy Mira to Applications. |
 
 Each platform has its own release version. The GitHub Latest badge follows the Fire TV update channel; the table links to the newest build for each device.
 
@@ -43,13 +43,11 @@ Search shows results as individual add-ons respond and loads more on demand. Que
 
 Playback preferences include Low Data, Balanced and Highest. On iPhone, Mira checks H.264, HEVC and AV1 hardware support and favors compatible codecs. Balanced favors good 1080p sources for the iPhone 12 mini while reducing the preference for oversized files. Highest then favors resolution and disc sources. On Mac, Low Data targets 1080p and Balanced favors suitable 4K within its size budget. These choices rank the metadata providers return; they do not measure your internet speed or guarantee playback quality.
 
-### Movies or videos
+### Videos on iPhone
 
-On iPhone and Mac, open **Settings → Look & feel → Browsing**. Movies & shows is the default. Videos enables muted hover previews on Mac and press-and-hold preview sheets on iPhone. On iPhone build 161, a missing trailer falls back to a muted direct-stream preview starting deterministically at 0:20 and playing up to 30 seconds (0:20–0:50). Short videos between 20s and 50s play from 0:20 to end; videos under 20s play from 0:00 to end; and missing duration or unsupported seeking displays a clear unavailable message without endless spinning. All "Random excerpt" wording is removed. On Mac build 157, direct-stream fallback uses muted excerpts. On iPhone, press and hold a poster to open the preview sheet. Full catalog grids support the same gesture. Providers without a ready direct stream may have no excerpt.
+On iPhone, open **Settings → Look & feel → Browsing**. Movies & shows is the default. Videos enables muted press-and-hold preview sheets. If no trailer resolves, a ready direct stream previews from 0:20 for up to 30 seconds. Short videos end naturally; videos shorter than 20 seconds start at 0:00. Unknown duration or unsupported seeking displays an unavailable message. Preview availability depends on the provider.
 
-![A muted trailer preview over Mira's poster shelves](docs/assets/video-preview.jpg)
-
-<p align="center"><sub>Real screenshot from the Mac app, build 155 (Videos preview mode).</sub></p>
+Mac build 165 removes Videos mode and automatic hover-video playback. Mac poster hover cards stay static to avoid video decoder work during browsing. Normal movie playback remains available.
 
 ### Make it yours
 
@@ -58,6 +56,12 @@ Choose an accent color, change the app icon, or adjust the browsing layout. The 
 ![Mira appearance settings with accent colors and Movies or Videos browsing modes](docs/assets/appearance.jpg)
 
 <p align="center"><sub>Real screenshot from the Mac app, build 155 (appearance settings).</sub></p>
+
+## What's new in Mac build 165
+
+Removed **Videos mode and automatic hover-video playback** from Mac. Existing saved Videos preferences migrate to Movies & shows. Static hover cards remain, while old trailer settings cannot silently start previews.
+
+67 focused checks passed. Apple Silicon and Intel packages are verified; the new app is installed on M1. [Mac 165 changes, checks and remaining device testing](docs/BUILD-165.md).
 
 ## What's new in iPhone build 164
 
