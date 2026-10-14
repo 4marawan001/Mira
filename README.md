@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="#download">Download</a> · <a href="#inside-mira">Inside Mira</a> · <a href="docs/INSTALL.md">Installation</a> · <a href="docs/BUILD-161.md">Latest changes</a>
+  <a href="#download">Download</a> · <a href="#inside-mira">Inside Mira</a> · <a href="docs/INSTALL.md">Installation</a> · <a href="docs/BUILD-163.md">Latest changes</a>
 </p>
 
 ![Mira Home on Mac, with cinematic artwork, genre shortcuts, IMDb Top 250 and floating navigation](docs/assets/home.jpg)
@@ -22,14 +22,14 @@
 
 ## Download
 
-Latest releases: **iPhone 0.5.16 · build 161**, **Fire TV 0.5.17 · build 162**, and **Mac 0.5.17 · build 162**. These are Release packages.
+Latest releases: **iPhone 0.5.16 · build 161**, **Fire TV 0.5.17 · build 162**, and **Mac 0.5.18 · build 163**. These are Release packages.
 
 | Device | Download | Installation |
 | --- | --- | --- |
 | iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.16/Mira-ios-161.ipa) | Sign and install with Sideloadly on your Mac. |
 | Fire TV | [APK](https://github.com/4marawan001/Mira/releases/download/v0.5.17/Mira-FireTV-universal.apk) | Install on a compatible Android-based Fire TV. Remote controls are supported. |
-| Apple Silicon Mac (macOS 12+) | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.17/Mira-macOS-arm64.dmg) | Open the disk image and copy Mira to Applications. |
-| Intel Mac (macOS 12+) | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.17/Mira-macOS-x86_64.dmg) | Open the disk image and copy Mira to Applications. |
+| Apple Silicon Mac (macOS 12+) | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.18/Mira-macOS-arm64.dmg) | Open the disk image and copy Mira to Applications. |
+| Intel Mac (macOS 12+) | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.18/Mira-macOS-x86_64.dmg) | Open the disk image and copy Mira to Applications. |
 
 [All releases and source downloads](https://github.com/4marawan001/Mira/releases) · [Step-by-step setup](docs/INSTALL.md) · [Fire TV & Mac build 162 checksums](https://github.com/4marawan001/Mira/releases/download/v0.5.17/SHA256SUMS.txt)
 
@@ -56,6 +56,12 @@ Choose an accent color, change the app icon, or adjust the browsing layout. The 
 ![Mira appearance settings with accent colors and Movies or Videos browsing modes](docs/assets/appearance.jpg)
 
 <p align="center"><sub>Real screenshot from the Mac app, build 155 (appearance settings).</sub></p>
+
+## What's new in Mac build 163
+
+Mac Low Data now prefers smaller **1080p** sources. Balanced still prefers suitable **4K** within its size budget, and Highest prioritizes resolution and disc sources. All three use the Mac's hardware-decoder capabilities when ranking codecs. Equivalent Low Data candidates favor smaller known files; lower resolutions remain fallbacks. The Settings footer now shows the correct Mac version.
+
+80 targeted checks passed. [Mac build 163 details and validation](docs/BUILD-163.md).
 
 ## What's new in Mac build 162
 

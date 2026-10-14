@@ -21,7 +21,7 @@ Both Apple Silicon and Intel packages require macOS 12 or newer. These are Relea
 - Both Release DMGs passed disk-image verification and strict deep ad-hoc signature verification. Bundle ID, macOS 12 minimum, desktop version 0.5.18 and build 163 verified.
 - Launcher, bundled JVM and native playback libraries checked for the correct architecture: 73 binaries in ARM package and 75 in Intel package.
 - Apple Silicon package installed at /Applications/Mira.app with build 162 retained under outputs/Mira-release-163/previous/Mira.app. Account data and settings are outside the replaced bundle.
-- Installed Settings UI verification pending.
+- Installed Settings footer visually verified as Mira 0.5.18. Saved automatic quality remains Balanced. Opening the quality popup encountered a computer-control noWindowsAvailable error; behavior is covered by the selection regression tests.
 
 ## Release routing
 

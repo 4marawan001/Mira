@@ -1,6 +1,6 @@
 # Install Mira
 
-Use the device-specific [download links in the README](../README.md#download). Current versions are iPhone 161 (0.5.16), Fire TV 162 (0.5.17), and Mac 162 (0.5.17). Read the [validation notes](BUILD-162.md) before installing.
+Use the device-specific [download links in the README](../README.md#download). Current versions are iPhone 161 (0.5.16), Fire TV 162 (0.5.17), and Mac 163 (0.5.18). Read the [validation notes](BUILD-162.md) before installing.
 
 ## iPhone
 
@@ -50,3 +50,5 @@ For an issue report, include the Mira build number, device model, the screen or 
 ## Balanced playback on Mac
 
 Choose **Settings → Playback → Balanced**. The choice is saved on this Mac. Balanced prefers suitable 4K and uses the Mac's hardware-decoder capabilities to rank codecs. For a two-hour movie, known file size must be at most 30 decimal GB; known duration scales this budget. Missing duration uses two hours. Oversized and unknown-size sources remain available for manual selection. Choose Highest if you want to prioritize original-quality disc remuxes regardless of that budget. Provider labels do not guarantee stream compatibility or correct file sizes.
+
+Mac build 163 changes Low Data to prefer smaller 1080p copies. It retains lower-resolution fallback and the existing device-specific codec ranking.
