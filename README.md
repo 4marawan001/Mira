@@ -1,150 +1,100 @@
-<p align="center">
-  <img src="docs/assets/icon.png" alt="Mira silver app icon" width="112" />
-</p>
-
+<p align="center"><img src="docs/assets/icon.png" width="112" alt="Mira silver icon" /></p>
 <h1 align="center">Mira</h1>
-
-<p align="center">A personal media app with cinematic browsing and a quieter interface.</p>
+<p align="center">Your media, with room to breathe.</p>
 <p align="center">iPhone · Apple Silicon & Intel Mac · Fire TV</p>
-
 <p align="center">
-  <a href="https://github.com/4marawan001/Mira/releases/latest"><img src="https://img.shields.io/github/v/release/4marawan001/Mira?style=flat-square&label=latest&color=9fabbc" alt="Latest release" /></a>
-  <a href="https://github.com/4marawan001/Mira/releases"><img src="https://img.shields.io/badge/builds-personal%20testing-242830?style=flat-square" alt="Personal testing builds" /></a>
+  <img src="https://img.shields.io/badge/iPhone-166-9fabbc?style=flat-square" alt="iPhone stable build 166" />
+  <img src="https://img.shields.io/badge/Mac-165-9fabbc?style=flat-square" alt="Mac build 165" />
+  <img src="https://img.shields.io/badge/Fire_TV-167-9fabbc?style=flat-square" alt="Fire TV build 167" />
+  <img src="https://img.shields.io/badge/status-personal_testing-242830?style=flat-square" alt="Personal testing builds" />
 </p>
+<p align="center"><a href="#download">Download</a> · <a href="#inside-mira">Explore</a> · <a href="docs/INSTALL.md">Install</a> · <a href="docs/AUDIT-2026-10-14.md">Latest checks</a> · <a href="docs/RELEASING.md">Build & publish</a></p>
 
-<p align="center">
-  <a href="#download">Download</a> · <a href="#inside-mira">Inside Mira</a> · <a href="docs/INSTALL.md">Installation</a> · <a href="docs/BUILD-165.md">Latest changes</a>
-</p>
+![Mira Home on Mac](docs/assets/home.jpg)
 
-![Mira Home on Mac, with cinematic artwork, genre shortcuts, IMDb Top 250 and floating navigation](docs/assets/home.jpg)
-
-<p align="center"><sub>Real screenshot from the Mac app, build 155. Artwork and available titles depend on your catalogs.</sub></p>
+*Real Mac screenshot from build 155. Catalog artwork depends on your sources; the current Mac uses static poster hover cards.*
 
 ## Download
 
-Latest releases: **iPhone 0.5.21 · build 166**, **Fire TV 0.5.22 · build 167**, and **Mac 0.5.20 · build 165**. These are Release packages.
+| Device | Release package | Version | Setup |
+| --- | --- | --- | --- |
+| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.21/Mira-ios-166.ipa) | 0.5.21 / 166 | Sign with Sideloadly; iOS 16.1+. |
+| Apple Silicon Mac | [ARM64 DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.20/Mira-macOS-arm64.dmg) | 0.5.20 / 165 | macOS 12+. |
+| Intel Mac | [Intel DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.20/Mira-macOS-x86_64.dmg) | 0.5.20 / 165 | macOS 12+. |
+| Fire TV | [Universal APK](https://github.com/4marawan001/Mira/releases/download/v0.5.22/Mira-FireTV-universal.apk) | 0.5.22 / 167 | Android-based Fire TV, API 24+. |
+| iPhone update helper for Mac | [Universal Mac ZIP](https://github.com/4marawan001/Mira/releases/download/v0.5.22/Mira-iPhone-Updates-macOS.zip) | Helper 1.1.0 / 168 | Apple Silicon or Intel; macOS 13+. |
 
-| Device | Download | Installation |
-| --- | --- | --- |
-| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.21/Mira-ios-166.ipa) | Sign and install with Sideloadly on your Mac. |
-| Fire TV | [APK](https://github.com/4marawan001/Mira/releases/download/v0.5.22/Mira-FireTV-universal.apk) | Install on a compatible Android-based Fire TV. Remote controls are supported. |
-| Apple Silicon Mac (macOS 12+) | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.20/Mira-macOS-arm64.dmg) | Open the disk image and copy Mira to Applications. |
-| Intel Mac (macOS 12+) | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.20/Mira-macOS-x86_64.dmg) | Open the disk image and copy Mira to Applications. |
+Keep Mira installed when updating, and use the same signing identity to retain local data. Mac packages are ad-hoc signed, without Apple notarization. [Installation guide](docs/INSTALL.md) · [All releases](https://github.com/4marawan001/Mira/releases).
 
-Each platform has its own release version. The GitHub Latest badge follows the Fire TV update channel; the table links to the newest build for each device.
+**iPhone release correction:** the separate v0.5.23 release contains an IPA whose internal version is **0.5.22 / build 165**. Its title previously implied otherwise. It adds profile/search work but has a lower build number than 166. If you already use that package, keep it installed; do not downgrade solely to match this table. Its lookup changes remain in the working source. [Audit and next-package status](docs/AUDIT-2026-10-14.md).
 
-[All releases and source downloads](https://github.com/4marawan001/Mira/releases) · [Step-by-step setup](docs/INSTALL.md) · [Fire TV & Mac build 162 checksums](https://github.com/4marawan001/Mira/releases/download/v0.5.17/SHA256SUMS.txt)
+GitHub’s “Latest” points to the shared Fire TV release, which carries the update manifest for every platform. Platform versions can differ; use the table for downloads.
 
 ## Inside Mira
 
-Mira is a personal fork of the open-source Nuvio apps. Home puts artwork first, with genre shortcuts, IMDb Top 250 entry points and compact poster shelves. Home, Search and Saved use a consistent navigation style on iPhone and Mac; TV adapts browsing for the remote.
+Mira is a personal fork of the open-source Nuvio apps. Cinematic artwork, near-black surfaces and compact poster shelves carry through Home, Search, Saved and details. Profiles stay tucked in Settings; PIN-protected profiles still require unlocking. Genre shortcuts and IMDb Top 250 entry points are available from Home.
 
-Search shows results as individual add-ons respond and loads more on demand. Queries stay intact when opening View All and later pages. Duplicate detection and repeated-page protection keep providers from filling the list endlessly. The app has no fixed total-result cap, but results still depend on each provider's search support and available pages.
+Search displays results as add-ons respond. View All keeps the original query and loads later pages on demand. Duplicate detection and repeated-page protection prevent endless repeated results. There is no fixed total-result cap; providers can still omit matches or lack search/pagination support. Person profiles and cast navigation depend on metadata returned by your sources.
 
-Playback preferences include Low Data, Balanced and Highest. On iPhone, Mira checks H.264, HEVC and AV1 hardware support and favors compatible codecs. Balanced favors good 1080p sources for the iPhone 12 mini while reducing the preference for oversized files. Highest then favors resolution and disc sources. On Mac, Low Data targets 1080p and Balanced favors suitable 4K within its size budget. These choices rank the metadata providers return; they do not measure your internet speed or guarantee playback quality.
+<p align="center"><img src="docs/assets/iphone-168-preview.png" width="330" alt="Mira 168 Home on the iPhone 12 mini simulator" /></p>
 
-### Videos on iPhone
+*Current iPhone 168 Debug preview. The source fixes are awaiting preview review before a new Release IPA.*
 
-On iPhone, open **Settings → Look & feel → Browsing**. Movies & shows is the default. Videos enables muted press-and-hold preview sheets. If no trailer resolves, a ready direct stream previews from 0:20 for up to 30 seconds. Short videos end naturally; videos shorter than 20 seconds start at 0:00. Unknown duration or unsupported seeking displays an unavailable message. Preview availability depends on the provider.
+### Choose playback quality
 
-Mac build 165 removes Videos mode and automatic hover-video playback. Mac poster hover cards stay static to avoid video decoder work during browsing. Normal movie playback remains available.
+| Mode | iPhone | Mac | Fire TV |
+| --- | --- | --- | --- |
+| Low Data | Prefers smaller 720p. | Prefers smaller 1080p. | Prefers smaller 1080p. |
+| Balanced | Prefers good 1080p, considering size and codec support. | Prefers compatible 4K within the size budget. | Prefers supported 4K on a capable 4K TV; otherwise 1080p. |
+| Highest | Prioritizes hardware compatibility, resolution and disc sources. | Prioritizes compatible resolution and disc/REMUX. | Prioritizes supported resolution and disc/REMUX. |
 
-### Make it yours
+Mac and TV Balanced use a budget of **30 decimal GB per two hours**, scaled by known runtime. Unknown-size or oversized copies remain available manually. Hardware checks help rank supplied codec metadata; they do not measure bandwidth or guarantee every HDR mode, codec profile, audio format or container. Playback still validates the real stream when opening it.
 
-Choose an accent color, change the app icon, or adjust the browsing layout. The silver icon and dark surfaces carry through the app. On iPhone and Mac, the Home logo does a brief dance after ten stationary seconds and respects Reduce Motion.
+### iPhone previews
 
-![Mira appearance settings with accent colors and Movies or Videos browsing modes](docs/assets/appearance.jpg)
+Select **Settings → Look & feel → Browsing → Videos**, then press and hold a poster. A supplied trailer is preferred. A ready direct stream can provide a muted excerpt from **0:20 to 0:50**, ending earlier for short videos. Videos shorter than 20 seconds start at zero. Unknown duration or unsupported seeking shows an unavailable message. Normal playback and watch progress stay separate from previews.
 
-<p align="center"><sub>Real screenshot from the Mac app, build 155 (appearance settings).</sub></p>
+Mac build 165 removes Videos mode and automatic hover-video playback to reduce decoder work while browsing. Static hover cards remain. TV has no hover-video mode.
 
-## What's new in Fire TV build 167
+### Appearance
 
-TV now has **Low Data, Balanced and Highest** with Android hardware-decoder and display checks. Balanced favors suitable 4K on a capable TV, with a 30 GB-per-two-hour budget scaled by known runtime. Existing installations can choose it in **Settings → Automatic quality**.
+Choose an accent color, alternate icon and layout. The default uses Mira’s silver mark and dark surfaces. On iPhone and Mac, the Home logo briefly dances after ten stationary seconds and respects Reduce Motion. TV uses remote focus indicators.
 
-Home and the source picker use Mira’s dark, compact styling. Browsing avoids duplicate catalog processing, large poster decoding, live source-menu blur and unnecessary focus scrolling. A fresh account can reach Settings and add sources even before any catalogs exist.
+## Fire TV, adapted for your remote
 
-![Mira Fire TV 167 Home in an Android TV emulator](docs/assets/firetv-167-home.png)
+![Mira Fire TV Home](docs/assets/firetv-167-home.png)
 
-*Signed Release APK running in the Android TV emulator with a local metadata-only fixture using public Cinemeta movie artwork. Physical Insignia performance remains untested.*
+<table><tr>
+<td width="50%"><img src="docs/assets/firetv-167-quality.png" alt="Fire TV automatic quality picker" /></td>
+<td width="50%"><img src="docs/assets/firetv-167-posters.png" alt="Fire TV poster browsing" /></td>
+</tr></table>
 
-[TV 167 changes, checks, installation and limitations](docs/BUILD-167.md) · [Download TV 167](https://github.com/4marawan001/Mira/releases/tag/v0.5.22)
+*Build 167 running in an Android TV emulator. Populated browsing uses a local metadata-only fixture with public Cinemeta artwork. These images do not establish physical-TV performance.*
 
-## What's new in Mac build 165
-
-Removed **Videos mode and automatic hover-video playback** from Mac. Existing saved Videos preferences migrate to Movies & shows. Static hover cards remain, while old trailer settings cannot silently start previews.
-
-67 focused checks passed. Apple Silicon and Intel packages are verified; the new app is installed on M1. [Mac 165 changes, checks and remaining device testing](docs/BUILD-165.md).
-
-## What's new in iPhone build 164
-
-Autoplay and recommended sources now consider the iPhone's **hardware decoder support**, along with resolution, file size and source readiness. Low Data keeps its **720p** target; Balanced keeps **1080p**. Highest prioritizes hardware-compatible codecs before resolution and disc source. Software-only copies remain fallbacks, and a slow provider can still return a compatible alternative before selection settles.
-
-115 regression checks passed, including 13 hardware-specific checks. The Debug iPhone 12 mini preview and physical-device arm64 source compilation passed; physical iPhone playback testing remains outstanding. [iPhone 164 details and package verification](docs/BUILD-164.md).
-
-## What's new in Mac build 163
-
-Mac Low Data now prefers smaller **1080p** sources. Balanced still prefers suitable **4K** within its size budget, and Highest prioritizes resolution and disc sources. All three use the Mac's hardware-decoder capabilities when ranking codecs. Equivalent Low Data candidates favor smaller known files; lower resolutions remain fallbacks. The Settings footer now shows the correct Mac version.
-
-80 targeted checks passed. [Mac build 163 details and validation](docs/BUILD-163.md).
-
-## What's new in Mac build 162
-
-- Separate **Apple Silicon and Intel** Release downloads, with architecture-aware updates.
-- **Device-local playback preferences:** changing the Mac's quality mode does not change the iPhone's preference.
-- **Balanced on Mac:** prefers suitable 4K, with a budget of 30 decimal GB per two hours, scaled to known runtime. Known oversized and unknown-size sources remain available for manual playback. Highest still allows original-quality remuxes.
-- **Hardware-aware codec ranking:** checks the Mac's VideoToolbox decoder capabilities. This M1 supports H.264 and HEVC hardware decoding, with no AV1 hardware decoder. Provider metadata and unusual codec profiles can still be imperfect.
-- **Less rendering work:** poster browsing avoids a duplicate captured graphics layer per card; hover springs update graphics rather than recomposing each frame. Context menus use the artwork fallback.
-- **Startup:** native playback warmup runs off the UI thread, with deferred native-controller loading.
-
-74 targeted regression checks passed. An earlier broad suite exposed five previously reported failures outside these changes. Home scrolling and poster-to-details navigation were checked on M1. The Intel app was smoke-tested under Rosetta; physical Intel testing and measured frame rates remain outstanding. [Mac checks and limitations](docs/BUILD-162.md).
-
-## What's new in Fire TV build 162
-
-- **1:1 iPhone IPA Visual Replica**: Complete overhaul replicating the sleek dark iPhone UI on Fire OS, including `MiraTvHomeHeader` (brand mark + D-pad Search, Saved, Settings), `TvHomeGenreSection` (dark rounded pills with vibrant colored dots), `TvMiraChartSection` (IMDb Top 250 with gold stars), and `MiraTvPosterCard` (fixed 126x189dp cards with 1.05x GPU scaling and crisp 2dp focus ring).
-- **60fps Fluidity on Low-End TV Hardware**: Eliminated layout measurement thrashing by replacing dynamic card width animations with GPU-layer hardware scaling. Fixed-size downsampling (252x378) and enabled memory/disk caching for instant poster loads.
-- **Background Player Eliminated**: Removed background ExoPlayer instances on poster focus that previously exhausted A53 CPU and video decoder pipelines, replacing them with cinematic static backdrops and direct [ Play ] / [ Details ] actions.
-- **Focus & D-Pad Traversal Restored**: Removed broken bottom navigation pill and key interceptors that previously trapped focus and hijacked down/left remote presses. Natural remote navigation from Header -> Hero -> Genres -> Charts -> Continue Watching -> Catalogs.
-- **Seamless In-Place Upgrades**: Signed with the official Mira release key under package `app.mira.tv` (`versionCode = 162`, `versionName = "0.5.17"`), upgrading directly over build 160 preserving settings and logins.
-
-[Read Fire TV & Mac build 162 changes and checks](docs/BUILD-162.md).
-
-## What's new in iPhone build 161
-
-- **Deterministic 0:20 Excerpt Timing**: Replaced random excerpt starting points with a fixed, deterministic start at 20,000 ms (0:20). For standard videos, playback previews 0:20–0:50 every time without playing the initial 20 seconds, waiting in real time, or picking a random section.
-- **Short-Video Rules & Unavailable Fallback**: Videos between 20s and 50s start at 0:20 and play to end; videos 20s or shorter start at 0:00 and play to end; unknown duration or unsupported seeking displays a clear unavailable message without infinite spinning.
-- **Clear Interface Copy**: Removed all "Random excerpt" wording across the app in favor of exact timing indicators (e.g., *"Muted preview · Starts at 0:20 · Up to 30 seconds"*).
-- **Preserved Rules**: Press-and-hold previews remain exclusive to Videos browsing mode, trailer clips remain first choice, audio is muted, requests time out and cancel cleanly, and previews never write watch progress.
-
-[Read iPhone build 161 changes and checks](docs/BUILD-161.md) · [Earlier build 158 notes](docs/BUILD-158.md).
-
-## What's new in Mac build 157
-
-- Fixes the updater’s installed-app lookup. Install this DMG once if an older build cannot apply its download.
-- Automatic update checks on opening and hourly while Mira stays open.
-- Automatic downloads with checksum verification, followed by an Install & Restart button. Playback is not interrupted by a completed download.
-- Muted random excerpts in Videos mode when no trailer resolves. Preview requests time out and cancel on scrolling or dismissal.
-- Less rendering work during scrolling: image crossfades disabled, card highlights cached, and hover scaling suppressed while scrolling.
-
-[Read build 157 changes and checks](docs/BUILD-157.md) · [Earlier build 155 notes](docs/BUILD-155.md).
+Build 167 bounds poster decoding, removes duplicate catalog presentation work and avoids live source-menu blur. Focus scrolls when a card needs room. Empty Home retains navigation and setup. Provider responses are serialized to prevent competing autoplay selections. [TV changes and validation](docs/BUILD-167.md).
 
 ## Updates
 
-Mac checks for updates on opening and hourly while Mira is running. New packages download automatically and pass a SHA-256 check before **Install & Restart** becomes available. Installation retains the previous app and preserves settings stored outside the app bundle. Checks stop when Mira is closed. Fire TV keeps its existing APK update flow.
+Mac checks on opening and hourly while running, verifies downloads with SHA-256, then provides **Install & Restart**. Fire TV uses its existing update/install confirmation flow.
 
-The optional [Mira iPhone Updates helper for Mac](https://github.com/4marawan001/Mira/releases/latest/download/Mira-iPhone-Updates-macOS.zip) checks for a newer IPA and hands it to Sideloadly. iPhone signing refresh remains separate from installing new features.
+The optional Mac helper downloads a verified IPA and opens Sideloadly. Signing refresh and feature installation are separate; Sideloadly may still need you to click Start. The helper now recovers if a platform-only GitHub release temporarily becomes Latest without a manifest, checks cached IPA integrity, and prevents downgrading its own newer download.
 
-The [update manifest](https://github.com/4marawan001/Mira/releases/latest/download/mira-updates.json) records each platform's version, build, package size and SHA-256 checksum. Platforms can have different current builds.
+![Mira iPhone Updates ready for Sideloadly](docs/assets/updater-ready.png)
 
-## Testing status
+*Helper 1.1.0, verified on this Mac. It downloads an IPA; it cannot bypass iPhone signing requirements.*
 
-These are personal testing builds. Fire TV build 160 passed 109 focused checks and 296 player/autosync package checks with zero failures. Mac build 157 passed 30 focused checks, including real installer replacement and rejection checks in temporary folders. iPhone build 161 passed 102 regression checks and 13 boundary/determinism unit tests on the iOS simulator. Five broader desktop failures from build 155 remain in the Mac repo. Unit tests verify parser, retimer, and selection logic; real-provider excerpt playback, sustained Mac frame rates, and physical television playback quality remain for device testing. See [Fire TV build 160 validation](docs/BUILD-160.md#validation), [iPhone build 161 validation](docs/BUILD-161.md#validation), and [Mac build 157 validation](docs/BUILD-157.md#validation).
+[Live update manifest](https://github.com/4marawan001/Mira/releases/latest/download/mira-updates.json) · [Publishing rules and channel check](docs/RELEASING.md).
 
-The Mac package supports Apple Silicon and is ad-hoc signed. The Fire TV package supports ARMv7 and ARM64 Android/Fire OS devices with Android 7 or later. Platform features differ; Videos mode and the logo dance are excluded from TV.
+## Checks and remaining device testing
 
-## Source and credits
+The October 14 audit passed **118 iPhone logic checks, 53 Mac checks, 49 Fire TV checks and 21 helper checks**. This includes synthetic pagination beyond 1,000 results, hardware-aware quality ranking, profile cache isolation, update verification and temporary-app Mac installer tests. These are selected regression suites, not a claim that every device path is tested.
 
-Build 155 contains the full source archives, upstream base commits, original licenses and acknowledgements. Release 161 includes [iPhone Release source reconstruction instructions](updates/161/SOURCE.md), with verified patches for iPhone (Release 161), Fire TV (Release 160) and Mac (Release 157). This repository is the download and documentation hub.
+Earlier broad suites retain known failures: two vendored TV Media3 tests and five desktop tests recorded in previous reports. Physical Insignia playback/focus, Intel GUI behavior, real-provider iPhone seeking and sustained scrolling performance still need device checks. No measured 60fps or zero-lag claim is made. [Full audit status](docs/AUDIT-2026-10-14.md).
 
-Built on [Nuvio Mobile](https://github.com/NuvioMedia/NuvioMobile), [Nuvio Desktop](https://github.com/NuvioMedia/NuvioDesktop), [Nuvio TV](https://github.com/NuvioMedia/NuvioTV) and [nuvio-engine](https://github.com/NuvioMedia/nuvio-engine).
+## Source and earlier changes
 
-Mira is a personal fork and is not affiliated with Nuvio or Apple. Release assets exclude saved account data and private signing keys. Media artwork belongs to its respective owners.
+App source archives and patches are attached to their platform releases. The source repositories contain local changes beyond those archives; the audit document identifies which fixes are awaiting an app package. The update helper’s source and checks are in [companion](companion), with a read-only [release channel validator](tools/check-release-channel.py).
+
+[Mac 165](docs/BUILD-165.md) · [iPhone 164](docs/BUILD-164.md) · [TV 167](docs/BUILD-167.md) · [Earlier release history](https://github.com/4marawan001/Mira/releases).
+
+Mira builds on [NuvioMobile](https://github.com/NuvioMedia/NuvioMobile), [NuvioDesktop](https://github.com/NuvioMedia/NuvioDesktop) and [NuvioTV](https://github.com/NuvioMedia/NuvioTV). App source archives retain their upstream licensing and notices. Catalog availability depends on the add-ons you configure; Mira does not host media.

@@ -1,0 +1,19 @@
+name: Verify update channel
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'updates/**/mira-updates.json'
+      - 'tools/check-release-channel.py'
+      - '.github/workflows/check-update-channel.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check platform assets and checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/check-release-channel.py

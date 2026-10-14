@@ -1,54 +1,49 @@
 # Install Mira
 
-Use the device-specific [download links in the README](../README.md#download). Current versions are iPhone 161 (0.5.16), Fire TV 162 (0.5.17), and Mac 163 (0.5.18). Read the [validation notes](BUILD-162.md) before installing.
+Use the device-specific [download table](../README.md#download). The shared channel currently lists iPhone 166, Mac 165 and Fire TV 167. The [audit](AUDIT-2026-10-14.md) explains the separate iPhone v0.5.23 package’s incorrect build numbering; keep that package installed if you already use its profile/search changes.
 
 ## iPhone
 
-1. Download `Mira-ios-161.ipa` to your Mac.
-2. Open Sideloadly, connect your iPhone and select the IPA.
-3. Use the same Apple ID and signing options you used for your existing Mira installation, then install.
-4. Open Mira on your iPhone. Keep the existing app installed when applying an update to preserve its local data.
+1. Download the IPA for the version you intend to install.
+2. Open Sideloadly and connect your iPhone by USB, or use an already configured Wi-Fi connection.
+3. Select the IPA. Use the same Apple ID and signing options as your existing Mira installation.
+4. Install over Mira; keep the existing app installed to preserve its local data.
 
-The IPA is an unsigned Release package for sideload signing. A free developer profile has installation and expiration limits. Sideloadly's signing refresh renews an installed app; new Mira features require installing the newer IPA.
+The IPA is an unsigned Release package for sideload signing and requires iOS 16.1+. A free developer profile has installation and expiration limits. Sideloadly’s refresh renews signing; new features require a newer IPA.
 
-The optional `Mira-iPhone-Updates-macOS.zip` helper checks for new IPAs and opens Sideloadly. Signing or installation may still need your interaction. Download the helper from the release assets.
+### Optional update helper
 
-## Mac (Apple Silicon or Intel)
+1. Download [Mira-iPhone-Updates-macOS.zip](https://github.com/4marawan001/Mira/releases/download/v0.5.22/Mira-iPhone-Updates-macOS.zip).
+2. Extract it and put **Mira iPhone Updates.app** in Applications. Quit any older copy first.
+3. Open it, then choose **Check now**. The download is checked against the feed’s SHA-256 and size.
+4. Choose **Open in Sideloadly**, confirm the correct IPA/version, and start installation.
 
-1. On Apple Silicon, download `Mira-macOS-arm64.dmg`; on Intel, download `Mira-macOS-x86_64.dmg`. Open the disk image.
-2. Quit Mira if it is already running.
-3. Copy Mira into Applications, replacing the existing copy when updating.
+Helper 1.1.0 supports Intel and Apple Silicon on macOS 13+. Start at login is optional. The helper checks hourly while running. Sideloadly may require interaction; the helper does not remove signing limits.
+
+If the old helper says the update channel has not been published, replace it with this version and retry. The shared feed has been restored. If multiple helper copies open, quit them and launch the copy in Applications.
+
+## Mac
+
+1. Check **Apple menu → About This Mac**. Choose the ARM64 DMG for an M-series chip or the x86_64 DMG for Intel.
+2. Open the disk image and quit an already running Mira.
+3. Copy Mira to Applications, replacing the old app.
 4. Open Mira from Applications.
 
-Both packages require macOS 12 or later. Check **Apple menu → About This Mac**: an M-series chip needs Apple Silicon; an Intel processor needs Intel. Packages are ad-hoc signed and are not Apple-notarized. App settings and account data are stored separately from the app bundle.
+Both packages require macOS 12+. They are ad-hoc signed and not Apple-notarized. Account data lives outside the app bundle. Mac checks for updates while running and provides **Install & Restart** after a verified download. Builds 155/156 can need a one-time manual DMG replacement to repair installed-app lookup.
 
-Builds 155 and 156 may fail to locate their installed app when applying a download. Replace the app once using the latest Mac DMG to fix this.
-
-Starting with build 157, Mira checks hourly while open and downloads updates automatically. Choose **Install & Restart** when ready; a downloaded update does not interrupt playback. Installation retains the previous app for recovery.
+Videos mode and automatic hover-video playback are removed in Mac 165. Poster hover cards are static; normal playback remains available.
 
 ## Fire TV
 
-1. Download `Mira-FireTV-universal.apk` from the release assets.
-2. Transfer it to your compatible Android-based Fire TV using your preferred APK installation method.
-3. Install it over the existing Mira app when updating, then open Mira.
-4. Use the remote's directional pad, Select and Back buttons to browse.
+1. Download [Mira-FireTV-universal.apk](https://github.com/4marawan001/Mira/releases/download/v0.5.22/Mira-FireTV-universal.apk).
+2. Transfer it to a compatible Android-based Fire TV using your APK installation method.
+3. Install over your existing Mira app, then open it.
+4. Browse with D-pad, Select and Back. In **Settings → Automatic quality**, choose Low Data, Balanced or Highest.
 
-The package includes ARMv7 and ARM64 support and requires Android 7 or later. Build 162 uses the official Mira signing key so it seamlessly updates the previous signed release. Remote controls and D-pad navigation are fully supported.
+Build 167 requires Android 7/API 24+. Its signing identity matches the previous Mira TV release. Saved Manual/First Link/Regex preferences remain; existing users must choose Balanced if desired. Physical Insignia testing remains outstanding. [Remote and quality validation](BUILD-167.md).
 
-## Turn on video previews
+## Verify a download or report a problem
 
-On iPhone or Mac, go to **Settings → Look & feel → Browsing → Videos**. Hover over a poster on Mac or press and hold on iPhone. iPhone build 161 falls back to a muted excerpt starting at 0:20 for up to 30 seconds; Mac build 162 retains its muted random excerpt of up to 30 seconds when no trailer resolves and a provider has a direct playable stream. An unavailable preview does not mean the full title is unavailable. Excerpts require a playable, seekable direct stream with a reported duration.
+The [manifest](https://github.com/4marawan001/Mira/releases/latest/download/mira-updates.json) records platform versions, SHA-256 hashes and sizes. Releases that include a checksum file also provide `SHA256SUMS.txt`. On Mac, run `shasum -a 256` followed by the downloaded file path and compare it with the matching entry.
 
-Choose **Movies & shows** to return to the default experience. TV does not include this mode.
-
-## Verify a download
-
-Every release includes `SHA256SUMS.txt`. Compare your package's SHA-256 checksum with the matching entry. The live update feed also contains each app package's checksum and expected size.
-
-For an issue report, include the Mira build number, device model, the screen or action involved, and any error text. Keep passwords and private add-on URLs out of public reports.
-
-## Balanced playback on Mac
-
-Choose **Settings → Playback → Balanced**. The choice is saved on this Mac. Balanced prefers suitable 4K and uses the Mac's hardware-decoder capabilities to rank codecs. For a two-hour movie, known file size must be at most 30 decimal GB; known duration scales this budget. Missing duration uses two hours. Oversized and unknown-size sources remain available for manual selection. Choose Highest if you want to prioritize original-quality disc remuxes regardless of that budget. Provider labels do not guarantee stream compatibility or correct file sizes.
-
-Mac build 163 changes Low Data to prefer smaller 1080p copies. It retains lower-resolution fallback and the existing device-specific codec ranking.
+Include the build number, device model, action and exact error text in an issue report. Keep passwords, account data and private add-on URLs out of public reports. [Known limitations and current checks](AUDIT-2026-10-14.md).
