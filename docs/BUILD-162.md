@@ -50,3 +50,5 @@
 - Both live GitHub DMG asset digests and the complete Mac source ZIP digest match the verified local files.
 - The verified ARM package was installed at `/Applications/Mira.app`, preserving settings and retaining the previous app for rollback.
 - Five previously reported broad-suite failures remain: hero cycling timing, static custom poster patterns, two search-manifest state checks, and legacy completion migration. The final targeted suite passed all 74 checks.
+
+- Cosmetic issue observed during installed-app QA: SettingsRootPage displays the shared base version 0.5.10. The app Info.plist and desktop updater correctly identify 0.5.17/build 162. Fix the footer to use AppVersionPolicy.displayVersionName in the next Mac update; do not change device signing identity.
