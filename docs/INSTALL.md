@@ -1,6 +1,6 @@
 # Install Mira
 
-Use the device-specific [download table](../README.md#download). The shared channel currently lists iPhone 166, Mac 165 and Fire TV 167. The [audit](AUDIT-2026-10-14.md) explains the separate iPhone v0.5.23 package’s incorrect build numbering; keep that package installed if you already use its profile/search changes.
+Use the device-specific [download table](../README.md#download). The shared channel currently lists iPhone 165, Mac 165 and Fire TV 167. The [audit](AUDIT-2026-10-14.md) explains the corrected iPhone version labels and the next preview.
 
 ## iPhone
 
@@ -13,12 +13,12 @@ The IPA is an unsigned Release package for sideload signing and requires iOS 16.
 
 ### Optional update helper
 
-1. Download [Mira-iPhone-Updates-macOS.zip](https://github.com/4marawan001/Mira/releases/download/v0.5.22/Mira-iPhone-Updates-macOS.zip).
+1. Download [Mira-iPhone-Updates-1.1.1-macOS.zip](https://github.com/4marawan001/Mira/releases/download/v0.5.22/Mira-iPhone-Updates-1.1.1-macOS.zip).
 2. Extract it and put **Mira iPhone Updates.app** in Applications. Quit any older copy first.
 3. Open it, then choose **Check now**. The download is checked against the feed’s SHA-256 and size.
 4. Choose **Open in Sideloadly**, confirm the correct IPA/version, and start installation.
 
-Helper 1.1.0 supports Intel and Apple Silicon on macOS 13+. Start at login is optional. The helper checks hourly while running. Sideloadly may require interaction; the helper does not remove signing limits.
+Helper 1.1.1 supports Intel and Apple Silicon on macOS 13+. Start at login is optional. The helper checks hourly while running. Sideloadly may require interaction; the helper does not remove signing limits.
 
 If the old helper says the update channel has not been published, replace it with this version and retry. The shared feed has been restored. If multiple helper copies open, quit them and launch the copy in Applications.
 

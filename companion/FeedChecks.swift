@@ -72,6 +72,32 @@ do {
     }
     fatalError("missing feed accepted")
 } catch { checks += 1 }
+let fixtureRoot = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+defer { try? FileManager.default.removeItem(at: fixtureRoot) }
+let contents = fixtureRoot.appendingPathComponent("Payload/Mira.app")
+try FileManager.default.createDirectory(at: contents, withIntermediateDirectories: true)
+let ipa = fixtureRoot.appendingPathComponent("fixture.ipa")
+func makeIPA(identifier: String = "com.nuvio.media", build: Int = 166, version: String = "0.5.21") throws {
+    try? FileManager.default.removeItem(at: ipa)
+    let data = try PropertyListSerialization.data(fromPropertyList: [
+        "CFBundleIdentifier": identifier, "CFBundleVersion": String(build),
+        "CFBundleShortVersionString": version
+    ], format: .binary, options: 0)
+    try data.write(to: contents.appendingPathComponent("Info.plist"))
+    let zip = Process(); zip.executableURL = URL(fileURLWithPath: "/usr/bin/zip")
+    zip.arguments = ["-q", "-r", ipa.path, "Payload"]; zip.currentDirectoryURL = fixtureRoot
+    try zip.run(); zip.waitUntilExit(); assert(zip.terminationStatus == 0)
+}
+try makeIPA()
+try validateIPA(ipa, artifact: artifact); checks += 1
+for value in [("com.other.app", 166, "0.5.21"), ("com.nuvio.media", 164, "0.5.21"), ("com.nuvio.media", 166, "0.5.19")] {
+    try makeIPA(identifier: value.0, build: value.1, version: value.2)
+    do { try validateIPA(ipa, artifact: artifact); fatalError("wrong IPA accepted") }
+    catch { checks += 1 }
+}
+try Data("not a ZIP".utf8).write(to: ipa)
+do { _ = try readIPAIdentity(ipa); fatalError("invalid archive accepted") }
+catch { checks += 1 }
 print("Passed \(checks) companion feed/checksum checks")
 }
 }

@@ -58,6 +58,51 @@ func cachedDownloadMatches(_ file: URL, artifact: Artifact, downloadedBuild: Int
     }
     return try checksum(file) == artifact.sha256.lowercased()
 }
+
+struct IPAIdentity { let identifier: String; let build: Int; let version: String }
+private func zipOutput(_ arguments: [String]) throws -> Data {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
+    process.arguments = arguments
+    let pipe = Pipe()
+    process.standardOutput = pipe
+    process.standardError = FileHandle.nullDevice
+    try process.run()
+    var output = Data()
+    while let chunk = try pipe.fileHandleForReading.read(upToCount: 65536), !chunk.isEmpty {
+        output.append(chunk)
+        if output.count > 4 * 1024 * 1024 {
+            process.terminate(); process.waitUntilExit()
+            throw URLError(.cannotParseResponse)
+        }
+    }
+    process.waitUntilExit()
+    guard process.terminationStatus == 0 else { throw URLError(.cannotParseResponse) }
+    return output
+}
+func readIPAIdentity(_ file: URL) throws -> IPAIdentity {
+    let listing = try zipOutput(["-Z1", file.path])
+    let entries = String(decoding: listing, as: UTF8.self).split(separator: "\n").map(String.init).filter {
+        let parts = $0.split(separator: "/")
+        return parts.count == 3 && parts[0] == "Payload" && parts[1].hasSuffix(".app") && parts[2] == "Info.plist"
+    }
+    guard entries.count == 1 else { throw URLError(.cannotParseResponse) }
+    let data = try zipOutput(["-p", file.path, entries[0]])
+    let value = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
+    guard let identifier = value?["CFBundleIdentifier"] as? String,
+          let version = value?["CFBundleShortVersionString"] as? String,
+          let buildString = value?["CFBundleVersion"] as? String,
+          let build = Int(buildString), build > 0 else { throw URLError(.cannotParseResponse) }
+    return IPAIdentity(identifier: identifier, build: build, version: version)
+}
+func validateIPA(_ file: URL, artifact: Artifact) throws {
+    let identity = try readIPAIdentity(file)
+    guard identity.identifier == "com.nuvio.media", identity.build == artifact.build,
+          identity.version == artifact.version else {
+        throw NSError(domain: "Mira", code: 4, userInfo: [NSLocalizedDescriptionKey:
+            "The published IPA’s app identity or internal version disagrees with the update feed. Nothing was installed. Check again after the channel is corrected."])
+    }
+}
 func checksum(_ file: URL) throws -> String {
     let handle = try FileHandle(forReadingFrom:file); defer {try? handle.close()}
     var hash = SHA256()

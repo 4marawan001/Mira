@@ -4,6 +4,9 @@ import json
 import re
 import subprocess
 import tempfile
+import hashlib
+import plistlib
+import zipfile
 from pathlib import Path
 
 REPO = "4marawan001/Mira"
@@ -53,6 +56,23 @@ def main():
         artifact = feed["artifacts"][platform]
         verify_artifact(artifact, releases)
         print(f"Verified {platform}: {artifact['version']} / {artifact['build']}")
+    # Asset labels and even valid checksums cannot prove the app's internal version.
+    ios = feed["artifacts"]["ios"]
+    tag, name = ios["url"].rsplit("/", 2)[-2:]
+    with tempfile.TemporaryDirectory() as folder:
+        gh("release", "download", tag, "--repo", REPO, "--pattern", name, "--dir", folder)
+        package = Path(folder) / name
+        assert hashlib.sha256(package.read_bytes()).hexdigest() == ios["sha256"]
+        with zipfile.ZipFile(package) as archive:
+            entries = [n for n in archive.namelist() if len(n.split("/")) == 3
+                       and n.startswith("Payload/") and n.endswith(".app/Info.plist")]
+            assert len(entries) == 1, "Ambiguous IPA app identity"
+            assert archive.getinfo(entries[0]).file_size < 4 * 1024 * 1024
+            info = plistlib.loads(archive.read(entries[0]))
+            assert info["CFBundleIdentifier"] == "com.nuvio.media", "Wrong iPhone app"
+            assert str(info["CFBundleVersion"]) == str(ios["build"]), "IPA build number mismatch"
+            assert info["CFBundleShortVersionString"] == ios["version"], "IPA version mismatch"
+    print("Verified iPhone internal bundle identity and version")
     tv = feed["artifacts"]["firetv"]
     assert tv["url"].split("/")[-2] == latest["tag_name"], "Latest must contain the current TV APK"
     assert tv["url"].split("/")[-1] in names, "Latest TV asset is missing"

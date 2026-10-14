@@ -30,7 +30,7 @@ Run this read-only check after publishing:
 python3 tools/check-release-channel.py
 ```
 
-It requires GitHub CLI (`gh`) authenticated to an account that can read the repository. It checks the shared feed, all platform asset hashes/sizes, Mac architecture entries, and the Latest TV APK. A [workflow template](../tools/check-update-channel.workflow.yml) is included. The current GitHub OAuth login lacks the workflow permission needed to install it under `.github/workflows`, so it is not enabled. Run the script manually for now. With a suitably authorized GitHub login, copy the template to `.github/workflows/check-update-channel.yml`; it reports failures and never alters releases.
+It requires GitHub CLI (`gh`) authenticated to an account that can read the repository. It checks the shared feed, all platform asset hashes/sizes, Mac architecture entries, the Latest TV APK, and the iPhone IPA’s internal bundle ID/version/build. The IPA is downloaded temporarily and removed after the check. A [workflow template](../tools/check-update-channel.workflow.yml) is included. The current GitHub OAuth login lacks the workflow permission needed to install it under `.github/workflows`, so it is not enabled. Run the script manually for now. With a suitably authorized GitHub login, copy the template to `.github/workflows/check-update-channel.yml`; it reports failures and never alters releases.
 
 ## Update helper
 

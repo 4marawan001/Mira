@@ -17,7 +17,7 @@ import ServiceManagement
     }()
     private let folder = FileManager.default.urls(for:.applicationSupportDirectory,in:.userDomainMask)[0].appendingPathComponent("Mira Phone Updates",isDirectory:true)
     func check(force: Bool = false) async {
-        guard !busy else {return}; busy = true; defer {busy = false}
+        guard !busy else {return}; ready = nil; busy = true; defer {busy = false}
         do {
             let item = try await loadArtifact { url in
                 var request = URLRequest(url: url)
@@ -30,7 +30,8 @@ import ServiceManagement
             version=item.version
             let destination=folder.appendingPathComponent("Mira.ipa")
             let downloaded=UserDefaults.standard.integer(forKey:"downloadedBuild")
-            if downloaded > item.build {
+            let actualCachedBuild = await Task.detached { (try? readIPAIdentity(destination).build) ?? 0 }.value
+            if actualCachedBuild > item.build {
                 message="The channel lists an older build. Keeping your newer download; no downgrade was made."
                 return
             }
@@ -38,6 +39,7 @@ import ServiceManagement
                 try cachedDownloadMatches(destination, artifact: item, downloadedBuild: downloaded)
             }.value
             if matches {
+                try await Task.detached { try validateIPA(destination, artifact: item) }.value
                 ready=destination;message="Mira \(item.version) is downloaded and ready to install.";return
             }
             message="Downloading Mira \(item.version)…"
@@ -47,6 +49,7 @@ import ServiceManagement
             guard (downloadResponse as? HTTPURLResponse)?.statusCode == 200 else {throw URLError(.badServerResponse)}
             let actual=try await Task.detached {try checksum(temp)}.value
             guard actual == item.sha256.lowercased() else {throw NSError(domain:"Mira",code:2,userInfo:[NSLocalizedDescriptionKey:"The download checksum did not match. Nothing was installed."])}
+            try await Task.detached { try validateIPA(temp, artifact: item) }.value
             if let expected = item.size {
                 let bytes = try temp.resourceValues(forKeys: [.fileSizeKey]).fileSize
                 guard bytes == Int(expected) else { throw URLError(.badServerResponse) }
@@ -58,7 +61,7 @@ import ServiceManagement
             if FileManager.default.fileExists(atPath:destination.path) {_ = try FileManager.default.replaceItemAt(destination,withItemAt:staging)}
             else {try FileManager.default.moveItem(at:staging,to:destination)}
             UserDefaults.standard.set(item.build,forKey:"downloadedBuild")
-            ready=destination;message="Ready to install. Sideloadly will sign the update for your iPhone."
+            ready=destination;message="Mira \(item.version) (build \(item.build)) is ready. Sideloadly will sign it for your iPhone."
         } catch {message=error.localizedDescription}
     }
     func install() {
