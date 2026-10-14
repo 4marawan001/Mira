@@ -4,11 +4,11 @@
 <p align="center">iPhone · Apple Silicon & Intel Mac · Fire TV</p>
 <p align="center">
   <img src="https://img.shields.io/badge/iPhone-168-9fabbc?style=flat-square" alt="iPhone stable build 168" />
-  <img src="https://img.shields.io/badge/Mac-165-9fabbc?style=flat-square" alt="Mac build 165" />
-  <img src="https://img.shields.io/badge/Fire_TV-167-9fabbc?style=flat-square" alt="Fire TV build 167" />
+  <img src="https://img.shields.io/badge/Mac-169-9fabbc?style=flat-square" alt="Mac build 169" />
+  <img src="https://img.shields.io/badge/Fire_TV-170-9fabbc?style=flat-square" alt="Fire TV build 170" />
   <img src="https://img.shields.io/badge/status-personal_testing-242830?style=flat-square" alt="Personal testing builds" />
 </p>
-<p align="center"><a href="#download">Download</a> · <a href="#inside-mira">Explore</a> · <a href="docs/INSTALL.md">Install</a> · <a href="docs/AUDIT-2026-10-14.md">Latest checks</a> · <a href="docs/RELEASING.md">Build & publish</a></p>
+<p align="center"><a href="#download">Download</a> · <a href="#inside-mira">Explore</a> · <a href="docs/INSTALL.md">Install</a> · <a href="docs/BUILD-170.md">Latest checks</a> · <a href="docs/RELEASING.md">Build & publish</a></p>
 
 ![Mira Home on Mac](docs/assets/home.jpg)
 
@@ -19,9 +19,9 @@
 | Device | Release package | Version | Setup |
 | --- | --- | --- | --- |
 | iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.24/Mira.ipa) | 0.5.24 / 168 | Sign with Sideloadly; iOS 16.1+. |
-| Apple Silicon Mac | [ARM64 DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.20/Mira-macOS-arm64.dmg) | 0.5.20 / 165 | macOS 12+. |
-| Intel Mac | [Intel DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.20/Mira-macOS-x86_64.dmg) | 0.5.20 / 165 | macOS 12+. |
-| Fire TV | [Universal APK](https://github.com/4marawan001/Mira/releases/download/v0.5.22/Mira-FireTV-universal.apk) | 0.5.22 / 167 | Android-based Fire TV, API 24+. |
+| Apple Silicon Mac | [ARM64 DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.25/Mira-macOS-arm64.dmg) | 0.5.25 / 169 | macOS 12+. |
+| Intel Mac | [Intel DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.25/Mira-macOS-x86_64.dmg) | 0.5.25 / 169 | macOS 12+. |
+| Fire TV | [Universal APK](https://github.com/4marawan001/Mira/releases/download/v0.5.26/Mira-FireTV-universal.apk) | 0.5.26 / 170 | Android-based Fire TV, API 24+. |
 | iPhone update helper for Mac | [Universal Mac ZIP](https://github.com/4marawan001/Mira/releases/download/v0.5.22/Mira-iPhone-Updates-1.1.1-macOS.zip) | Helper 1.1.1 / 169 | Apple Silicon or Intel; macOS 13+. |
 
 Keep Mira installed when updating, and use the same signing identity to retain local data. Mac packages are ad-hoc signed, without Apple notarization. [Installation guide](docs/INSTALL.md) · [All releases](https://github.com/4marawan001/Mira/releases).
@@ -48,7 +48,7 @@ Search displays results as add-ons respond. View All keeps the original query an
 | Balanced | Prefers good 1080p, considering size and codec support. | Prefers compatible 4K within the size budget. | Prefers supported 4K on a capable 4K TV; otherwise 1080p. |
 | Highest | Prioritizes hardware compatibility, resolution and disc sources. | Prioritizes compatible resolution and disc/REMUX. | Prioritizes supported resolution and disc/REMUX. |
 
-Mac and TV Balanced use a budget of **30 decimal GB per two hours**, scaled by known runtime. Unknown-size or oversized copies remain available manually. Hardware checks help rank supplied codec metadata; they do not measure bandwidth or guarantee every HDR mode, codec profile, audio format or container. Playback still validates the real stream when opening it.
+Mac and TV Balanced use a budget of **40 decimal GB per two hours**, scaled by known runtime. Balanced now considers runtime-scaled compression hints, so a tiny 2 GB two-hour 4K copy no longer wins just for saving space. A substantial encode is preferred when available; short episodes scale down. Unknown-size or oversized copies remain available manually. Hardware checks help rank supplied codec metadata; they do not measure bandwidth or guarantee every HDR mode, codec profile, audio format or container. Playback still validates the real stream when opening it.
 
 ### iPhone previews
 
@@ -65,13 +65,19 @@ Choose an accent color, alternate icon and layout. The default uses Mira’s sil
 ![Mira Fire TV Home](docs/assets/firetv-167-home.png)
 
 <table><tr>
-<td width="50%"><img src="docs/assets/firetv-167-quality.png" alt="Fire TV automatic quality picker" /></td>
+<td width="50%"><img src="docs/assets/firetv-170-quality.png" alt="Fire TV automatic quality picker" /></td>
 <td width="50%"><img src="docs/assets/firetv-167-posters.png" alt="Fire TV poster browsing" /></td>
 </tr></table>
 
-*Build 167 running in an Android TV emulator. Populated browsing uses a local metadata-only fixture with public Cinemeta artwork. These images do not establish physical-TV performance.*
+*Home/poster images are build 167; the quality picker is build 170, all in an Android TV emulator. Populated browsing uses a local metadata-only fixture with public Cinemeta artwork. These images do not establish physical-TV performance.*
 
-Build 167 bounds poster decoding, removes duplicate catalog presentation work and avoids live source-menu blur. Focus scrolls when a card needs room. Empty Home retains navigation and setup. Provider responses are serialized to prevent competing autoplay selections. [TV changes and validation](docs/BUILD-167.md).
+Build 167 introduced bounded poster decoding, removed duplicate catalog presentation work and avoided live source-menu blur. Focus scrolls when a card needs room. Empty Home retains navigation and setup. Provider responses are serialized to prevent competing autoplay selections. Build 170 raises the Balanced ceiling to 40 GB/two hours, reduces the preference for over-compressed copies, and prevents cached links or early binge groups from bypassing current quality selection. [TV changes and validation](docs/BUILD-167.md).
+
+## Latest quality update
+
+Mac 169 and Fire TV 170 improve Balanced selection while preserving iPhone 168. For a two-hour movie, an 18 GB 4K Blu-ray HEVC encode beats a 2 GB 4K copy; a 39 GB REMUX does not win automatically. The maximum is 40 GB, rather than a target download size.
+
+The new focused checks passed **68 Mac tests and 45 TV tests**, plus a signed TV Release quality-settings remote check. The separate populated-browsing fixture check did not pass setup. [Mac checks](docs/BUILD-169.md) · [TV checks](docs/BUILD-170.md). Physical Insignia playback and sustained frame pacing still need device testing.
 
 ## Updates
 

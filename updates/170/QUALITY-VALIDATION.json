@@ -1,0 +1,59 @@
+{
+  "macos": {
+    "checks": {
+      "tests": 68,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "architectures": {
+      "arm64": {
+        "build": 169,
+        "version": "0.5.25",
+        "sha256": "422ac9019deacb47d3f920f66a308383679d1711a971092ec8feda4191d11106",
+        "size": 195772055,
+        "signature": "ad-hoc verified",
+        "packagedJvmRuns": true,
+        "nativeFilesVerified": 102
+      },
+      "x86_64": {
+        "build": 169,
+        "version": "0.5.25",
+        "sha256": "11047dc9257428df0a543d277bf0f6e9fa336e389157421f2870e509352e3c22",
+        "size": 201342550,
+        "signature": "ad-hoc verified",
+        "packagedJvmRuns": true,
+        "nativeFilesVerified": 104
+      }
+    }
+  },
+  "firetv": {
+    "checks": {
+      "tests": 45,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "universal": {
+      "build": 170,
+      "version": "0.5.26",
+      "sha256": "f52bbda2fc912bc4ec9203e2b3c9643b7c6d3818a335a6d8da0fc81a87ec4604",
+      "size": 134515051,
+      "signingCertificate": "existing MiraPersonal verified"
+    },
+    "arm64": {
+      "build": 170,
+      "version": "0.5.26",
+      "sha256": "a463c40e713a3e3899f5835c5a8d920ea138b5b46bf8e20af57abb04e6ab7396",
+      "size": 54007177,
+      "signingCertificate": "existing MiraPersonal verified"
+    },
+    "armv7": {
+      "build": 170,
+      "version": "0.5.26",
+      "sha256": "fa1a639f38d4a2f065a8bfab148310cfce0efba821878ec1553d8d27dad86fa4",
+      "size": 52018219,
+      "signingCertificate": "existing MiraPersonal verified"
+    }
+  }
+}

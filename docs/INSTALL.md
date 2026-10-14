@@ -35,7 +35,7 @@ Videos mode and automatic hover-video playback are removed in Mac 165. Poster ho
 
 ## Fire TV
 
-1. Download [Mira-FireTV-universal.apk](https://github.com/4marawan001/Mira/releases/download/v0.5.22/Mira-FireTV-universal.apk).
+1. Download [Mira-FireTV-universal.apk](https://github.com/4marawan001/Mira/releases/download/v0.5.26/Mira-FireTV-universal.apk).
 2. Transfer it to a compatible Android-based Fire TV using your APK installation method.
 3. Install over your existing Mira app, then open it.
 4. Browse with D-pad, Select and Back. In **Settings → Automatic quality**, choose Low Data, Balanced or Highest.
