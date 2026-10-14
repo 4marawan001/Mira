@@ -31,6 +31,8 @@ Latest releases: **iPhone 0.5.19 · build 164**, **Fire TV 0.5.17 · build 162**
 | Apple Silicon Mac (macOS 12+) | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.18/Mira-macOS-arm64.dmg) | Open the disk image and copy Mira to Applications. |
 | Intel Mac (macOS 12+) | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.18/Mira-macOS-x86_64.dmg) | Open the disk image and copy Mira to Applications. |
 
+Each platform has its own release version. The GitHub Latest badge follows the Fire TV update channel; the table links to the newest build for each device.
+
 [All releases and source downloads](https://github.com/4marawan001/Mira/releases) · [Step-by-step setup](docs/INSTALL.md) · [Fire TV & Mac build 162 checksums](https://github.com/4marawan001/Mira/releases/download/v0.5.17/SHA256SUMS.txt)
 
 ## Inside Mira

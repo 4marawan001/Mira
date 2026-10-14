@@ -1,0 +1,31 @@
+{
+  "ios": {
+    "build": 164,
+    "version": "0.5.19",
+    "baseBuild": 155,
+    "changedFiles": [
+      "MIRA_BUILD.md",
+      "composeApp/src/androidMain/kotlin/com/nuvio/app/features/home/components/MiraPreviewPlatformSurface.android.kt",
+      "composeApp/src/androidMain/kotlin/com/nuvio/app/features/streams/MiraPlaybackPreferences.android.kt",
+      "composeApp/src/commonMain/composeResources/values/strings_mira.xml",
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/catalog/CatalogScreen.kt",
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/HomePosterCard.kt",
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/home/components/MiraVideoPreview.kt",
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/settings/AppearanceSettingsPage.kt",
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/BalancedStreamRanking.kt",
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/MiraPlaybackPreferences.kt",
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/StreamAutoPlaySelector.kt",
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/streams/StreamDecoderCapabilities.kt",
+      "composeApp/src/commonTest/kotlin/com/nuvio/app/features/home/components/MiraVideoPreviewTest.kt",
+      "composeApp/src/commonTest/kotlin/com/nuvio/app/features/mdblist/MdbListLibrarySorterTest.kt",
+      "composeApp/src/commonTest/kotlin/com/nuvio/app/features/streams/StreamDecoderCapabilitiesTest.kt",
+      "composeApp/src/desktopMain/kotlin/com/nuvio/app/features/streams/MiraPlaybackPreferences.desktop.kt",
+      "composeApp/src/iosMain/kotlin/com/nuvio/app/features/home/components/MiraPreviewPlatformSurface.ios.kt",
+      "composeApp/src/iosMain/kotlin/com/nuvio/app/features/streams/MiraPlaybackPreferences.ios.kt",
+      "iosApp/Configuration/Version.xcconfig",
+      "scripts/catalog-regression/run.sh",
+      "scripts/catalog-regression/stubs/MiraPlayback.kt"
+    ],
+    "upstreamCommit": "ee3d915067362651e85dd6c959a92f147a77d110"
+  }
+}
