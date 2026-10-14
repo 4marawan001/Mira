@@ -39,3 +39,4 @@ This release provides corrective updates for subtitle character set discriminati
 ## Source
 
 Verified patches against the exact build 155 source archives are included with base checksums and reconstruction instructions in `updates/160/SOURCE.md` and `updates/160/Mira-source-deltas.json`. Original licenses and acknowledgements remain in the base archives. Saved account data and private signing keys are excluded.
+

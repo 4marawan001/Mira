@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="#download">Download</a> · <a href="#inside-mira">Inside Mira</a> · <a href="docs/INSTALL.md">Installation</a> · <a href="docs/BUILD-159.md">Latest changes</a>
+  <a href="#download">Download</a> · <a href="#inside-mira">Inside Mira</a> · <a href="docs/INSTALL.md">Installation</a> · <a href="docs/BUILD-161.md">Latest changes</a>
 </p>
 
 ![Mira Home on Mac, with cinematic artwork, genre shortcuts, IMDb Top 250 and floating navigation](docs/assets/home.jpg)
@@ -22,15 +22,15 @@
 
 ## Download
 
-Latest releases: **Fire TV 0.5.15 · build 160**, **iPhone 0.5.13 · build 158**, and **Mac 0.5.12 · build 157**. These are Release packages.
+Latest releases: **iPhone 0.5.16 · build 161**, **Fire TV 0.5.15 · build 160**, and **Mac 0.5.12 · build 157**. These are Release packages.
 
 | Device | Download | Installation |
 | --- | --- | --- |
+| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.16/Mira-ios-161.ipa) | Sign and install with Sideloadly on your Mac. |
 | Fire TV | [APK](https://github.com/4marawan001/Mira/releases/download/v0.5.15/Mira-FireTV-universal.apk) | Install on a compatible Android-based Fire TV. Remote controls are supported. |
-| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.13/Mira-ios-158.ipa) | Sign and install with Sideloadly on your Mac. |
 | Apple Silicon Mac | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.12/Mira-macOS-arm64.dmg) | Open the disk image and copy Mira to Applications. |
 
-[All releases and source downloads](https://github.com/4marawan001/Mira/releases) · [Step-by-step setup](docs/INSTALL.md) · [Fire TV build 160 checksums](https://github.com/4marawan001/Mira/releases/download/v0.5.15/SHA256SUMS.txt)
+[All releases and source downloads](https://github.com/4marawan001/Mira/releases) · [Step-by-step setup](docs/INSTALL.md) · [iPhone build 161 checksums](https://github.com/4marawan001/Mira/releases/download/v0.5.16/SHA256SUMS.txt)
 
 ## Inside Mira
 
@@ -42,7 +42,7 @@ Playback preferences include Low Data, Balanced and Highest. Balanced favors goo
 
 ### Movies or videos
 
-On iPhone and Mac, open **Settings → Look & feel → Browsing**. Movies & shows is the default. Videos enables muted hover previews on Mac and press-and-hold preview sheets on iPhone. On iPhone build 158 and Mac build 157, a missing trailer falls back to a muted random excerpt lasting up to 30 seconds when an enabled provider exposes a ready direct stream. Short videos may end earlier. On iPhone, press and hold a poster to open the preview sheet. Full catalog grids support the same gesture. Providers without a ready direct stream may have no excerpt.
+On iPhone and Mac, open **Settings → Look & feel → Browsing**. Movies & shows is the default. Videos enables muted hover previews on Mac and press-and-hold preview sheets on iPhone. On iPhone build 161, a missing trailer falls back to a muted direct-stream preview starting deterministically at 0:20 and playing up to 30 seconds (0:20–0:50). Short videos between 20s and 50s play from 0:20 to end; videos under 20s play from 0:00 to end; and missing duration or unsupported seeking displays a clear unavailable message without endless spinning. All "Random excerpt" wording is removed. On Mac build 157, direct-stream fallback uses muted excerpts. On iPhone, press and hold a poster to open the preview sheet. Full catalog grids support the same gesture. Providers without a ready direct stream may have no excerpt.
 
 ![A muted trailer preview over Mira's poster shelves](docs/assets/video-preview.jpg)
 
@@ -68,13 +68,14 @@ Choose an accent color, change the app icon, or adjust the browsing layout. The 
 
 [Read Fire TV build 160 changes and checks](docs/BUILD-160.md).
 
-## What's new in iPhone build 158
+## What's new in iPhone build 161
 
-- Random muted excerpts of up to 30 seconds when no trailer resolves, enabled only in Videos mode.
-- Press-and-hold previews on poster shelves and full catalog grids.
-- Preview requests time out and cancel without writing watch progress.
+- **Deterministic 0:20 Excerpt Timing**: Replaced random excerpt starting points with a fixed, deterministic start at 20,000 ms (0:20). For standard videos, playback previews 0:20–0:50 every time without playing the initial 20 seconds, waiting in real time, or picking a random section.
+- **Short-Video Rules & Unavailable Fallback**: Videos between 20s and 50s start at 0:20 and play to end; videos 20s or shorter start at 0:00 and play to end; unknown duration or unsupported seeking displays a clear unavailable message without infinite spinning.
+- **Clear Interface Copy**: Removed all "Random excerpt" wording across the app in favor of exact timing indicators (e.g., *"Muted preview · Starts at 0:20 · Up to 30 seconds"*).
+- **Preserved Rules**: Press-and-hold previews remain exclusive to Videos browsing mode, trailer clips remain first choice, audio is muted, requests time out and cancel cleanly, and previews never write watch progress.
 
-[Read iPhone build 158 changes and checks](docs/BUILD-158.md).
+[Read iPhone build 161 changes and checks](docs/BUILD-161.md) · [Earlier build 158 notes](docs/BUILD-158.md).
 
 ## What's new in Mac build 157
 
@@ -96,13 +97,13 @@ The [update manifest](https://github.com/4marawan001/Mira/releases/latest/downlo
 
 ## Testing status
 
-These are personal testing builds. Fire TV build 159 passed 91 focused checks and 611 player/autosync package checks with zero failures. Mac build 157 passed 30 focused checks, including real installer replacement and rejection checks in temporary folders. iPhone build 158 passed 102 regression checks and 10 preview checks on the iOS simulator. Five broader desktop failures from build 155 remain in the Mac repo. Unit tests verify parser, retimer, and selection logic; real-provider excerpt playback, sustained Mac frame rates, and physical television playback quality remain for device testing. See [Fire TV build 159 validation](docs/BUILD-159.md#validation) and [Mac build 157 validation](docs/BUILD-157.md#validation).
+These are personal testing builds. Fire TV build 160 passed 109 focused checks and 296 player/autosync package checks with zero failures. Mac build 157 passed 30 focused checks, including real installer replacement and rejection checks in temporary folders. iPhone build 161 passed 102 regression checks and 13 boundary/determinism unit tests on the iOS simulator. Five broader desktop failures from build 155 remain in the Mac repo. Unit tests verify parser, retimer, and selection logic; real-provider excerpt playback, sustained Mac frame rates, and physical television playback quality remain for device testing. See [Fire TV build 160 validation](docs/BUILD-160.md#validation), [iPhone build 161 validation](docs/BUILD-161.md#validation), and [Mac build 157 validation](docs/BUILD-157.md#validation).
 
 The Mac package supports Apple Silicon and is ad-hoc signed. The Fire TV package supports ARMv7 and ARM64 Android/Fire OS devices with Android 7 or later. Platform features differ; Videos mode and the logo dance are excluded from TV.
 
 ## Source and credits
 
-Build 155 contains the full source archives, upstream base commits, original licenses and acknowledgements. Release 159 includes [Fire TV Release source reconstruction instructions](updates/159/SOURCE.md), with verified patches for Fire TV (Release 159), iPhone (Release 158) and Mac (Release 157). This repository is the download and documentation hub.
+Build 155 contains the full source archives, upstream base commits, original licenses and acknowledgements. Release 161 includes [iPhone Release source reconstruction instructions](updates/161/SOURCE.md), with verified patches for iPhone (Release 161), Fire TV (Release 160) and Mac (Release 157). This repository is the download and documentation hub.
 
 Built on [Nuvio Mobile](https://github.com/NuvioMedia/NuvioMobile), [Nuvio Desktop](https://github.com/NuvioMedia/NuvioDesktop), [Nuvio TV](https://github.com/NuvioMedia/NuvioTV) and [nuvio-engine](https://github.com/NuvioMedia/nuvio-engine).
 
