@@ -12,6 +12,21 @@ diff --git a/app/build.gradle.kts b/app/build.gradle.kts
  
          buildConfigField("String", "PARENTAL_GUIDE_API_URL", "\"${localProperties.getProperty("PARENTAL_GUIDE_API_URL", "")}\"")
          buildConfigField("String", "INTRODB_API_URL", "\"${localProperties.getProperty("INTRODB_API_URL", "")}\"")
+diff --git a/app/src/full/java/com/nuvio/tv/core/build/AppFeaturePolicy.kt b/app/src/full/java/com/nuvio/tv/core/build/AppFeaturePolicy.kt
+--- a/app/src/full/java/com/nuvio/tv/core/build/AppFeaturePolicy.kt
++++ b/app/src/full/java/com/nuvio/tv/core/build/AppFeaturePolicy.kt
+@@ -3,9 +3,9 @@
+ object AppFeaturePolicy {
+     val pluginsEnabled: Boolean = true
+     val inAppUpdatesEnabled: Boolean = true
+-    val inAppTrailerPlaybackEnabled: Boolean = true
++    val inAppTrailerPlaybackEnabled: Boolean = false
+     val externalTrailerPlaybackEnabled: Boolean = true
+     val supportNuvioEnabled: Boolean = true
+-    val trailerPlaybackMode: TrailerPlaybackMode = TrailerPlaybackMode.IN_APP
++    val trailerPlaybackMode: TrailerPlaybackMode = TrailerPlaybackMode.EXTERNAL
+     val imdbRatingLogoEnabled: Boolean = true
+ }
 diff --git a/app/src/main/java/com/nuvio/tv/MainActivity.kt b/app/src/main/java/com/nuvio/tv/MainActivity.kt
 --- a/app/src/main/java/com/nuvio/tv/MainActivity.kt
 +++ b/app/src/main/java/com/nuvio/tv/MainActivity.kt
@@ -139,6 +154,21 @@ diff --git a/app/src/main/java/com/nuvio/tv/MainActivity.kt b/app/src/main/java/
  
  @Composable
  private fun CollapsedSidebarPill(
+diff --git a/app/src/main/java/com/nuvio/tv/NuvioApplication.kt b/app/src/main/java/com/nuvio/tv/NuvioApplication.kt
+--- a/app/src/main/java/com/nuvio/tv/NuvioApplication.kt
++++ b/app/src/main/java/com/nuvio/tv/NuvioApplication.kt
+@@ -172,9 +172,9 @@
+             }
+             .crossfade(false)
+             .precision(coil3.size.Precision.INEXACT)
+-            .allowHardware(false)
++            .allowHardware(true)
+             .allowRgb565(imagePerformancePreferences.rgb565Enabled)
+-            .bitmapFactoryMaxParallelism(4)
++            .bitmapFactoryMaxParallelism(2)
+             .build()
+     }
+ }
 diff --git a/app/src/main/java/com/nuvio/tv/core/player/StreamAutoPlaySelector.kt b/app/src/main/java/com/nuvio/tv/core/player/StreamAutoPlaySelector.kt
 --- a/app/src/main/java/com/nuvio/tv/core/player/StreamAutoPlaySelector.kt
 +++ b/app/src/main/java/com/nuvio/tv/core/player/StreamAutoPlaySelector.kt
@@ -608,6 +638,34 @@ diff --git a/app/src/main/java/com/nuvio/tv/ui/navigation/NuvioNavHost.kt b/app/
 +                onSearchClick = { navController.navigate(Screen.Search.route) },
 +                onSavedClick = { navController.navigate(Screen.Library.route) },
 +                onSettingsClick = { navController.navigate(Screen.Settings.route) }
+             )
+         }
+ 
+@@ -1208,18 +1211,17 @@
+         }
+ 
+         composable(Screen.Settings.route) {
+-            SettingsScreen(
+-                showBuiltInHeader = !hideBuiltInHeaders,
++            com.nuvio.tv.ui.screens.settings.MiraTvSettingsScreen(
++                onBackPress = { navController.popBackStack() },
+                 onNavigateToAddons = { navController.navigate(Screen.AddonManager.route) },
++                onNavigateToPlayback = { navController.navigate(Screen.PlaybackSettings.route) },
++                onNavigateToAppearance = { navController.navigate(Screen.ThemeSettings.route) },
++                onNavigateToManageProfiles = { navController.navigate(Screen.ManageProfiles.route) },
++                onNavigateToAuthQrSignIn = { navController.navigate(Screen.AuthQrSignIn.route) },
++                onNavigateToConnections = { navController.navigate(Screen.TmdbSettings.route) },
++                onNavigateToTracking = { navController.navigate(Screen.Tracking.route) },
+                 onNavigateToPlugins = { navController.navigate(Screen.Plugins.route) },
+-                onNavigateToAuthQrSignIn = { navController.navigate(Screen.AuthQrSignIn.route) },
+-                onNavigateToManageProfiles = { navController.navigate(Screen.ManageProfiles.route) },
+-                onNavigateToSupportersContributors = {
+-                    navController.navigate(Screen.SupportersContributors.route)
+-                },
+-                onNavigateToLicensesAttributions = {
+-                    navController.navigate(Screen.LicensesAttributions.route)
+-                }
++                onNavigateToLicensesAttributions = { navController.navigate(Screen.LicensesAttributions.route) }
              )
          }
  
@@ -1355,7 +1413,7 @@ diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHomeContent.kt
 new file mode 100644
 --- /dev/null
 +++ b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvHomeContent.kt
-@@ -0,0 +1,319 @@
+@@ -0,0 +1,325 @@
 +@file:OptIn(
 +    androidx.tv.material3.ExperimentalTvMaterial3Api::class,
 +    androidx.compose.foundation.ExperimentalFoundationApi::class
@@ -1409,6 +1467,13 @@ new file mode 100644
 +    scrollToTopTrigger: Int = 0
 +) {
 +    val listState = rememberLazyListState()
++    val rowStates = remember { mutableMapOf<String, androidx.compose.foundation.lazy.LazyListState>() }
++
++    val rows = remember(uiState.homeRows, uiState.catalogRows) {
++        uiState.homeRows.ifEmpty {
++            uiState.catalogRows.map { HomeRow.Catalog(it) }
++        }
++    }
 +
 +    LaunchedEffect(scrollToTopTrigger) {
 +        if (scrollToTopTrigger > 0) {
@@ -1499,10 +1564,6 @@ new file mode 100644
 +        }
 +
 +        // 6. Catalogs & Collections
-+        val rows = uiState.homeRows.ifEmpty {
-+            uiState.catalogRows.map { HomeRow.Catalog(it) }
-+        }
-+
 +        items(
 +            items = rows,
 +            key = { homeRow ->
@@ -1524,6 +1585,8 @@ new file mode 100644
 +                is HomeRow.Catalog -> {
 +                    val catalog = homeRow.row
 +                    if (catalog.items.isNotEmpty()) {
++                        val rowKey = "cat_${catalog.addonId}_${catalog.catalogId}_${catalog.apiType}"
++                        val rowState = rowStates.getOrPut(rowKey) { androidx.compose.foundation.lazy.LazyListState() }
 +                        val previewItems = remember(catalog.items) { catalog.items.take(20) }
 +                        Column(
 +                            modifier = Modifier
@@ -1582,6 +1645,7 @@ new file mode 100644
 +                                }
 +                            }
 +                            LazyRow(
++                                state = rowState,
 +                                horizontalArrangement = Arrangement.spacedBy(14.dp),
 +                                contentPadding = PaddingValues(horizontal = 36.dp, vertical = 8.dp)
 +                            ) {
@@ -1899,7 +1963,7 @@ diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvPosterCard.kt 
 new file mode 100644
 --- /dev/null
 +++ b/app/src/main/java/com/nuvio/tv/ui/screens/home/MiraTvPosterCard.kt
-@@ -0,0 +1,173 @@
+@@ -0,0 +1,172 @@
 +@file:OptIn(androidx.tv.material3.ExperimentalTvMaterial3Api::class)
 +package com.nuvio.tv.ui.screens.home
 +
@@ -1930,6 +1994,8 @@ new file mode 100644
 +import com.nuvio.tv.domain.model.MetaPreview
 +import com.nuvio.tv.ui.components.WatchedMarker
 +
++private val POSTER_YEAR_REGEX = Regex("(\\d{4})")
++
 +@Composable
 +fun MiraTvPosterCard(
 +    item: MetaPreview,
@@ -1942,7 +2008,6 @@ new file mode 100644
 +) {
 +    val cardShape = remember { RoundedCornerShape(12.dp) }
 +    val context = LocalContext.current
-+    var isFocused by remember { mutableStateOf(false) }
 +    val shape = item.posterShape
 +    val effectiveWidth = when (shape) {
 +        com.nuvio.tv.domain.model.PosterShape.LANDSCAPE -> 240.dp
@@ -2009,9 +2074,7 @@ new file mode 100644
 +            )
 +        ) {
 +            Box(
-+                modifier = Modifier
-+                    .fillMaxSize()
-+                    .clip(cardShape)
++                modifier = Modifier.fillMaxSize()
 +            ) {
 +                if (!imageUrl.isNullOrBlank()) {
 +                    AsyncImage(
@@ -2058,7 +2121,7 @@ new file mode 100644
 +        )
 +        val releaseYear = remember(item.releaseInfo) {
 +            item.releaseInfo?.takeIf { it.isNotBlank() }?.let { release ->
-+                Regex("(\\d{4})").find(release)?.value ?: release.split("-").firstOrNull() ?: release
++                POSTER_YEAR_REGEX.find(release)?.value ?: release.split("-").firstOrNull() ?: release
 +            }
 +        }
 +        if (!releaseYear.isNullOrBlank()) {
@@ -2172,6 +2235,388 @@ diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncS
              .replace(Regex("""<(?:\d+:)?\d{1,2}:\d{2}(?:[.,]\d+)?>"""), "")
              .replace(Regex("""</?[a-zA-Z0-9._-]+(?: [^>]*)?>"""), "")
              .replace("&nbsp;", " ")
+diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/settings/MiraTvSettingsScreen.kt b/app/src/main/java/com/nuvio/tv/ui/screens/settings/MiraTvSettingsScreen.kt
+new file mode 100644
+--- /dev/null
++++ b/app/src/main/java/com/nuvio/tv/ui/screens/settings/MiraTvSettingsScreen.kt
+@@ -0,0 +1,377 @@
++@file:OptIn(
++    androidx.tv.material3.ExperimentalTvMaterial3Api::class,
++    androidx.compose.foundation.ExperimentalFoundationApi::class
++)
++package com.nuvio.tv.ui.screens.settings
++
++import androidx.activity.compose.BackHandler
++import androidx.compose.foundation.BorderStroke
++import androidx.compose.foundation.background
++import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
++import androidx.compose.foundation.layout.*
++import androidx.compose.foundation.lazy.LazyColumn
++import androidx.compose.foundation.lazy.rememberLazyListState
++import androidx.compose.foundation.shape.CircleShape
++import androidx.compose.foundation.shape.RoundedCornerShape
++import androidx.compose.material.icons.Icons
++import androidx.compose.material.icons.automirrored.rounded.ArrowBack
++import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
++import androidx.compose.material.icons.filled.Sync
++import androidx.compose.material.icons.rounded.*
++import androidx.compose.runtime.*
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.graphics.Color
++import androidx.compose.ui.graphics.vector.ImageVector
++import androidx.compose.ui.text.font.FontWeight
++import androidx.compose.ui.text.style.TextAlign
++import androidx.compose.ui.unit.dp
++import androidx.compose.ui.unit.sp
++import androidx.hilt.navigation.compose.hiltViewModel
++import androidx.lifecycle.compose.collectAsStateWithLifecycle
++import androidx.tv.material3.*
++import com.nuvio.tv.core.build.AppFeaturePolicy
++import com.nuvio.tv.ui.components.NuvioScrollDefaults
++import com.nuvio.tv.updater.UpdateViewModel
++
++@Composable
++fun MiraTvSettingsScreen(
++    onBackPress: () -> Unit,
++    onNavigateToAddons: () -> Unit = {},
++    onNavigateToPlayback: () -> Unit = {},
++    onNavigateToAppearance: () -> Unit = {},
++    onNavigateToManageProfiles: () -> Unit = {},
++    onNavigateToAuthQrSignIn: () -> Unit = {},
++    onNavigateToConnections: () -> Unit = {},
++    onNavigateToTracking: () -> Unit = {},
++    onNavigateToPlugins: () -> Unit = {},
++    onNavigateToLicensesAttributions: () -> Unit = {},
++    profileViewModel: ProfileSettingsViewModel = hiltViewModel(),
++    updateViewModel: UpdateViewModel = hiltViewModel()
++) {
++    BackHandler { onBackPress() }
++
++    val profiles by profileViewModel.profiles.collectAsStateWithLifecycle()
++    val activeProfile = profiles.firstOrNull()
++    val updateState by updateViewModel.uiState.collectAsStateWithLifecycle()
++    val listState = rememberLazyListState()
++
++    CompositionLocalProvider(LocalBringIntoViewSpec provides NuvioScrollDefaults.smoothScrollSpec) {
++        Box(
++            modifier = Modifier
++                .fillMaxSize()
++                .background(Color.Black),
++            contentAlignment = Alignment.TopCenter
++        ) {
++            LazyColumn(
++                state = listState,
++                modifier = Modifier
++                    .fillMaxHeight()
++                    .widthIn(max = 780.dp)
++                    .padding(horizontal = 32.dp),
++                contentPadding = PaddingValues(top = 28.dp, bottom = 64.dp),
++                verticalArrangement = Arrangement.spacedBy(18.dp)
++            ) {
++                // Header: Back button + "Settings" title
++                item(key = "settings_header") {
++                    Row(
++                        modifier = Modifier
++                            .fillMaxWidth()
++                            .padding(bottom = 8.dp),
++                        verticalAlignment = Alignment.CenterVertically,
++                        horizontalArrangement = Arrangement.spacedBy(14.dp)
++                    ) {
++                        Card(
++                            onClick = onBackPress,
++                            shape = CardDefaults.shape(CircleShape),
++                            colors = CardDefaults.colors(
++                                containerColor = Color(0xFF1B1D21),
++                                focusedContainerColor = Color(0xFF2C2C30),
++                                contentColor = Color.White,
++                                focusedContentColor = Color.White
++                            ),
++                            scale = CardDefaults.scale(focusedScale = 1.08f),
++                            border = CardDefaults.border(
++                                focusedBorder = Border(
++                                    BorderStroke(2.dp, Color.White),
++                                    shape = CircleShape
++                                )
++                            )
++                        ) {
++                            Box(
++                                modifier = Modifier.size(42.dp),
++                                contentAlignment = Alignment.Center
++                            ) {
++                                Icon(
++                                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
++                                    contentDescription = "Back",
++                                    modifier = Modifier.size(20.dp),
++                                    tint = Color.White
++                                )
++                            }
++                        }
++                        Text(
++                            text = "Settings",
++                            color = Color.White,
++                            fontSize = 28.sp,
++                            fontWeight = FontWeight.Bold
++                        )
++                    }
++                }
++
++                // Profile Card (1:1 with iPhone IPA)
++                item(key = "profile_card") {
++                    Card(
++                        onClick = onNavigateToManageProfiles,
++                        shape = CardDefaults.shape(RoundedCornerShape(20.dp)),
++                        colors = CardDefaults.colors(
++                            containerColor = Color(0xFF181B20),
++                            focusedContainerColor = Color(0xFF242730),
++                            contentColor = Color.White,
++                            focusedContentColor = Color.White
++                        ),
++                        scale = CardDefaults.scale(focusedScale = 1.03f),
++                        border = CardDefaults.border(
++                            focusedBorder = Border(
++                                BorderStroke(2.dp, Color.White),
++                                shape = RoundedCornerShape(20.dp)
++                            )
++                        )
++                    ) {
++                        Row(
++                            modifier = Modifier
++                                .fillMaxWidth()
++                                .padding(20.dp),
++                            verticalAlignment = Alignment.CenterVertically,
++                            horizontalArrangement = Arrangement.spacedBy(14.dp)
++                        ) {
++                            Box(
++                                modifier = Modifier
++                                    .size(46.dp)
++                                    .background(Color(0xFF30353E), RoundedCornerShape(14.dp)),
++                                contentAlignment = Alignment.Center
++                            ) {
++                                Text(
++                                    text = activeProfile?.name?.take(1)?.uppercase() ?: "M",
++                                    color = Color.White,
++                                    fontWeight = FontWeight.SemiBold,
++                                    fontSize = 20.sp
++                                )
++                            }
++                            Column(
++                                modifier = Modifier.weight(1f),
++                                verticalArrangement = Arrangement.spacedBy(4.dp)
++                            ) {
++                                Text(
++                                    text = activeProfile?.name?.ifBlank { "My space" } ?: "My space",
++                                    color = Color.White,
++                                    fontSize = 17.sp,
++                                    fontWeight = FontWeight.SemiBold
++                                )
++                                Text(
++                                    text = "Manage your personal space",
++                                    color = Color(0xFF9CA3AF),
++                                    fontSize = 13.sp
++                                )
++                            }
++                            Icon(
++                                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
++                                contentDescription = null,
++                                tint = Color(0xFF9CA3AF)
++                            )
++                        }
++                    }
++                }
++
++                // General Section (1:1 with iPhone IPA)
++                item(key = "general_section") {
++                    TvMiraSettingsGroup {
++                        TvMiraSettingsRow(
++                            title = "Sources",
++                            subtitle = "Add-ons and catalogs",
++                            icon = Icons.Rounded.Extension,
++                            onClick = onNavigateToAddons
++                        )
++                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF1F2329)))
++                        TvMiraSettingsRow(
++                            title = "Playback",
++                            subtitle = "Picture, sound and subtitles",
++                            icon = Icons.Rounded.PlayArrow,
++                            onClick = onNavigateToPlayback
++                        )
++                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF1F2329)))
++                        TvMiraSettingsRow(
++                            title = "Look & feel",
++                            subtitle = "Home, posters and appearance",
++                            icon = Icons.Rounded.Palette,
++                            onClick = onNavigateToAppearance
++                        )
++                    }
++                }
++
++                // More Options Section (1:1 with iPhone IPA)
++                item(key = "more_options_section") {
++                    var expanded by remember { mutableStateOf(false) }
++                    TvMiraSettingsGroup {
++                        TvMiraSettingsRow(
++                            title = "More options",
++                            subtitle = if (expanded) "Click to collapse" else "Accounts, connections and watch tracking",
++                            icon = Icons.Rounded.Tune,
++                            onClick = { expanded = !expanded }
++                        )
++                        if (expanded) {
++                            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF1F2329)))
++                            TvMiraSettingsRow(
++                                title = "Account",
++                                subtitle = "Sign-in and sync via QR code",
++                                icon = Icons.Rounded.AccountCircle,
++                                onClick = onNavigateToAuthQrSignIn
++                            )
++                            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF1F2329)))
++                            TvMiraSettingsRow(
++                                title = "Connections",
++                                subtitle = "Ratings and metadata services",
++                                icon = Icons.Rounded.Link,
++                                onClick = onNavigateToConnections
++                            )
++                            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF1F2329)))
++                            TvMiraSettingsRow(
++                                title = "Watch tracking",
++                                subtitle = "Trakt history and progress",
++                                icon = Icons.Default.Sync,
++                                onClick = onNavigateToTracking
++                            )
++                            if (AppFeaturePolicy.pluginsEnabled) {
++                                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF1F2329)))
++                                TvMiraSettingsRow(
++                                    title = "Plugins",
++                                    subtitle = "Extensions and player add-ons",
++                                    icon = Icons.Rounded.Extension,
++                                    onClick = onNavigateToPlugins
++                                )
++                            }
++                        }
++                    }
++                }
++
++                // Updates Section (1:1 with iPhone IPA)
++                item(key = "updates_section") {
++                    val message = updateState.feedbackMessage ?: if (updateState.isChecking) "Checking for updates..." else "Mira is up to date"
++                    TvMiraSettingsGroup {
++                        TvMiraSettingsRow(
++                            title = if (updateState.showBanner) "Update available" else "Updates",
++                            subtitle = message,
++                            icon = Icons.Default.Sync,
++                            onClick = {
++                                if (updateState.showBanner) {
++                                    updateViewModel.downloadUpdate()
++                                } else {
++                                    updateViewModel.checkForUpdates(force = true, showNoUpdateFeedback = true)
++                                }
++                            }
++                        )
++                    }
++                }
++
++                // About Mira Section (1:1 with iPhone IPA)
++                item(key = "about_section") {
++                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
++                        TvMiraSettingsGroup {
++                            TvMiraSettingsRow(
++                                title = "About Mira",
++                                subtitle = "Licenses and acknowledgements",
++                                icon = Icons.Rounded.Info,
++                                onClick = onNavigateToLicensesAttributions
++                            )
++                        }
++                        Text(
++                            text = "Mira  ·  0.5.17 (162)",
++                            color = Color(0xFF737B89),
++                            fontSize = 13.sp,
++                            modifier = Modifier.fillMaxWidth(),
++                            textAlign = TextAlign.Center
++                        )
++                    }
++                }
++            }
++        }
++    }
++}
++
++@Composable
++private fun TvMiraSettingsGroup(content: @Composable ColumnScope.() -> Unit) {
++    Surface(
++        colors = SurfaceDefaults.colors(containerColor = Color(0xFF14171B)),
++        shape = RoundedCornerShape(20.dp),
++        modifier = Modifier.fillMaxWidth()
++    ) {
++        Column(
++            modifier = Modifier.fillMaxWidth(),
++            content = content
++        )
++    }
++}
++
++@Composable
++private fun TvMiraSettingsRow(
++    title: String,
++    subtitle: String,
++    icon: ImageVector,
++    onClick: () -> Unit
++) {
++    Card(
++        onClick = onClick,
++        shape = CardDefaults.shape(RoundedCornerShape(14.dp)),
++        colors = CardDefaults.colors(
++            containerColor = Color.Transparent,
++            focusedContainerColor = Color(0xFF242730),
++            contentColor = Color.White,
++            focusedContentColor = Color.White
++        ),
++        scale = CardDefaults.scale(focusedScale = 1.02f),
++        border = CardDefaults.border(
++            focusedBorder = Border(
++                BorderStroke(2.dp, Color.White),
++                shape = RoundedCornerShape(14.dp)
++            )
++        )
++    ) {
++        Row(
++            modifier = Modifier
++                .fillMaxWidth()
++                .padding(horizontal = 18.dp, vertical = 14.dp),
++            verticalAlignment = Alignment.CenterVertically,
++            horizontalArrangement = Arrangement.spacedBy(14.dp)
++        ) {
++            Icon(
++                imageVector = icon,
++                contentDescription = null,
++                tint = Color(0xFFBEC5D1),
++                modifier = Modifier.size(22.dp)
++            )
++            Column(
++                modifier = Modifier.weight(1f),
++                verticalArrangement = Arrangement.spacedBy(2.dp)
++            ) {
++                Text(
++                    text = title,
++                    color = Color.White,
++                    fontWeight = FontWeight.Medium,
++                    fontSize = 15.sp
++                )
++                Text(
++                    text = subtitle,
++                    color = Color(0xFF858E9D),
++                    fontSize = 12.sp
++                )
++            }
++            Icon(
++                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
++                contentDescription = null,
++                tint = Color(0xFF626B79),
++                modifier = Modifier.size(18.dp)
++            )
++        }
++    }
++}
++
 diff --git a/app/src/test/java/com/nuvio/tv/core/player/StreamAutoPlaySelectorTest.kt b/app/src/test/java/com/nuvio/tv/core/player/StreamAutoPlaySelectorTest.kt
 --- a/app/src/test/java/com/nuvio/tv/core/player/StreamAutoPlaySelectorTest.kt
 +++ b/app/src/test/java/com/nuvio/tv/core/player/StreamAutoPlaySelectorTest.kt
