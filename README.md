@@ -22,15 +22,15 @@
 
 ## Download
 
-Latest releases: **Fire TV 0.5.14 · build 159**, **iPhone 0.5.13 · build 158**, and **Mac 0.5.12 · build 157**. These are Release packages.
+Latest releases: **Fire TV 0.5.15 · build 160**, **iPhone 0.5.13 · build 158**, and **Mac 0.5.12 · build 157**. These are Release packages.
 
 | Device | Download | Installation |
 | --- | --- | --- |
-| Fire TV | [APK](https://github.com/4marawan001/Mira/releases/download/v0.5.14/Mira-FireTV-universal.apk) | Install on a compatible Android-based Fire TV. Remote controls are supported. |
+| Fire TV | [APK](https://github.com/4marawan001/Mira/releases/download/v0.5.15/Mira-FireTV-universal.apk) | Install on a compatible Android-based Fire TV. Remote controls are supported. |
 | iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.13/Mira-ios-158.ipa) | Sign and install with Sideloadly on your Mac. |
 | Apple Silicon Mac | [DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.12/Mira-macOS-arm64.dmg) | Open the disk image and copy Mira to Applications. |
 
-[All releases and source downloads](https://github.com/4marawan001/Mira/releases) · [Step-by-step setup](docs/INSTALL.md) · [Fire TV build 159 checksums](https://github.com/4marawan001/Mira/releases/download/v0.5.14/SHA256SUMS.txt)
+[All releases and source downloads](https://github.com/4marawan001/Mira/releases) · [Step-by-step setup](docs/INSTALL.md) · [Fire TV build 160 checksums](https://github.com/4marawan001/Mira/releases/download/v0.5.15/SHA256SUMS.txt)
 
 ## Inside Mira
 
@@ -56,16 +56,17 @@ Choose an accent color, change the app icon, or adjust the browsing layout. The 
 
 <p align="center"><sub>Real screenshot from the Mac app, build 155 (appearance settings).</sub></p>
 
-## What's new in Fire TV build 159
+## What's new in Fire TV build 160
 
-- **Automatic Arabic & English Subtitle Sync**: Automatic detection of Arabic Windows-1256 encoding without language hints, with strict script discrimination against Cyrillic, Greek, Hebrew and CJK encodings.
+- **Arabic & Cyrillic Script Discrimination**: Automatic detection of Arabic Windows-1256 encoding without language hints using statistical script evaluation against Russian (Windows-1251), Greek (Windows-1253), Hebrew (Windows-1255), and CJK encodings. Corrected mixed-case Cyrillic discrimination without language hints.
 - **Double-Encoded UTF-8 Mojibake Repair**: Detects and automatically restores Arabic subtitles corrupted by Latin-1/Windows-1252 mis-decoding.
-- **Release-Tag & FPS Matching**: Ranks subtitle candidates by release group (YTS, SPARKS, RARBG, etc.), source, codec, resolution, and target video frame rate.
-- **Bidi Marker Normalization**: Strips Unicode bidi control characters (`\u200E`, `\u200F`, `\u202A`..`\u202E`, `\u2066`..`\u2069`, `\uFEFF`) and filters phantom cues for reliable timeline correlation.
-- **Activity Correlation Drift Alignment**: Seamlessly aligns subtitles with frame-rate drift (such as 25.0 fps PAL to 23.976 fps NTSC) against embedded reference cues.
+- **Language Code Alias Normalization**: Subtitle ranking normalizes equivalent language identifiers (e.g. `en` and `eng`, `ar` and `ara`, regional codes like `en-US` or `ar-SA`) so that exact release matches are not superseded by code format differences.
+- **Canonical Compound Release Tag Matching**: Compound tags (`WEB-DL`, `WEB.DL`, `WEBDL`, `Blu-Ray`, `BD-Rip`, `x264`, `H.264`, `x265`, `HEVC`) and codec synonyms are canonicalized before tokenization.
+- **Bidi Marker Normalization**: Strips Unicode bidi control characters (`\u200E`, `\u200F`, `\u202A`..`\u202E`, `\u2066`..`\u2069`, `\uFEFF`) and filters phantom cues.
+- **Heuristic Drift Alignment with Fallback**: Activity correlation aligns subtitles with frame-rate drift against embedded reference cues when present, with safe fallback to original timing.
 - **Preserved Controls**: Manual subtitle track selection and delay adjustments remain completely intact.
 
-[Read Fire TV build 159 changes and checks](docs/BUILD-159.md).
+[Read Fire TV build 160 changes and checks](docs/BUILD-160.md).
 
 ## What's new in iPhone build 158
 

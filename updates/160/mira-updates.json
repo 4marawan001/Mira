@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "artifacts": {
+    "ios": {
+      "version": "0.5.13",
+      "build": 158,
+      "url": "https://github.com/4marawan001/Mira/releases/download/v0.5.13/Mira-ios-158.ipa",
+      "sha256": "ee1cc44365aeaab9c09714ca0e83a8492875df0fb642339f8527776dc3a19874",
+      "size": 90939967
+    },
+    "macos": {
+      "version": "0.5.12",
+      "build": 157,
+      "url": "https://github.com/4marawan001/Mira/releases/download/v0.5.12/Mira-macOS-arm64.dmg",
+      "sha256": "a633491b604685fd1ba630151d1714252868f1793a82a7edb94b02949497073f",
+      "size": 196502162
+    },
+    "firetv": {
+      "version": "0.5.15",
+      "build": 160,
+      "url": "https://github.com/4marawan001/Mira/releases/download/v0.5.15/Mira-FireTV-universal.apk",
+      "sha256": "3995369660797e2a133f3b17e4d4ee37536077a030eec5d12c9ee056c1c6caac",
+      "size": 134728075
+    }
+  }
+}

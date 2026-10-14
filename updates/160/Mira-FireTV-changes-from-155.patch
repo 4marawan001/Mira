@@ -1,0 +1,1024 @@
+diff --git a/app/build.gradle.kts b/app/build.gradle.kts
+--- a/app/build.gradle.kts
++++ b/app/build.gradle.kts
+@@ -106,8 +106,8 @@
+         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+         minSdk = 24
+         targetSdk = 36
+-        versionCode = 155
+-        versionName = "0.5.10"
++        versionCode = 160
++        versionName = "0.5.15"
+ 
+         buildConfigField("String", "PARENTAL_GUIDE_API_URL", "\"${localProperties.getProperty("PARENTAL_GUIDE_API_URL", "")}\"")
+         buildConfigField("String", "INTRODB_API_URL", "\"${localProperties.getProperty("INTRODB_API_URL", "")}\"")
+diff --git a/app/src/main/java/com/nuvio/tv/core/player/StreamAutoPlaySelector.kt b/app/src/main/java/com/nuvio/tv/core/player/StreamAutoPlaySelector.kt
+--- a/app/src/main/java/com/nuvio/tv/core/player/StreamAutoPlaySelector.kt
++++ b/app/src/main/java/com/nuvio/tv/core/player/StreamAutoPlaySelector.kt
+@@ -6,6 +6,7 @@
+ import com.nuvio.tv.domain.model.AddonStreams
+ import com.nuvio.tv.domain.model.Stream
+ import com.nuvio.tv.domain.model.StreamDebridCacheState
++import com.nuvio.tv.ui.screens.player.PlayerSubtitleUtils
+ 
+ object StreamAutoPlaySelector {
+     fun orderAddonStreams(
+@@ -167,4 +168,211 @@
+ 
+         }
+     }
++
++    data class SubtitleReleaseMatch(
++        val score: Double,
++        val matchedTokens: Set<String>,
++        val streamFps: Double?,
++        val subtitleFps: Double?,
++        val fpsMatched: Boolean,
++    )
++
++    private val RELEASE_GROUPS = setOf(
++        "yts", "yify", "sparks", "rarbg", "psa", "fgt", "amiable", "flux", "ntb", "ion10",
++        "galaxyrg", "cmrg", "evo", "megusta", "vxt", "tgx", "pahe", "darksiders", "ettv",
++        "batv", "strife", "cake", "deflate", "rovers", "geckos", "shortbrehd", "drom",
++        "playhd", "wiki", "qxr", "utr", "swtyblz", "surcode", "framestor", "epsilon",
++        "ctrlhd", "don", "hdchina", "chd", "bhdstudio", "pter", "mkvhub"
++    )
++
++    private val SOURCE_TAGS = setOf(
++        "bluray", "bdrip", "brrip", "web-dl", "webdl", "webrip", "web", "hdtv", "dvdrip", "remux", "uhd", "hdr"
++    )
++
++    private val CODEC_TAGS = setOf(
++        "x264", "x265", "hevc", "h264", "h265", "avc", "xvid", "10bit"
++    )
++
++    private val RESOLUTION_TAGS = setOf(
++        "2160p", "4k", "1080p", "720p", "480p", "576p"
++    )
++
++    fun extractReleaseTokens(text: String?): Set<String> {
++        if (text.isNullOrBlank()) return emptySet()
++        var normalized = text.lowercase()
++        // Canonicalize compound release and codec tags before punctuation stripping
++        normalized = normalized
++            .replace(Regex("""\bweb[\-._]?dl\b"""), " webdl ")
++            .replace(Regex("""\bweb[\-._]?rip\b"""), " webrip ")
++            .replace(Regex("""\bblu[\-._]?ray\b"""), " bluray ")
++            .replace(Regex("""\bbd[\-._]?rip\b"""), " bdrip ")
++            .replace(Regex("""\bbr[\-._]?rip\b"""), " brrip ")
++            .replace(Regex("""\bdvd[\-._]?rip\b"""), " dvdrip ")
++            .replace(Regex("""\bh[\-._]?264\b"""), " h264 ")
++            .replace(Regex("""\bh[\-._]?265\b"""), " h265 ")
++            .replace(Regex("""\bx[\-._]?264\b"""), " x264 ")
++            .replace(Regex("""\bx[\-._]?265\b"""), " x265 ")
++
++        val tokens = normalized
++            .replace(Regex("""[.\-_+\[\]()/{}:,|]"""), " ")
++            .split(Regex("""\s+"""))
++            .filter { it.isNotBlank() }
++            .toSet()
++
++        val matched = mutableSetOf<String>()
++        tokens.forEach { token ->
++            if (token in RELEASE_GROUPS || token in SOURCE_TAGS || token in CODEC_TAGS || token in RESOLUTION_TAGS) {
++                matched += token
++            }
++        }
++        return matched
++    }
++
++    fun extractFps(text: String?): Double? {
++        if (text.isNullOrBlank()) return null
++        val lower = text.lowercase()
++
++        val fpsRegex = Regex("""\b(23\.976|23\.98|24(?:\.0)?|25(?:\.0)?|29\.97|30(?:\.0)?|50(?:\.0)?|60(?:\.0)?)\s*fps\b""")
++        val match = fpsRegex.find(lower)
++        if (match != null) {
++            val v = match.groupValues[1].toDoubleOrNull()
++            if (v != null) {
++                return if (kotlin.math.abs(v - 23.98) < 0.01) 23.976 else v
++            }
++        }
++
++        if (Regex("""\b23\.976\b""").containsMatchIn(lower)) return 23.976
++        if (Regex("""\b29\.97\b""").containsMatchIn(lower)) return 29.97
++        if (Regex("""\bpal\b""").containsMatchIn(lower)) return 25.0
++        if (Regex("""\bntsc\b""").containsMatchIn(lower)) return 23.976
++
++        return null
++    }
++
++    fun scoreSubtitleForStreamText(
++        streamText: String?,
++        subtitleName: String?,
++        subtitleId: String? = null,
++        subtitleUrl: String? = null
++    ): SubtitleReleaseMatch {
++        val streamTokens = extractReleaseTokens(streamText)
++        val subtitleCombinedText = listOfNotNull(subtitleName, subtitleId, subtitleUrl).joinToString(" ")
++        val subTokens = extractReleaseTokens(subtitleCombinedText)
++
++        val streamFps = extractFps(streamText)
++        val subFps = extractFps(subtitleCombinedText)
++
++        var score = 0.0
++        val matchedTokens = streamTokens.intersect(subTokens).toMutableSet()
++
++        matchedTokens.forEach { token ->
++            when {
++                token in RELEASE_GROUPS -> score += 50.0
++                token in SOURCE_TAGS -> score += 20.0
++                token in CODEC_TAGS -> score += 10.0
++                token in RESOLUTION_TAGS -> score += 5.0
++            }
++        }
++
++        // Codec synonym matching (e.g. stream has HEVC/H.265 and subtitle has x265)
++        val hevcFamily = setOf("x265", "h265", "hevc")
++        val h264Family = setOf("x264", "h264", "avc")
++        if (matchedTokens.none { it in hevcFamily } &&
++            streamTokens.any { it in hevcFamily } && subTokens.any { it in hevcFamily }
++        ) {
++            score += 10.0
++            matchedTokens += "hevc"
++        }
++        if (matchedTokens.none { it in h264Family } &&
++            streamTokens.any { it in h264Family } && subTokens.any { it in h264Family }
++        ) {
++            score += 10.0
++            matchedTokens += "x264"
++        }
++
++        val fpsMatched = if (streamFps != null && subFps != null) {
++            if (kotlin.math.abs(streamFps - subFps) < 0.05) {
++                score += 30.0
++                true
++            } else {
++                score -= 20.0
++                false
++            }
++        } else {
++            false
++        }
++
++        return SubtitleReleaseMatch(
++            score = score,
++            matchedTokens = matchedTokens,
++            streamFps = streamFps,
++            subtitleFps = subFps,
++            fpsMatched = fpsMatched
++        )
++    }
++
++    fun scoreSubtitleForStream(
++        stream: Stream?,
++        subtitleName: String?,
++        subtitleId: String? = null,
++        subtitleUrl: String? = null
++    ): SubtitleReleaseMatch {
++        val streamText = buildString {
++            if (stream != null) {
++                append(stream.addonName).append(' ')
++                append(stream.name.orEmpty()).append(' ')
++                append(stream.title.orEmpty()).append(' ')
++                append(stream.description.orEmpty()).append(' ')
++                append(stream.getStreamUrl().orEmpty())
++            }
++        }
++        return scoreSubtitleForStreamText(streamText, subtitleName, subtitleId, subtitleUrl)
++    }
++
++    fun rankSubtitlesForStream(
++        subtitles: List<com.nuvio.tv.domain.model.Subtitle>,
++        stream: Stream?,
++        preferredLanguage: String? = null
++    ): List<com.nuvio.tv.domain.model.Subtitle> {
++        val streamText = buildString {
++            if (stream != null) {
++                append(stream.addonName).append(' ')
++                append(stream.name.orEmpty()).append(' ')
++                append(stream.title.orEmpty()).append(' ')
++                append(stream.description.orEmpty()).append(' ')
++                append(stream.getStreamUrl().orEmpty())
++            }
++        }
++        return rankSubtitlesForStreamText(subtitles, streamText, preferredLanguage)
++    }
++
++    fun rankSubtitlesForStreamText(
++        subtitles: List<com.nuvio.tv.domain.model.Subtitle>,
++        streamText: String?,
++        preferredLanguage: String? = null
++    ): List<com.nuvio.tv.domain.model.Subtitle> {
++        if (subtitles.isEmpty()) return subtitles
++
++        return subtitles
++            .mapIndexed { index, subtitle ->
++                val langMatch = if (!preferredLanguage.isNullOrBlank()) {
++                    PlayerSubtitleUtils.matchesLanguageCode(subtitle.lang, preferredLanguage)
++                } else false
++
++                val match = scoreSubtitleForStreamText(
++                    streamText = streamText,
++                    subtitleName = subtitle.addonName,
++                    subtitleId = subtitle.id,
++                    subtitleUrl = subtitle.url
++                )
++                Triple(subtitle, index, Pair(langMatch, match.score))
++            }
++            .sortedWith(
++                compareByDescending<Triple<com.nuvio.tv.domain.model.Subtitle, Int, Pair<Boolean, Double>>> { it.third.first }
++                    .thenByDescending { it.third.second }
++                    .thenByDescending { it.first.isStreamProvided }
++                    .thenBy { it.second }
++            )
++            .map { it.first }
++    }
+ }
+diff --git a/app/src/main/java/com/nuvio/tv/core/player/SubtitleCharsetDetector.kt b/app/src/main/java/com/nuvio/tv/core/player/SubtitleCharsetDetector.kt
+--- a/app/src/main/java/com/nuvio/tv/core/player/SubtitleCharsetDetector.kt
++++ b/app/src/main/java/com/nuvio/tv/core/player/SubtitleCharsetDetector.kt
+@@ -87,37 +87,61 @@
+ 
+         val normalized = languageHint?.trim()?.lowercase()?.substringBefore('-')?.substringBefore('_')
+         val isHebrewHint = normalized == "heb" || normalized == "he" || normalized == "iw" || normalized?.startsWith("hebrew") == true
+-
+-        // Double-encoded UTF-8 subtitles (where Windows-1255 Hebrew bytes were decoded as Latin-1 and saved as UTF-8)
+-        // are an issue specific to Hebrew providers like Ktuvit.
+-        // If a non-Hebrew language hint is present (e.g. Russian, Romanian, Spanish), or if the text contains standard Latin/Cyrillic words,
++        val isArabicHint = normalized == "ara" || normalized == "ar" || normalized?.startsWith("arabic") == true
++
++        // Double-encoded UTF-8 subtitles (where Windows-1255 Hebrew or Windows-1256 Arabic bytes were decoded as Latin-1/Windows-1252 and saved as UTF-8).
++        // If a non-RTL language hint is present (e.g. Russian, Romanian, Spanish), or if the text contains standard Latin/Cyrillic words,
+         // do not attempt conversion.
+-        if (!isHebrewHint && !normalized.isNullOrBlank()) {
++        if (!isHebrewHint && !isArabicHint && !normalized.isNullOrBlank()) {
+             return text
+         }
+ 
+         val words = text.split("\\s+".toRegex()).filter { it.length >= 2 && it.any { c -> c.isLetter() } }
+         if (words.isEmpty()) return text
+ 
+-        // In true double-encoded Hebrew text, dialogue words consist almost exclusively of Latin-1 characters in \u00E0..\u00FA
+-        val mojibakeWordsCount = words.count { word ->
+-            word.all { c -> (c in '\u00E0'..'\u00FA') || c in "<i></i>-.,!?:'\"<>/\\_()" }
+-        }
+-
+-        val threshold = if (isHebrewHint) 5 else 10
+-        if (mojibakeWordsCount >= threshold && (mojibakeWordsCount * 2 >= words.size)) {
+-            try {
+-                // Ensure text can be encoded to Windows-1252 cleanly without unmappable replacement characters
+-                val encoder = CHARSET_WIN1252.newEncoder()
+-                if (!encoder.canEncode(text)) return text
+-
+-                val win1252Bytes = text.toByteArray(CHARSET_WIN1252)
+-                val hebrewCandidate = String(win1252Bytes, CHARSET_WIN1255)
+-                val hebrewChars = hebrewCandidate.count { it in '\u0590'..'\u05FF' }
+-                if (hebrewChars >= 10) {
+-                    return hebrewCandidate
+-                }
+-            } catch (_: Exception) {}
++        // 1. Hebrew check: dialogue words consist almost exclusively of Latin-1 characters in \u00E0..\u00FA
++        if (isHebrewHint || normalized.isNullOrBlank()) {
++            val mojibakeWordsCount = words.count { word ->
++                word.any { c -> c in '\u00E0'..'\u00FA' } &&
++                    word.all { c -> (c in '\u00E0'..'\u00FA') || c in "<i></i>-.,!?:'\"<>/\\_()[]{}" }
++            }
++            val threshold = if (isHebrewHint) 3 else 4
++            if (mojibakeWordsCount >= threshold && (mojibakeWordsCount * 2 >= words.size)) {
++                try {
++                    val encoder = CHARSET_WIN1252.newEncoder()
++                    if (encoder.canEncode(text)) {
++                        val win1252Bytes = text.toByteArray(CHARSET_WIN1252)
++                        val hebrewCandidate = String(win1252Bytes, CHARSET_WIN1255)
++                        val hebrewChars = hebrewCandidate.count { it in '\u0590'..'\u05FF' }
++                        if (hebrewChars >= 8) {
++                            return hebrewCandidate
++                        }
++                    }
++                } catch (_: Exception) {}
++            }
++        }
++
++        // 2. Arabic check: dialogue words consist of Latin-1 supplement characters in \u00C0..\u00FE
++        // (Windows-1256 Arabic letter bytes 0xC1..0xFE interpreted as Windows-1252, or Arabic punctuation \u00BA, \u00BF)
++        if (isArabicHint || normalized.isNullOrBlank()) {
++            val arabicMojibakeWordsCount = words.count { word ->
++                word.any { c -> c in '\u00C0'..'\u00FE' } &&
++                    word.all { c -> (c in '\u00C0'..'\u00FE') || c == '\u00BA' || c == '\u00BF' || c in "<i></i>-.,!?:'\"<>/\\_()[]{}،؛؟" }
++            }
++            val threshold = if (isArabicHint) 3 else 4
++            if (arabicMojibakeWordsCount >= threshold && (arabicMojibakeWordsCount * 2 >= words.size)) {
++                try {
++                    val encoder = CHARSET_WIN1252.newEncoder()
++                    if (encoder.canEncode(text)) {
++                        val win1252Bytes = text.toByteArray(CHARSET_WIN1252)
++                        val arabicCandidate = String(win1252Bytes, CHARSET_WIN1256)
++                        val arabicChars = arabicCandidate.count { it in '\u0600'..'\u06FF' }
++                        if (arabicChars >= 8) {
++                            return arabicCandidate
++                        }
++                    }
++                } catch (_: Exception) {}
++            }
+         }
+ 
+         return text
+@@ -212,6 +236,10 @@
+         return true
+     }
+ 
++    private fun isWindows1256ArabicByte(b: Int): Boolean {
++        return (b in 0xC1..0xD6) || (b in 0xD8..0xDF) || (b == 0xE1) || (b in 0xE3..0xE6) || (b in 0xEC..0xED) || (b == 0xBA) || (b == 0xBF) || (b == 0xBB)
++    }
++
+     private fun detectUniversalCharset(bytes: ByteArray, offset: Int, length: Int): Charset {
+         var startOffset = offset
+         val totalEnd = offset + length
+@@ -228,7 +256,6 @@
+         var nonAscii = 0
+         var consecutiveNonAscii = 0
+         var maxConsecutiveNonAscii = 0
+-
+         for (i in sampleOffset until end) {
+             val b = bytes[i].toInt() and 0xFF
+             if ((b in 'a'.code..'z'.code) || (b in 'A'.code..'Z'.code)) {
+@@ -321,21 +348,61 @@
+         // Statistical evaluation for non-Latin single-byte alphabets (Hebrew, Arabic, Thai, Cyrillic, Greek)
+         var thaiConsonants = 0
+         var hebrewLetters = 0
+-        var arabicAlCount = 0
+         var russianVowels = 0
+         var koi8Vowels = 0
+         var greekVowels = 0
++        var greekSpecific = 0
++        var nonArabicEuropeanLetters = 0
+         var bytes0xC0to0xDF = 0
++        var arabicLetters = 0
++        var arabicAlCount = 0
++        var arabicPunctuation = 0
++        var arabicHighLetters = 0
+ 
+         for (i in sampleOffset until end) {
+             val b = bytes[i].toInt() and 0xFF
+             if (b in 0xA1..0xBF) thaiConsonants++
+             if (b in 0xE0..0xFA) hebrewLetters++
+             if (b in 0xC0..0xDF) bytes0xC0to0xDF++
+-            if (b == 0xEE || b == 0xE0 || b == 0xE5 || b == 0xE8 || b == 0xFF || b == 0xFB || b == 0xF3 || b == 0xFD || b == 0xFE) russianVowels++
++
++            // Russian vowels in Windows-1251 (both lower and upper, plus ё/Ё)
++            if (b == 0xEE || b == 0xE0 || b == 0xE5 || b == 0xE8 || b == 0xFF || b == 0xFB || b == 0xF3 || b == 0xFD || b == 0xFE ||
++                b == 0xC0 || b == 0xC5 || b == 0xC8 || b == 0xCE || b == 0xD3 || b == 0xDB || b == 0xDD || b == 0xDE || b == 0xDF ||
++                b == 0xA8 || b == 0xB8
++            ) {
++                russianVowels++
++            }
++
+             if (b == 0xCF || b == 0xC1 || b == 0xC5 || b == 0xC9 || b == 0xD5 || b == 0xDF) koi8Vowels++
+-            if (b == 0xE1 || b == 0xEF || b == 0xE5 || b == 0xE7 || b == 0xFD || b == 0xFE || b == 0xE9 || b == 0xF5 || b == 0xF9 || b == 0xDC || b == 0xDD || b == 0xDE || b == 0xDF || b == 0xFA || b == 0xFB || b == 0xFC) greekVowels++
+-            if (i < end - 1 && b == 0xC7 && (bytes[i + 1].toInt() and 0xFF) == 0xE1) arabicAlCount++
++
++            // Greek vowels in Windows-1253
++            if (b == 0xE1 || b == 0xEF || b == 0xE5 || b == 0xE7 || b == 0xFD || b == 0xFE || b == 0xE9 || b == 0xF5 || b == 0xF9 ||
++                b == 0xDC || b == 0xDD || b == 0xDE || b == 0xDF || b == 0xFA || b == 0xFB || b == 0xFC
++            ) {
++                greekVowels++
++            }
++
++            // Greek distinctive letters (tones and unique consonants)
++            if (b == 0xDC || b == 0xDD || b == 0xDE || b == 0xDF || b == 0xFA || b == 0xFB || b == 0xFC ||
++                b == 0xF2 || b == 0xF4 || b == 0xE7 || b == 0xF9
++            ) {
++                greekSpecific++
++            }
++
++            // Letters present in Russian 1251 or Greek 1253 that never appear as base Arabic letters in 1256
++            if (b == 0xE0 || b == 0xE2 || b == 0xE7 || b == 0xE8 || b == 0xE9 || b == 0xEA || b == 0xEB || b == 0xEE ||
++                b == 0xEF || b == 0xF4 || b == 0xF7 || b == 0xF9 || b == 0xFB || b == 0xFC || b == 0xFD || b == 0xFE
++            ) {
++                nonArabicEuropeanLetters++
++            }
++
++            if (isWindows1256ArabicByte(b)) arabicLetters++
++            if (b == 0xA1 || b == 0xBA || b == 0xBF) arabicPunctuation++
++            if (b in 0xE1..0xED && b != 0xE2 && b !in 0xE7..0xEB) arabicHighLetters++
++
++            if (i < end - 1 && b == 0xC7 && (bytes[i + 1].toInt() and 0xFF) == 0xE1) {
++                arabicAlCount++
++            }
+         }
+ 
+         // Hebrew check: consonants (0xE0..0xFA) make up all non-ASCII bytes in non-Latin script
+@@ -348,9 +415,30 @@
+             return CHARSET_WIN874
+         }
+ 
+-        // Arabic check
+-        if (arabicAlCount > 0) {
+-            return CHARSET_WIN1256
++        // Competing script evaluation:
++        // If non-Arabic European letters (Russian/Greek lowercase) are present:
++        if (nonArabicEuropeanLetters >= 1) {
++            if (greekSpecific >= 2 && greekVowels > russianVowels) {
++                return CHARSET_WIN1253
++            }
++            if (greekVowels >= 4 && greekVowels > russianVowels) {
++                return CHARSET_WIN1253
++            }
++            if (russianVowels >= 2) {
++                return CHARSET_WIN1251
++            }
++        }
++
++        // Russian ALL-CAPS check (all non-ASCII in 0xC0..0xDF with Cyrillic vowels and no Arabic indicators)
++        if (bytes0xC0to0xDF == nonAscii && russianVowels >= 3 && arabicHighLetters == 0 && arabicPunctuation == 0 && arabicAlCount == 0) {
++            return CHARSET_WIN1251
++        }
++
++        // Arabic check: only if no European letters that contradict Arabic are present
++        if (nonArabicEuropeanLetters == 0) {
++            if (arabicAlCount > 0 || arabicPunctuation > 0 || (arabicLetters >= 4 && arabicLetters * 10 >= nonAscii * 8 && (arabicHighLetters > 0 || nonAscii < 6))) {
++                return CHARSET_WIN1256
++            }
+         }
+ 
+         // Cyrillic check
+@@ -364,6 +452,11 @@
+         // Greek check
+         if (greekVowels > russianVowels && greekVowels >= 4) {
+             return CHARSET_WIN1253
++        }
++
++        // Arabic fallback
++        if (arabicAlCount > 0 && nonArabicEuropeanLetters == 0) {
++            return CHARSET_WIN1256
+         }
+ 
+         // Turkish / Central European / Vietnamese / Western European fallback
+diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerAutomaticSubtitleSync.kt b/app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerAutomaticSubtitleSync.kt
+--- a/app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerAutomaticSubtitleSync.kt
++++ b/app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerAutomaticSubtitleSync.kt
+@@ -167,11 +167,21 @@
+                 selectedSubtitleBodyDeferred = selectedBodyDeferred,
+                 preferredLanguage = selectedSubtitle.lang,
+                 alternativeSubtitles = if (candidateScope == AutoSyncCandidateScope.STARTUP_SEARCH) {
+-                    candidatesAtStart.map { subtitle ->
++                    val streamContextText = listOfNotNull(streamName, currentStreamDescription, currentFilename, currentStreamUrl).joinToString(" ")
++                    val rankedCandidatesAtStart = com.nuvio.tv.core.player.StreamAutoPlaySelector.rankSubtitlesForStreamText(
++                        subtitles = candidatesAtStart,
++                        streamText = streamContextText,
++                        preferredLanguage = selectedSubtitle.lang
++                    )
++                    rankedCandidatesAtStart.map { subtitle ->
+                         AutoSyncSubtitleCandidate(
+                             url = subtitle.url,
+                             language = subtitle.lang,
+-                            name = subtitle.addonName.ifBlank { subtitle.id },
++                            name = if (subtitle.id.isNotBlank() && subtitle.addonName.isNotBlank() && subtitle.id != subtitle.addonName) {
++                                "${subtitle.addonName} ${subtitle.id}"
++                            } else {
++                                subtitle.id.ifBlank { subtitle.addonName }
++                            },
+                         )
+                     }
+                 } else {
+@@ -181,11 +191,21 @@
+                     candidateScope == AutoSyncCandidateScope.STARTUP_SEARCH
+                 ) {
+                     {
+-                        _uiState.value.addonSubtitles.map { subtitle ->
++                        val streamContextText = listOfNotNull(streamName, currentStreamDescription, currentFilename, currentStreamUrl).joinToString(" ")
++                        val rankedAddons = com.nuvio.tv.core.player.StreamAutoPlaySelector.rankSubtitlesForStreamText(
++                            subtitles = _uiState.value.addonSubtitles,
++                            streamText = streamContextText,
++                            preferredLanguage = selectedSubtitle.lang
++                        )
++                        rankedAddons.map { subtitle ->
+                             AutoSyncSubtitleCandidate(
+                                 url = subtitle.url,
+                                 language = subtitle.lang,
+-                                name = subtitle.addonName.ifBlank { subtitle.id },
++                                name = if (subtitle.id.isNotBlank() && subtitle.addonName.isNotBlank() && subtitle.id != subtitle.addonName) {
++                                    "${subtitle.addonName} ${subtitle.id}"
++                                } else {
++                                    subtitle.id.ifBlank { subtitle.addonName }
++                                },
+                             )
+                         }
+                     }
+diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerTracks.kt b/app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerTracks.kt
+--- a/app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerTracks.kt
++++ b/app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerTracks.kt
+@@ -1690,7 +1690,13 @@
+         // If internal match is secondary and a primary addon match exists, prefer the addon.
+         if (matchedTargetPosition > 0 && addonSubtitlesLoaded) {
+             val primaryTarget = targets.first()
+-            val primaryAddonMatch = state.addonSubtitles.firstOrNull { subtitle ->
++            val streamContextText = listOfNotNull(streamName, currentStreamDescription, currentFilename, currentStreamUrl).joinToString(" ")
++            val rankedAddons = com.nuvio.tv.core.player.StreamAutoPlaySelector.rankSubtitlesForStreamText(
++                subtitles = state.addonSubtitles,
++                streamText = streamContextText,
++                preferredLanguage = primaryTarget,
++            )
++            val primaryAddonMatch = rankedAddons.firstOrNull { subtitle ->
+                 PlayerSubtitleUtils.matchesLanguageCode(subtitle.lang, primaryTarget)
+             }
+             if (primaryAddonMatch != null) {
+@@ -1790,10 +1796,17 @@
+         return
+     }
+ 
++    val streamContextText = listOfNotNull(streamName, currentStreamDescription, currentFilename, currentStreamUrl).joinToString(" ")
++    val rankedAddons = com.nuvio.tv.core.player.StreamAutoPlaySelector.rankSubtitlesForStreamText(
++        subtitles = state.addonSubtitles,
++        streamText = streamContextText,
++        preferredLanguage = targets.firstOrNull(),
++    )
++
+     val addonMatch = run {
+         // Try each target in priority order so primary language is preferred over secondary.
+         for (target in targets) {
+-            val match = state.addonSubtitles.firstOrNull { subtitle ->
++            val match = rankedAddons.firstOrNull { subtitle ->
+                 (!useForcedSubtitles || !addonSubtitleIsForced(subtitle)) &&
+                     PlayerSubtitleUtils.matchesLanguageCode(subtitle.lang, target)
+             }
+diff --git a/app/src/main/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncSubtitleCueParser.kt b/app/src/main/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncSubtitleCueParser.kt
+--- a/app/src/main/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncSubtitleCueParser.kt
++++ b/app/src/main/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncSubtitleCueParser.kt
+@@ -399,6 +399,7 @@
+ 
+     private fun normalizeCueText(text: String): String {
+         return text
++            .replace(Regex("""[\u200E\u200F\u202A-\u202E\u2066-\u2069\uFEFF]"""), "")
+             .replace(Regex("""<(?:\d+:)?\d{1,2}:\d{2}(?:[.,]\d+)?>"""), "")
+             .replace(Regex("""</?[a-zA-Z0-9._-]+(?: [^>]*)?>"""), "")
+             .replace("&nbsp;", " ")
+diff --git a/app/src/test/java/com/nuvio/tv/core/player/StreamAutoPlaySelectorTest.kt b/app/src/test/java/com/nuvio/tv/core/player/StreamAutoPlaySelectorTest.kt
+--- a/app/src/test/java/com/nuvio/tv/core/player/StreamAutoPlaySelectorTest.kt
++++ b/app/src/test/java/com/nuvio/tv/core/player/StreamAutoPlaySelectorTest.kt
+@@ -10,6 +10,7 @@
+ import com.nuvio.tv.domain.model.StreamDebridCacheStatus
+ import org.junit.Assert.assertEquals
+ import org.junit.Assert.assertNull
++import org.junit.Assert.assertTrue
+ import org.junit.Test
+ 
+ class StreamAutoPlaySelectorTest {
+@@ -335,6 +336,223 @@
+         )
+ 
+         assertEquals(listOf(regular, cachedDebrid), ordered)
++    }
++
++    @Test
++    fun `extractReleaseTokens identifies groups sources codecs and resolutions`() {
++        val tokens = StreamAutoPlaySelector.extractReleaseTokens("Inception.2010.1080p.BluRay.x264-SPARKS")
++        assertEquals(setOf("1080p", "bluray", "x264", "sparks"), tokens)
++
++        val tokens2 = StreamAutoPlaySelector.extractReleaseTokens("Dune.Part.Two.2024.2160p.UHD.WEBRip.x265-[YTS.MX]")
++        assertEquals(setOf("2160p", "uhd", "webrip", "x265", "yts"), tokens2)
++    }
++
++    @Test
++    fun `extractFps identifies standard rates and PAL NTSC tags`() {
++        assertEquals(23.976, StreamAutoPlaySelector.extractFps("Movie 23.976 fps")!!, 0.001)
++        assertEquals(23.976, StreamAutoPlaySelector.extractFps("Movie 23.98fps")!!, 0.001)
++        assertEquals(25.0, StreamAutoPlaySelector.extractFps("Show S01E01 25.0 fps")!!, 0.001)
++        assertEquals(25.0, StreamAutoPlaySelector.extractFps("Show S01E01 PAL")!!, 0.001)
++        assertEquals(23.976, StreamAutoPlaySelector.extractFps("Show S01E01 NTSC")!!, 0.001)
++        assertEquals(29.97, StreamAutoPlaySelector.extractFps("Broadcast 29.97fps")!!, 0.001)
++        assertNull(StreamAutoPlaySelector.extractFps("No fps mentioned"))
++    }
++
++    @Test
++    fun `scoreSubtitleForStream scores matching release group and FPS higher`() {
++        val stream = Stream(
++            name = "SPARKS",
++            title = "Inception.2010.1080p.BluRay.x264-SPARKS",
++            description = "23.976fps",
++            url = "https://example.com/video.mkv",
++            ytId = null,
++            infoHash = null,
++            fileIdx = null,
++            externalUrl = null,
++            behaviorHints = null,
++            addonName = "Torrentio",
++            addonLogo = null
++        )
++
++        val matchSameGroup = StreamAutoPlaySelector.scoreSubtitleForStream(
++            stream = stream,
++            subtitleName = "OpenSubtitles",
++            subtitleId = "Inception.2010.1080p.BluRay.x264-SPARKS.srt",
++            subtitleUrl = "https://example.com/sub1.srt"
++        )
++
++        val matchDifferentGroup = StreamAutoPlaySelector.scoreSubtitleForStream(
++            stream = stream,
++            subtitleName = "OpenSubtitles",
++            subtitleId = "Inception.2010.720p.HDTV.x264-YIFY.srt 25fps",
++            subtitleUrl = "https://example.com/sub2.srt"
++        )
++
++        org.junit.Assert.assertTrue("Expected matchSameGroup.score (${matchSameGroup.score}) > matchDifferentGroup.score (${matchDifferentGroup.score})",
++            matchSameGroup.score > matchDifferentGroup.score)
++        org.junit.Assert.assertTrue(matchSameGroup.matchedTokens.contains("sparks"))
++        org.junit.Assert.assertTrue(matchSameGroup.matchedTokens.contains("bluray"))
++    }
++
++    @Test
++    fun `rankSubtitlesForStream prioritizes matching release and preferred language for Arabic and English`() {
++        val stream = Stream(
++            name = "SPARKS",
++            title = "Oppenheimer.2023.1080p.BluRay.x264-SPARKS",
++            description = "23.976 fps",
++            url = "https://example.com/oppenheimer.mkv",
++            ytId = null,
++            infoHash = null,
++            fileIdx = null,
++            externalUrl = null,
++            behaviorHints = null,
++            addonName = "Torrentio",
++            addonLogo = null
++        )
++
++        val arMatchingSparks = com.nuvio.tv.domain.model.Subtitle(
++            id = "Oppenheimer.2023.1080p.BluRay.x264-SPARKS.ar.srt",
++            url = "https://example.com/ar_sparks.srt",
++            lang = "ar",
++            addonName = "OpenSubtitles",
++            addonLogo = null
++        )
++        val arGeneric = com.nuvio.tv.domain.model.Subtitle(
++            id = "Oppenheimer.2023.720p.HDTV.x264-UNKNOWN.ar.srt",
++            url = "https://example.com/ar_generic.srt",
++            lang = "ar",
++            addonName = "Subscene",
++            addonLogo = null
++        )
++        val enMatchingSparks = com.nuvio.tv.domain.model.Subtitle(
++            id = "Oppenheimer.2023.1080p.BluRay.x264-SPARKS.en.srt",
++            url = "https://example.com/en_sparks.srt",
++            lang = "en",
++            addonName = "OpenSubtitles",
++            addonLogo = null
++        )
++        val enGeneric = com.nuvio.tv.domain.model.Subtitle(
++            id = "Oppenheimer.2023.WEBRip.x264-YTS.en.srt",
++            url = "https://example.com/en_generic.srt",
++            lang = "en",
++            addonName = "Subscene",
++            addonLogo = null
++        )
++
++        val allSubs = listOf(arGeneric, enGeneric, arMatchingSparks, enMatchingSparks)
++
++        // Preferred Arabic: arMatchingSparks must be first
++        val rankedArabic = StreamAutoPlaySelector.rankSubtitlesForStream(allSubs, stream, preferredLanguage = "ar")
++        assertEquals(arMatchingSparks, rankedArabic.first())
++
++        // Preferred English: enMatchingSparks must be first
++        val rankedEnglish = StreamAutoPlaySelector.rankSubtitlesForStream(allSubs, stream, preferredLanguage = "en")
++        assertEquals(enMatchingSparks, rankedEnglish.first())
++    }
++
++    @Test
++    fun `equivalentLanguageCodesDoNotOverrideReleaseMatchReviewSample`() {
++        // Exact reviewer test case: en vs eng aliases
++        val stream = Stream(
++            name = "SPARKS",
++            title = "Movie.1080p.BluRay.SPARKS",
++            description = null,
++            url = "https://example.com/movie.mkv",
++            ytId = null,
++            infoHash = null,
++            fileIdx = null,
++            externalUrl = null,
++            behaviorHints = null,
++            addonName = "Torrentio",
++            addonLogo = null
++        )
++
++        val candidateA = com.nuvio.tv.domain.model.Subtitle(
++            id = "Movie.HDTV.720p.srt",
++            url = "https://example.com/a.srt",
++            lang = "en",
++            addonName = "AddonA",
++            addonLogo = null
++        )
++        val candidateB = com.nuvio.tv.domain.model.Subtitle(
++            id = "Movie.1080p.BluRay.SPARKS.srt",
++            url = "https://example.com/b.srt",
++            lang = "eng",
++            addonName = "AddonB",
++            addonLogo = null
++        )
++
++        // When preferred language is "en", candidateB (release match with "eng") must rank first
++        val rankedWithEn = StreamAutoPlaySelector.rankSubtitlesForStream(listOf(candidateA, candidateB), stream, preferredLanguage = "en")
++        assertEquals(candidateB, rankedWithEn.first())
++
++        // When preferred language is "eng", candidateB must also rank first
++        val rankedWithEng = StreamAutoPlaySelector.rankSubtitlesForStream(listOf(candidateA, candidateB), stream, preferredLanguage = "eng")
++        assertEquals(candidateB, rankedWithEng.first())
++    }
++
++    @Test
++    fun `arabicLanguageCodesAliasMatchAndRankReleaseAccurately`() {
++        val stream = Stream(
++            name = "SPARKS",
++            title = "Movie.1080p.BluRay.SPARKS",
++            description = null,
++            url = "https://example.com/movie.mkv",
++            ytId = null,
++            infoHash = null,
++            fileIdx = null,
++            externalUrl = null,
++            behaviorHints = null,
++            addonName = "Torrentio",
++            addonLogo = null
++        )
++
++        val candidateA = com.nuvio.tv.domain.model.Subtitle(
++            id = "Movie.HDTV.720p.srt",
++            url = "https://example.com/a.srt",
++            lang = "ar",
++            addonName = "AddonA",
++            addonLogo = null
++        )
++        val candidateB = com.nuvio.tv.domain.model.Subtitle(
++            id = "Movie.1080p.BluRay.SPARKS.srt",
++            url = "https://example.com/b.srt",
++            lang = "ara",
++            addonName = "AddonB",
++            addonLogo = null
++        )
++        val candidateC = com.nuvio.tv.domain.model.Subtitle(
++            id = "Movie.1080p.BluRay.SPARKS.es.srt",
++            url = "https://example.com/c.srt",
++            lang = "es",
++            addonName = "AddonC",
++            addonLogo = null
++        )
++
++        // With preferred "ar", candidateB (lang "ara" + release match) ranks first, candidateA ("ar") ranks second, candidateC ("es") ranks last
++        val ranked = StreamAutoPlaySelector.rankSubtitlesForStream(listOf(candidateA, candidateB, candidateC), stream, preferredLanguage = "ar")
++        assertEquals(candidateB, ranked[0])
++        assertEquals(candidateA, ranked[1])
++        assertEquals(candidateC, ranked[2])
++    }
++
++    @Test
++    fun `canonicalizeCompoundReleaseTagsAndCodecSynonyms`() {
++        val tokens1 = StreamAutoPlaySelector.extractReleaseTokens("Movie.1080p.WEB-DL.x265")
++        assertTrue("Tokens must contain webdl: $tokens1", tokens1.contains("webdl"))
++        assertTrue("Tokens must contain 1080p: $tokens1", tokens1.contains("1080p"))
++        assertTrue("Tokens must contain x265: $tokens1", tokens1.contains("x265"))
++
++        val tokens2 = StreamAutoPlaySelector.extractReleaseTokens("Movie.1080p.WEB.DL.H.264")
++        assertTrue("Tokens must contain webdl: $tokens2", tokens2.contains("webdl"))
++        assertTrue("Tokens must contain h264: $tokens2", tokens2.contains("h264"))
++
++        val match = StreamAutoPlaySelector.scoreSubtitleForStreamText(
++            streamText = "Movie.1080p.WEB-DL.x265",
++            subtitleName = "Movie.1080p.WEBDL.HEVC.srt"
++        )
++        // 1080p (5) + webdl (20) + codec synonym hevc/x265 (10) = 35.0
++        assertTrue("Expected score >= 35.0 but was ${match.score}", match.score >= 35.0)
+     }
+ 
+     private fun stream(
+diff --git a/app/src/test/java/com/nuvio/tv/core/player/SubtitleCharsetDetectorTest.kt b/app/src/test/java/com/nuvio/tv/core/player/SubtitleCharsetDetectorTest.kt
+--- a/app/src/test/java/com/nuvio/tv/core/player/SubtitleCharsetDetectorTest.kt
++++ b/app/src/test/java/com/nuvio/tv/core/player/SubtitleCharsetDetectorTest.kt
+@@ -76,6 +76,81 @@
+ 
+         val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = "ara")
+         assertEquals(arabicText, decoded)
++    }
++
++    @Test
++    fun decodesArabicWindows1256WithoutLanguageHintAutoDetectionWithAl() {
++        val arabicText = "1\n00:00:01,000 --> 00:00:04,000\nالسلام عليكم ورحمة الله وبركاته، أهلا وسهلا بكم في المدينة"
++        val win1256Charset = Charset.forName("windows-1256")
++        val rawBytes = arabicText.toByteArray(win1256Charset)
++
++        val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
++        assertEquals(arabicText, decoded)
++    }
++
++    @Test
++    fun decodesArabicWindows1256WithoutLanguageHintAutoDetectionWithoutAl() {
++        val arabicText = "1\n00:00:01,000 --> 00:00:04,000\nمرحبا بكم يا رفاق كيف حالكم اليوم"
++        val win1256Charset = Charset.forName("windows-1256")
++        val rawBytes = arabicText.toByteArray(win1256Charset)
++
++        val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
++        assertEquals(arabicText, decoded)
++    }
++
++    @Test
++    fun decodesArabicWindows1256WithAsciiHeaderAndTimestamps() {
++        val srtText = """
++            1
++            00:00:01,000 --> 00:00:04,000
++            Sync by SubScene Team
++
++            2
++            00:00:05,000 --> 00:00:08,000
++            مرحبا بكم في هذا العرض الخاص
++        """.trimIndent()
++        val win1256Charset = Charset.forName("windows-1256")
++        val rawBytes = srtText.toByteArray(win1256Charset)
++
++        val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
++        assertEquals(srtText, decoded)
++    }
++
++    @Test
++    fun decodesArabicUtf8WithAndWithoutBom() {
++        val arabicText = "1\n00:00:01,000 --> 00:00:04,000\nمرحبا بالعالم! ترجمة عربية دقيقة."
++        val bom = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
++        val withBom = bom + arabicText.toByteArray(Charsets.UTF_8)
++        val withoutBom = arabicText.toByteArray(Charsets.UTF_8)
++
++        assertEquals(arabicText, SubtitleCharsetDetector.decode(withBom, languageHint = "ara"))
++        assertEquals(arabicText, SubtitleCharsetDetector.decode(withoutBom, languageHint = null))
++    }
++
++    @Test
++    fun decodesDoubleEncodedArabicUtf8WithLanguageHint() {
++        val originalArabic = "1\n00:00:01,000 --> 00:00:04,000\nمرحبا بكم في هذا المكان الرائع"
++        val win1256Charset = Charset.forName("windows-1256")
++        val win1252Charset = Charset.forName("windows-1252")
++        val win1256Bytes = originalArabic.toByteArray(win1256Charset)
++        val mojibakeString = String(win1256Bytes, win1252Charset)
++        val mojibakeUtf8Bytes = mojibakeString.toByteArray(Charsets.UTF_8)
++
++        val decoded = SubtitleCharsetDetector.decode(mojibakeUtf8Bytes, languageHint = "ara")
++        assertEquals(originalArabic, decoded)
++    }
++
++    @Test
++    fun decodesDoubleEncodedArabicUtf8WithoutLanguageHint() {
++        val originalArabic = "1\n00:00:01,000 --> 00:00:04,000\nمرحبا بكم في هذا المكان الرائع، شكرا جزيلا"
++        val win1256Charset = Charset.forName("windows-1256")
++        val win1252Charset = Charset.forName("windows-1252")
++        val win1256Bytes = originalArabic.toByteArray(win1256Charset)
++        val mojibakeString = String(win1256Bytes, win1252Charset)
++        val mojibakeUtf8Bytes = mojibakeString.toByteArray(Charsets.UTF_8)
++
++        val decoded = SubtitleCharsetDetector.decode(mojibakeUtf8Bytes, languageHint = null)
++        assertEquals(originalArabic, decoded)
+     }
+ 
+     @Test
+@@ -350,4 +425,55 @@
+         val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
+         assertEquals(elText, decoded)
+     }
++
++    @Test
++    fun decodesRussianWindows1251WithoutLanguageHintReviewSample() {
++        // Review regression sample: mixed uppercase/lowercase with common Russian words
++        val ruText = "ПРИВЕТ! где он? он тут"
++        val win1251Charset = Charset.forName("windows-1251")
++        val rawBytes = ruText.toByteArray(win1251Charset)
++
++        val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
++        assertEquals(ruText, decoded)
++    }
++
++    @Test
++    fun decodesRussianWindows1251MixedCaseAndQuestionsWithoutLanguageHint() {
++        val ruText = "Где ты был вчера вечером? Спасибо за помощь, друг!"
++        val win1251Charset = Charset.forName("windows-1251")
++        val rawBytes = ruText.toByteArray(win1251Charset)
++
++        val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
++        assertEquals(ruText, decoded)
++    }
++
++    @Test
++    fun decodesRussianWindows1251AllCapsWithoutLanguageHint() {
++        val ruText = "ПРИВЕТ МИР ЭТО ТЕСТ"
++        val win1251Charset = Charset.forName("windows-1251")
++        val rawBytes = ruText.toByteArray(win1251Charset)
++
++        val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
++        assertEquals(ruText, decoded)
++    }
++
++    @Test
++    fun decodesArabicWindows1256WithoutLanguageHintWithPunctuation() {
++        val arText = "نعم، أين هو؟ هو هنا"
++        val win1256Charset = Charset.forName("windows-1256")
++        val rawBytes = arText.toByteArray(win1256Charset)
++
++        val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
++        assertEquals(arText, decoded)
++    }
++
++    @Test
++    fun decodesArabicWindows1256WithoutLanguageHintWithoutAlOrPunctuation() {
++        val arText = "شكرا جزيلا يا صديقي"
++        val win1256Charset = Charset.forName("windows-1256")
++        val rawBytes = arText.toByteArray(win1256Charset)
++
++        val decoded = SubtitleCharsetDetector.decode(rawBytes, languageHint = null)
++        assertEquals(arText, decoded)
++    }
+ }
+diff --git a/app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncSubtitleCueParserTest.kt b/app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncSubtitleCueParserTest.kt
+--- a/app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncSubtitleCueParserTest.kt
++++ b/app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncSubtitleCueParserTest.kt
+@@ -44,4 +44,37 @@
+         assertEquals(10_500L, cue!!.startTimeMs)
+         assertEquals(11_000L, cue.endTimeMs)
+     }
++
++    @Test
++    fun srtParsesArabicWithBidiControlsAndStripsThem() {
++        val srt = """
++            1
++            00:01:20,000 --> 00:01:23,500
++            \u200F<i>مرحبا بك في العالم</i>\u200E
++
++            2
++            00:01:24,000 --> 00:01:25,000
++            \u200E\u200F   \u202B\u202C
++
++            3
++            00:01:26,000 --> 00:01:28,000
++            English and Arabic: \u200Fشكراً لك\u200E
++        """.trimIndent()
++            .replace("\\u200F", "\u200F")
++            .replace("\\u200E", "\u200E")
++            .replace("\\u202B", "\u202B")
++            .replace("\\u202C", "\u202C")
++
++        val cues = AutoSyncSubtitleCueParser.parse(text = srt, sourceUrl = "test.srt")
++        assertEquals(2, cues.size)
++
++        assertEquals(80_000L, cues[0].startTimeMs)
++        assertEquals(83_500L, cues[0].endTimeMs)
++        assertEquals("مرحبا بك في العالم", cues[0].text)
++
++        // Cue 2 was pure bidi whitespace, so it must be skipped completely
++        assertEquals(86_000L, cues[1].startTimeMs)
++        assertEquals(88_000L, cues[1].endTimeMs)
++        assertEquals("English and Arabic: شكراً لك", cues[1].text)
++    }
+ }
+diff --git a/app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncTimelineRetimeTest.kt b/app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncTimelineRetimeTest.kt
+--- a/app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncTimelineRetimeTest.kt
++++ b/app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncTimelineRetimeTest.kt
+@@ -793,6 +793,47 @@
+         assertEquals(null, preferTighterFitOnDisagreement(precise, agreeing))
+     }
+ 
++    @Test
++    fun arabicSubtitleWithPalDriftAlignsAgainstEnglishReference() {
++        // Embedded English reference cues at standard 23.976 fps
++        val englishReference = irregularTimeline(240).mapIndexed { idx, cue ->
++            cue.copy(text = "English speech cue $idx")
++        }
++
++        // Arabic subtitle sourced from a 25.0 fps PAL release (drift scale ~ 25.0 / 23.976)
++        // with initial delay offset of 3200ms and Arabic dialogue containing bidi characters
++        val scale = 25.0 / 23.976
++        val initialDelayMs = 3_200L
++        val arabicTarget = englishReference.mapIndexed { idx, cue ->
++            val scaledStart = ((cue.startTimeMs - initialDelayMs) / scale).toLong()
++            val scaledEnd = ((cue.endTimeMs - initialDelayMs) / scale).toLong()
++            SubtitleSyncCue(
++                startTimeMs = scaledStart,
++                endTimeMs = scaledEnd,
++                text = "\u200Fحوار باللغة العربية $idx\u200E",
++            )
++        }
++
++        val result = assertNotNull(
++            AutoSyncTimelineRetimer.retime(
++                reference = englishReference,
++                target = arabicTarget,
++                coarseScale = 1.0,
++                coarseInterceptMs = 0.0,
++                discoverAlignment = true,
++            ),
++        )
++
++        assertTrue(result.confident, result.rejectReason)
++        assertEquals("activity-correlation", result.alignmentSource)
++        assertTrue(abs(result.alignmentScale - scale) <= 0.015)
++        assertTrue(result.cues.isNotEmpty())
++        // Verify cues are re-timed back close to reference cues
++        val firstRetimed = result.cues.first()
++        val firstRef = englishReference.first()
++        assertTrue(abs(firstRetimed.startTimeMs - firstRef.startTimeMs) <= 300L)
++    }
++
+     private fun shift(cues: List<SubtitleSyncCue>, deltaMs: Long) = cues.map { cue ->
+         cue.copy(startTimeMs = cue.startTimeMs + deltaMs, endTimeMs = cue.endTimeMs + deltaMs)
+     }

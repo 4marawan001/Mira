@@ -33,7 +33,7 @@ Starting with build 157, Mira checks hourly while open and downloads updates aut
 3. Install it over the existing Mira app when updating, then open Mira.
 4. Use the remote's directional pad, Select and Back buttons to browse.
 
-The package includes ARMv7 and ARM64 support and requires Android 7 or later. Build 159 uses the existing Mira signing key so it can update the previous signed release. Physical Insignia TV performance has not been verified.
+The package includes ARMv7 and ARM64 support and requires Android 7 or later. Build 160 uses the existing Mira signing key so it can update the previous signed release. Physical Insignia TV performance has not been verified.
 
 ## Turn on video previews
 
