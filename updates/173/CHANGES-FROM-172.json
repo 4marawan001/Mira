@@ -1,0 +1,11 @@
+[
+  "MIRA_SOURCE_BASE.json",
+  "app/build.gradle.kts",
+  "app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerAutomaticSubtitleSync.kt",
+  "app/src/main/java/com/nuvio/tv/ui/screens/player/PlayerRuntimeControllerBestSubtitle.kt",
+  "app/src/main/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncPreferences.kt",
+  "app/src/main/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncRunPolicy.kt",
+  "app/src/main/java/com/nuvio/tv/ui/screens/player/autosync/AutomaticSubtitleSync.kt",
+  "app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncSearchDeadlineTest.kt",
+  "app/src/test/java/com/nuvio/tv/ui/screens/player/autosync/AutoSyncStartupGateTest.kt"
+]

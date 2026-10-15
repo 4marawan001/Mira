@@ -1,0 +1,37 @@
+{
+  "build": 173,
+  "version": "0.5.29",
+  "apkSHA256": "cd69e92c8d5f0ddd09f78e6b8e015e115735afae4036a9d1c0d3d8af6171abe6",
+  "device": {
+    "type": "Android TV ARM64 emulator",
+    "api": 31,
+    "ramMB": 2048,
+    "cpuCores": 2
+  },
+  "checks": {
+    "installedAPKHashMatchesFinalPackage": true,
+    "realBackroomsPlayback": true,
+    "englishBuiltInSelected": true,
+    "explicitArabicAfterEnglishStartsFreshAnalysis": true,
+    "arabicCorrectionApplied": true,
+    "arabicCaptionsRendered": true,
+    "playbackProcessRetainedDuringObservedSwitches": true,
+    "noAndroidRuntimeCrashDuringObservedSwitches": true
+  },
+  "processId": 2566,
+  "successfulArabicAttempt": {
+    "elapsedMs": 2838,
+    "offsetMs": 9500,
+    "scale": 1.001001001001001,
+    "renderedCues": 1016,
+    "targetCoverage": 0.985236220472441
+  },
+  "observedLimits": [
+    "A cold-start Arabic attempt returned no confident match after 12913 ms.",
+    "After selecting built-in English, an explicit Arabic retry applied a correction in 2838 ms.",
+    "An additional later language-selection attempt produced no new sync events in the 30-second observation window; its cause was not established.",
+    "No physical Insignia TV test or acoustic sound-to-caption verification was performed."
+  ],
+  "physicalDeviceTested": false,
+  "movieScreenshotsPublished": false
+}

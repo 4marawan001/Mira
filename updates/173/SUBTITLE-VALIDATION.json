@@ -1,0 +1,211 @@
+{
+  "firetv": {
+    "build": 173,
+    "version": "0.5.29",
+    "checks": {
+      "tests": 188,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "suites": [
+      {
+        "name": "com.nuvio.tv.ui.screens.player.autosync.AutoSyncSubtitleCueParserTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.ui.screens.player.autosync.AutoSyncTimelineRetimeTest",
+        "tests": 34,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.core.player.SubtitleCharsetDetectorTest",
+        "tests": 43,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.core.player.SubtitleReleaseRankingTest",
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.core.player.StreamAutoPlaySelectorTest",
+        "tests": 19,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.ui.screens.player.autosync.AutoSyncSearchDeadlineTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.data.repository.SubtitleMapperTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.data.mediaserver.mediabrowser.MediaBrowserPlaybackTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.data.mediaserver.ServerPlaybackTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.ui.screens.player.autosync.AutoSyncStartupGateTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.ui.screens.player.SubtitleBodyRequestTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.ui.screens.player.autosync.AutoSyncReferenceConsistencyTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.ui.screens.player.autosync.AutoSyncSubtitleHttpTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.ui.screens.player.SidecarSubtitleLifecycleTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.ui.screens.player.SubtitleMojibakeSanitizerTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.ui.screens.player.autosync.AutoSyncActivityPlateauTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.ui.screens.player.PlayerSubtitleUtilsMimeTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.ui.screens.player.autosync.AutoSyncNoFitTrackerTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.ui.screens.player.SubtitleRaceConditionUpgradeTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.ui.screens.player.autosync.EmbeddedSubtitleTimelineLoaderTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.ui.screens.player.autosync.AutoSyncObserverResourceTest",
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.core.player.SubtitleCandidateCoverageTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.ui.screens.player.SubtitleRoutingTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "com.nuvio.tv.ui.screens.player.SubtitleCredentialScopeTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "packages": {
+      "universal": {
+        "sha256": "650cd9e099e97d3b0f9fe0ad3a14421d3a2b307e8db4d4c7376b744e22b86fc8",
+        "size": 134510087,
+        "abis": [
+          "arm64-v8a",
+          "armeabi-v7a",
+          "x86",
+          "x86_64"
+        ],
+        "signingCertificate": "existing MiraPersonal verified"
+      },
+      "arm64": {
+        "sha256": "cd69e92c8d5f0ddd09f78e6b8e015e115735afae4036a9d1c0d3d8af6171abe6",
+        "size": 54002213,
+        "abis": [
+          "arm64-v8a"
+        ],
+        "signingCertificate": "existing MiraPersonal verified"
+      },
+      "armv7": {
+        "sha256": "95c4b7d77ca2b67647638b5efd0f9dfbbb4e7a68e97841435320dc25ca60a4f4",
+        "size": 52013251,
+        "abis": [
+          "armeabi-v7a"
+        ],
+        "signingCertificate": "existing MiraPersonal verified"
+      }
+    }
+  }
+}

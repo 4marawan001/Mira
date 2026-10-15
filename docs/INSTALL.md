@@ -1,6 +1,6 @@
 # Install Mira
 
-Use the device-specific [download table](../README.md#download). The shared channel currently lists iPhone 168, Mac 165 and Fire TV 167. The [audit](AUDIT-2026-10-14.md) explains the corrected iPhone version labels and the delivered iPhone 168 update.
+Use the device-specific [download table](../README.md#download). The shared channel currently lists iPhone 168, Mac 169 and Fire TV 173. The [audit](AUDIT-2026-10-14.md) explains the corrected iPhone version labels and the delivered iPhone 168 update.
 
 ## iPhone
 
@@ -35,7 +35,7 @@ Videos mode and automatic hover-video playback are removed in Mac 165. Poster ho
 
 ## Fire TV
 
-1. Download [Mira-FireTV-universal.apk](https://github.com/4marawan001/Mira/releases/download/v0.5.28/Mira-FireTV-universal.apk).
+1. Download [Mira-FireTV-universal.apk](https://github.com/4marawan001/Mira/releases/download/v0.5.29/Mira-FireTV-universal.apk).
 2. Transfer it to a compatible Android-based Fire TV using your APK installation method.
 3. Install over your existing Mira app, then open it.
 4. Browse with D-pad, Select and Back. In **Settings → Automatic quality**, choose Low Data, Balanced or Highest.

@@ -5,7 +5,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/iPhone-168-9fabbc?style=flat-square" alt="iPhone stable build 168" />
   <img src="https://img.shields.io/badge/Mac-169-9fabbc?style=flat-square" alt="Mac build 169" />
-  <img src="https://img.shields.io/badge/Fire_TV-172-9fabbc?style=flat-square" alt="Fire TV build 172" />
+  <img src="https://img.shields.io/badge/Fire_TV-173-9fabbc?style=flat-square" alt="Fire TV build 173" />
   <img src="https://img.shields.io/badge/status-personal_testing-242830?style=flat-square" alt="Personal testing builds" />
 </p>
 <p align="center"><a href="#download">Download</a> · <a href="#inside-mira">Explore</a> · <a href="docs/INSTALL.md">Install</a> · <a href="docs/BUILD-172.md">Latest checks</a> · <a href="docs/RELEASING.md">Build & publish</a></p>
@@ -21,7 +21,7 @@
 | iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.24/Mira.ipa) | 0.5.24 / 168 | Sign with Sideloadly; iOS 16.1+. |
 | Apple Silicon Mac | [ARM64 DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.25/Mira-macOS-arm64.dmg) | 0.5.25 / 169 | macOS 12+. |
 | Intel Mac | [Intel DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.25/Mira-macOS-x86_64.dmg) | 0.5.25 / 169 | macOS 12+. |
-| Fire TV | [Universal APK](https://github.com/4marawan001/Mira/releases/download/v0.5.28/Mira-FireTV-universal.apk) | 0.5.28 / 172 | Android-based Fire TV, API 24+. |
+| Fire TV | [Universal APK](https://github.com/4marawan001/Mira/releases/download/v0.5.29/Mira-FireTV-universal.apk) | 0.5.29 / 173 | Android-based Fire TV, API 24+. |
 | iPhone update helper for Mac | [Universal Mac ZIP](https://github.com/4marawan001/Mira/releases/download/v0.5.22/Mira-iPhone-Updates-1.1.1-macOS.zip) | Helper 1.1.1 / 169 | Apple Silicon or Intel; macOS 13+. |
 
 Keep Mira installed when updating, and use the same signing identity to retain local data. Mac packages are ad-hoc signed, without Apple notarization. [Installation guide](docs/INSTALL.md) · [All releases](https://github.com/4marawan001/Mira/releases).
@@ -75,7 +75,7 @@ Build 167 introduced bounded poster decoding, removed duplicate catalog presenta
 
 ## Lighter Arabic and English subtitles
 
-On Fire TV 172, choose **Arabic** or **English** for automatic selection. Mira prefers a matching full-dialogue embedded track, then considers add-on release names, filenames, frame rate and reported hash matches. It gives other providers a place before repeated files from one provider. OpenSubtitles remains eligible even with numeric IDs.
+On Fire TV 173, choose **Arabic** or **English** for automatic selection. Mira prefers a matching full-dialogue embedded track, then considers add-on release names, filenames, frame rate and reported hash matches. It gives other providers a place before repeated files from one provider. OpenSubtitles remains eligible even with numeric IDs.
 
 A compact side panel separates languages, exact file choices, and appearance/timing. The active language shows its provider; the file list opens at the checked track. The checkmark means **currently selected**, not “provider examined.” Choosing an individual file keeps that choice.
 
@@ -85,7 +85,7 @@ A compact side panel separates languages, exact file choices, and appearance/tim
 
 Subtitle analysis runs off the UI thread, one worker at a time, with a bounded candidate pool and deadline. Container indexing starts on demand, bitmap packets bypass text analysis, and video buffers leave heap room for captions/UI. The sidecar path preserves the video buffer, cancellation guards and original cue timing.
 
-**224 regression checks pass.** Automatic timing correction still needs a suitable reference and confident alignment. Manual tracks, Off, delay and styling remain available. The physical Insignia exit needs a device retest; its crash logs were unavailable. [Changes and validation](docs/BUILD-172.md) · [Previous matching update](docs/BUILD-171.md).
+**173 fixes a real timing regression:** slow subtitle providers could make Mira discard a correction it had already verified. The search now returns its best confident result within a bounded window. Testing with actual Backrooms files independently confirmed a roughly +7.9-second offset for one release; no movie-specific offset is hard-coded. **188 selected regression tests pass.** Cold-start and later selection misses were still observed, so this is not a guarantee that every attempt succeeds. Timing correction still requires a suitable reference; manual tracks, Off, delay and styling remain available. Physical Insignia testing is separate. [Real-file evidence and validation](docs/BUILD-173.md) · [Subtitle menu and resource checks](docs/BUILD-172.md).
 
 ## Previous quality update
 

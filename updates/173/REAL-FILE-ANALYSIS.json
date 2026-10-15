@@ -1,0 +1,111 @@
+{
+  "movie": "Backrooms (2026)",
+  "videoRelease": "BluRay 1080p x264-hallowed",
+  "account": "User-authorized existing test account; no credentials in this report",
+  "sourceInspection": {
+    "videoHeaderBytes": 524288,
+    "subtitleIndexBytes": 240652,
+    "reference": "Embedded English SRT, 1053 cues",
+    "fullMovieDownloaded": false
+  },
+  "regressionReproduction": {
+    "selectedExternalCues": 812,
+    "pendingProviders": "Two deliberately stalled alternatives, using real selected subtitle and real video index",
+    "before": {
+      "correctionFound": true,
+      "resultReturned": false,
+      "elapsedMs": 20013,
+      "reason": "Outer deadline discarded the confident match"
+    },
+    "after": {
+      "resultReturned": true,
+      "elapsedMs": 7655,
+      "alignmentOffsetMs": 49700.0,
+      "alignmentScale": 1.001001001001001
+    }
+  },
+  "independentEnglishLineChecks": {
+    "externalFileCues": 1055,
+    "matchingEmbeddedLines": 6,
+    "samplesSpreadFromMs": 90120,
+    "samplesSpreadToMs": 5934778,
+    "requiredShiftsMs": [
+      7954,
+      8007,
+      7870,
+      7994,
+      7834,
+      7857
+    ],
+    "matchedCorrectionMs": 7900,
+    "maximumSampleResidualMs": 107
+  },
+  "limitations": [
+    "Diagnostic JVM harness uses the production loader and matching code with locally downloaded subtitle bodies, not the Android renderer.",
+    "Two pending-provider delays are controlled to reproduce the observed failure mode.",
+    "Actual Insignia hardware is not connected; physical TV timing still needs confirmation."
+  ],
+  "preliminaryAndroidPlayback": {
+    "apkSHA256": "a26d4b4839bfd99a6ff076cbbbc13710179109621441626c360efde073c6c565",
+    "beforeRepeatSelectionFix": true,
+    "english": {
+      "build": 173,
+      "processId": 2586,
+      "externalCues": 812,
+      "resultReturned": true,
+      "correctionApplied": true,
+      "elapsedMs": 12616,
+      "alignmentOffsetMs": 49700,
+      "alignmentScale": 1.001001001001001,
+      "targetCoverage": 0.9901477832512315,
+      "videoBufferPreserved": true,
+      "emulatorGuestRamMB": 2048
+    },
+    "arabic": {
+      "elapsedMs": 2476,
+      "correctionApplied": true,
+      "alignmentOffsetMs": 9500,
+      "alignmentScale": 1.001001001001001,
+      "renderedCues": 1016,
+      "bufferPreserved": true
+    },
+    "secondBugFound": "A later Arabic choice after built-in English did not start analysis because the startup deduplication key was unchanged."
+  },
+  "finalSignedAndroidPlayback": {
+    "build": 173,
+    "version": "0.5.29",
+    "apkSHA256": "cd69e92c8d5f0ddd09f78e6b8e015e115735afae4036a9d1c0d3d8af6171abe6",
+    "device": {
+      "type": "Android TV ARM64 emulator",
+      "api": 31,
+      "ramMB": 2048,
+      "cpuCores": 2
+    },
+    "checks": {
+      "installedAPKHashMatchesFinalPackage": true,
+      "realBackroomsPlayback": true,
+      "englishBuiltInSelected": true,
+      "explicitArabicAfterEnglishStartsFreshAnalysis": true,
+      "arabicCorrectionApplied": true,
+      "arabicCaptionsRendered": true,
+      "playbackProcessRetainedDuringObservedSwitches": true,
+      "noAndroidRuntimeCrashDuringObservedSwitches": true
+    },
+    "processId": 2566,
+    "successfulArabicAttempt": {
+      "elapsedMs": 2838,
+      "offsetMs": 9500,
+      "scale": 1.001001001001001,
+      "renderedCues": 1016,
+      "targetCoverage": 0.985236220472441
+    },
+    "observedLimits": [
+      "A cold-start Arabic attempt returned no confident match after 12913 ms.",
+      "After selecting built-in English, an explicit Arabic retry applied a correction in 2838 ms.",
+      "An additional later language-selection attempt produced no new sync events in the 30-second observation window; its cause was not established.",
+      "No physical Insignia TV test or acoustic sound-to-caption verification was performed."
+    ],
+    "physicalDeviceTested": false,
+    "movieScreenshotsPublished": false
+  }
+}
