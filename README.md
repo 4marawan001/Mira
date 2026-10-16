@@ -3,12 +3,12 @@
 <p align="center">Your media, with room to breathe.</p>
 <p align="center">iPhone · Apple Silicon & Intel Mac · Fire TV</p>
 <p align="center">
-  <img src="https://img.shields.io/badge/iPhone-168-9fabbc?style=flat-square" alt="iPhone stable build 168" />
-  <img src="https://img.shields.io/badge/Mac-169-9fabbc?style=flat-square" alt="Mac build 169" />
+  <img src="https://img.shields.io/badge/iPhone-181-9fabbc?style=flat-square" alt="iPhone build 181" />
+  <img src="https://img.shields.io/badge/Mac-181-9fabbc?style=flat-square" alt="Mac build 181" />
   <img src="https://img.shields.io/badge/Fire_TV-180-9fabbc?style=flat-square" alt="Fire TV build 180" />
   <img src="https://img.shields.io/badge/status-personal_testing-242830?style=flat-square" alt="Personal testing builds" />
 </p>
-<p align="center"><a href="#download">Download</a> · <a href="#inside-mira">Explore</a> · <a href="docs/INSTALL.md">Install</a> · <a href="docs/BUILD-180.md">Latest checks</a> · <a href="docs/RELEASING.md">Build & publish</a></p>
+<p align="center"><a href="#download">Download</a> · <a href="#inside-mira">Explore</a> · <a href="docs/INSTALL.md">Install</a> · <a href="docs/BUILD-181.md">Latest checks</a> · <a href="docs/RELEASING.md">Build & publish</a></p>
 
 ![Mira Home on Mac](docs/assets/home.jpg)
 
@@ -18,15 +18,15 @@
 
 | Device | Release package | Version | Setup |
 | --- | --- | --- | --- |
-| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.24/Mira.ipa) | 0.5.24 / 168 | Sign with Sideloadly; iOS 16.1+. |
-| Apple Silicon Mac | [ARM64 DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.25/Mira-macOS-arm64.dmg) | 0.5.25 / 169 | macOS 12+. |
-| Intel Mac | [Intel DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.25/Mira-macOS-x86_64.dmg) | 0.5.25 / 169 | macOS 12+. |
+| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.37/Mira.ipa) | 0.5.37 / 181 | Sign with Sideloadly; iOS 16.1+. |
+| Apple Silicon Mac | [ARM64 DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.37/Mira-macOS-arm64.dmg) | 0.5.37 / 181 | macOS 12+. |
+| Intel Mac | [Intel DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.37/Mira-macOS-x86_64.dmg) | 0.5.37 / 181 | macOS 12+. |
 | Fire TV | [Universal APK](https://github.com/4marawan001/Mira/releases/download/v0.5.36/Mira-FireTV-universal.apk) | 0.5.36 / 180 | Android-based Fire TV, API 24+. |
 | iPhone update helper for Mac | [Universal Mac ZIP](https://github.com/4marawan001/Mira/releases/download/v0.5.22/Mira-iPhone-Updates-1.1.1-macOS.zip) | Helper 1.1.1 / 169 | Apple Silicon or Intel; macOS 13+. |
 
 Keep Mira installed when updating, and use the same signing identity to retain local data. Mac packages are ad-hoc signed, without Apple notarization. [Installation guide](docs/INSTALL.md) · [All releases](https://github.com/4marawan001/Mira/releases).
 
-**iPhone 168 is published:** the reviewed lookup, profile-cache and query fixes are in a verified Release IPA, with actual internal version **0.5.24 / 168**. Earlier mislabeled packages remain archived. [Changes and checks](docs/BUILD-168.md).
+**iPhone and Mac 181 add automatic external subtitle timing.** Mira validates an add-on file against a usable embedded subtitle timeline, writes a corrected local SRT, and cancels obsolete work when you change tracks. The menu keeps its existing appearance. Both targets passed 20 focused checks. The iPhone simulator generated and attached a corrected Arabic file; physical iPhone and Mac dialogue checks remain for the owner. [Changes and checks](docs/BUILD-181.md).
 
 GitHub’s “Latest” points to the shared Fire TV release, which carries the update manifest for every platform. Platform versions can differ; use the table for downloads.
 
@@ -87,6 +87,14 @@ Subtitle analysis runs off the UI thread, one worker at a time, with a bounded c
 
 **Fire TV 180 completed live Arabic and English checks on an Insignia TV.** Repeated provider ranking and speculative preparation used to exhaust the correction deadline before a match finished. Mira now reuses unchanged rankings, prioritizes a ready file, and retains a validated correction if later work times out. Restored subtitles run correction again; obsolete selections are cancelled. The owner confirmed Backrooms dialogue in sync, including fresh selections after reopening, and reported success on two more movies. Cold analysis took about 12–16 seconds; warm Arabic analysis took about four seconds. **116 focused checks passed.** Sustained performance, other source cuts and later-film drift still need testing. [Changes and validation](docs/BUILD-180.md).
 
+## Automatic timing on iPhone and Mac
+
+Build 181 ports the Fire TV 180 alignment algorithm to iPhone and Mac, including external subtitle startup, restored choices and manually selected files. It prefetches a bounded container subtitle index, performs matching on one background worker, and passes a corrected UTF-8 SRT to the existing player. Current manual delay resets for that corrected file so an old offset is not applied twice; saved preferences are retained.
+
+Automatic timing needs a reliable embedded reference. Matroska indexes and conservative unedited MP4 text tracks are supported; HLS/live sources, fragmented or edited MP4 files and unavailable or ambiguous references retain original timing and manual adjustment. This compares subtitle timelines rather than listening to dialogue. It cannot guarantee synchronization for every file or a different movie cut.
+
+The Apple Silicon app reached Home with existing data after updating. Both Mac architectures passed signature, native-file and packaged-JVM checks; Intel physical playback remains untested. The iPhone Release IPA requires signing with Sideloadly. [Release downloads](https://github.com/4marawan001/Mira/releases/tag/v0.5.37) · [Source and checks](docs/BUILD-181.md).
+
 ## Previous quality update
 
 Mac 169 and Fire TV 170 improve Balanced selection while preserving iPhone 168. For a two-hour movie, an 18 GB 4K Blu-ray HEVC encode beats a 2 GB 4K copy; a 39 GB REMUX does not win automatically. The maximum is 40 GB, rather than a target download size.
@@ -115,6 +123,6 @@ Earlier broad suites retain known failures: two vendored TV Media3 tests and fiv
 
 App source archives and patches are attached to their platform releases. The source repositories contain local changes beyond those archives; the audit and build documents identify the delivered versions. The update helper’s source and checks are in [companion](companion), with a read-only [release channel validator](tools/check-release-channel.py).
 
-[TV 180](docs/BUILD-180.md) · [TV 173](docs/BUILD-173.md) · [Mac 165](docs/BUILD-165.md) · [iPhone 164](docs/BUILD-164.md) · [TV 167](docs/BUILD-167.md) · [Earlier release history](https://github.com/4marawan001/Mira/releases).
+[iPhone & Mac 181](docs/BUILD-181.md) · [TV 180](docs/BUILD-180.md) · [TV 173](docs/BUILD-173.md) · [Mac 165](docs/BUILD-165.md) · [iPhone 164](docs/BUILD-164.md) · [TV 167](docs/BUILD-167.md) · [Earlier release history](https://github.com/4marawan001/Mira/releases).
 
 Mira builds on [NuvioMobile](https://github.com/NuvioMedia/NuvioMobile), [NuvioDesktop](https://github.com/NuvioMedia/NuvioDesktop) and [NuvioTV](https://github.com/NuvioMedia/NuvioTV). App source archives retain their upstream licensing and notices. Catalog availability depends on the add-ons you configure; Mira does not host media.
