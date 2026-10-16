@@ -21,9 +21,11 @@ The full Mac suite initially ran 1,654 tests with five failures. Investigation f
 
 Further source changes for build 182 improve the manual subtitle timing path: cancel obsolete downloads, avoid sending video authorization headers to subtitle providers, parse off the UI thread and reuse already-corrected cue times. The iPhone no-provider startup state now offers Retry instead of keeping a loading indicator active. A manual calibration action cancels any automatic match still running. Build 182 is development work; the download links above remain on the verified published builds until preview review and packaging are complete.
 
-The first full iOS Native run covered 1,481 tests with four failures: two stale hero-layout expectations and two pending-provider loading expectations. The hero tests now follow the current compact design; iPhone pending-provider handling was corrected to match the bounded Mac state. The corrected full iOS Native run passed all 1,481 tests with no failures or skips. Debug preview 182 built successfully and is running on the dedicated iPhone 12 mini simulator. Final Release IPA packaging awaits preview feedback.
+The first full iOS Native run covered 1,481 tests with four failures: two stale hero-layout expectations and two pending-provider loading expectations. The hero tests now follow the current compact design; iPhone pending-provider handling was corrected to match the bounded Mac state. The corrected full iOS Native run passed all 1,481 tests with no failures or skips. Debug preview 182 built successfully and is running on the dedicated iPhone 12 mini simulator. Home, Search and View All were checked visually in upright portrait. Final Release IPA packaging awaits preview feedback.
 
 The full Fire TV suite ran 2,177 checks: 2,174 passed, two failed, and one live-network check was skipped. The failures are in bundled Media3 runtime tests: localhost HTTP error classification and late allocation release/trim behavior. They remain open; the app-specific checks are not substituted for a full-suite pass. The skipped check requires a real private debrid stream URL and is not run by a public unit suite.
+
+The existing update-helper suite passed all 26 feed/checksum checks. The public shared-channel audit also passed, including the downloaded IPA's internal identity and version. All 30 documentation pages and 91 relative links/images passed the offline link check.
 
 ## Remaining limits
 

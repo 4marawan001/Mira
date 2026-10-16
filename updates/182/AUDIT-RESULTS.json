@@ -36,5 +36,20 @@
     "sourceDevelopmentBuild": 182,
     "sourcePatchesVerified": true,
     "newIpaPackaged": false
+  },
+  "helper": {
+    "checks": 26,
+    "failures": 0
+  },
+  "documentation": {
+    "pages": 30,
+    "localLinksAndImages": 91,
+    "passed": true
+  },
+  "preview": {
+    "build": 182,
+    "configuration": "Debug",
+    "homeSearchViewAllVisuallyChecked": true,
+    "physicalIphoneTest": false
   }
 }
