@@ -1,6 +1,6 @@
 # Install Mira
 
-Use the device-specific [download table](../README.md#download). The shared channel currently lists iPhone 168, Mac 169 and Fire TV 176. The [audit](AUDIT-2026-10-14.md) explains the corrected iPhone version labels and the delivered iPhone 168 update.
+Use the [download table](../README.md#download) for the current package. iPhone and Mac are build 181; Fire TV is build 180. [Current testing status](STATUS.md).
 
 ## iPhone
 
@@ -11,7 +11,7 @@ Use the device-specific [download table](../README.md#download). The shared chan
 
 The IPA is an unsigned Release package for sideload signing and requires iOS 16.1+. A free developer profile has installation and expiration limits. Sideloadly’s refresh renews signing; new features require a newer IPA.
 
-### Optional update helper
+### Optional iPhone update helper
 
 1. Download [Mira-iPhone-Updates-1.1.1-macOS.zip](https://github.com/4marawan001/Mira/releases/download/v0.5.22/Mira-iPhone-Updates-1.1.1-macOS.zip).
 2. Extract it and put **Mira iPhone Updates.app** in Applications. Quit any older copy first.
@@ -35,15 +35,15 @@ Videos mode and automatic hover-video playback are removed in Mac 165. Poster ho
 
 ## Fire TV
 
-1. Download [Mira-FireTV-universal.apk](https://github.com/4marawan001/Mira/releases/download/v0.5.32/Mira-FireTV-universal.apk).
+1. Download [Mira-FireTV-universal.apk](https://github.com/4marawan001/Mira/releases/download/v0.5.36/Mira-FireTV-universal.apk).
 2. Transfer it to a compatible Android-based Fire TV using your APK installation method.
 3. Install over your existing Mira app, then open it.
 4. Browse with D-pad, Select and Back. In **Settings → Automatic quality**, choose Low Data, Balanced or Highest.
 
-Build 167 requires Android 7/API 24+. Its signing identity matches the previous Mira TV release. Saved Manual/First Link/Regex preferences remain; existing users must choose Balanced if desired. Physical Insignia testing remains outstanding. [Remote and quality validation](BUILD-167.md).
+The current TV package requires Android 7/API 24+ and retains Mira's signing identity. Saved Manual/First Link/Regex preferences remain; choose Balanced if desired. Build 180 completed physical Arabic and English subtitle checks, including playback after reopening. Sustained performance and every source/provider still need device testing. [TV release checks](BUILD-180.md).
 
 ## Verify a download or report a problem
 
 The [manifest](https://github.com/4marawan001/Mira/releases/latest/download/mira-updates.json) records platform versions, SHA-256 hashes and sizes. Releases that include a checksum file also provide `SHA256SUMS.txt`. On Mac, run `shasum -a 256` followed by the downloaded file path and compare it with the matching entry.
 
-Include the build number, device model, action and exact error text in an issue report. Keep passwords, account data and private add-on URLs out of public reports. [Known limitations and current checks](AUDIT-2026-10-14.md).
+Include the build number, device model, action and exact error text in an issue report. Keep passwords, account data and private add-on URLs out of public reports. [Known limitations and current checks](STATUS.md).

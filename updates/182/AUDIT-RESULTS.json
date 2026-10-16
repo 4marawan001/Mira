@@ -1,0 +1,40 @@
+{
+  "mac": {
+    "counts": {
+      "tests": 1658,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "openFailures": []
+  },
+  "ios": {
+    "counts": {
+      "tests": 1481,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "openFailures": []
+  },
+  "firetv": {
+    "counts": {
+      "tests": 2177,
+      "failures": 2,
+      "errors": 0,
+      "skipped": 1
+    },
+    "openFailures": [
+      "androidx.media3.datasource.LocalhostZeroCopyDataSourceTest / testHttpError404",
+      "androidx.media3.exoplayer.upstream.DefaultAllocatorTest / testLateReleasedAllocationsMemoryLeak"
+    ]
+  },
+  "delivery": {
+    "publishedIos": 181,
+    "publishedMac": 181,
+    "publishedTV": 180,
+    "sourceDevelopmentBuild": 182,
+    "sourcePatchesVerified": true,
+    "newIpaPackaged": false
+  }
+}

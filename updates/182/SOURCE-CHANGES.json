@@ -1,0 +1,41 @@
+{
+  "ios": {
+    "baseBuild": 181,
+    "developmentBuild": 182,
+    "changedFiles": [
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/ManualSubtitleCueLoader.kt",
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenRuntimeSubtitleActions.kt",
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenRuntimeState.kt",
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenRuntimeEffects.kt",
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/autosync/MiraAutomaticSubtitleSession.kt",
+      "composeApp/src/commonTest/kotlin/com/nuvio/app/features/player/ManualSubtitleCueLoaderTest.kt",
+      "composeApp/src/commonTest/kotlin/com/nuvio/app/features/player/autosync/MiraAutomaticSubtitleTest.kt",
+      "composeApp/src/commonTest/kotlin/com/nuvio/app/features/search/SearchRequestStateTest.kt",
+      "composeApp/src/commonTest/kotlin/com/nuvio/app/features/watchprogress/WatchProgressIdentityTest.kt",
+      "composeApp/src/commonTest/kotlin/com/nuvio/app/core/poster/CustomPosterUrlResolverTest.kt",
+      "iosApp/Configuration/Version.xcconfig",
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/search/SearchRepository.kt",
+      "composeApp/src/commonTest/kotlin/com/nuvio/app/features/home/components/HomeHeroSectionTest.kt"
+    ],
+    "patchAppliedAndCompared": true
+  },
+  "macOS": {
+    "baseBuild": 181,
+    "developmentBuild": 182,
+    "changedFiles": [
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/ManualSubtitleCueLoader.kt",
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenRuntimeSubtitleActions.kt",
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenRuntimeState.kt",
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/PlayerScreenRuntimeEffects.kt",
+      "composeApp/src/commonMain/kotlin/com/nuvio/app/features/player/autosync/MiraAutomaticSubtitleSession.kt",
+      "composeApp/src/commonTest/kotlin/com/nuvio/app/features/player/ManualSubtitleCueLoaderTest.kt",
+      "composeApp/src/commonTest/kotlin/com/nuvio/app/features/player/autosync/MiraAutomaticSubtitleTest.kt",
+      "composeApp/src/commonTest/kotlin/com/nuvio/app/features/search/SearchRequestStateTest.kt",
+      "composeApp/src/commonTest/kotlin/com/nuvio/app/features/watchprogress/WatchProgressIdentityTest.kt",
+      "composeApp/src/commonTest/kotlin/com/nuvio/app/core/poster/CustomPosterUrlResolverTest.kt",
+      "composeApp/Configuration/DesktopVersion.properties",
+      "composeApp/src/desktopTest/kotlin/com/nuvio/app/features/home/HomeHeroPagerTest.kt"
+    ],
+    "patchAppliedAndCompared": true
+  }
+}

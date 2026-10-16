@@ -45,3 +45,7 @@ bash companion/build.sh /tmp/mira-helper-build
 ```
 
 The output is a universal arm64/x86_64 app requiring macOS 13+. ZIP only the `.app`, not the compiler cache or intermediate architecture binaries. The helper verifies IPA downloads and opens Sideloadly; it does not install unsigned IPAs directly on iPhone.
+
+## Documentation checks
+
+After changing a guide, run `python3 tools/check-docs.py` from the repository root. It checks Markdown links, section anchors, image descriptions and the current package/badge references. Update those version assertions whenever the public channel changes. Keep technical reports in the docs index and the main README focused on downloads and the app.
