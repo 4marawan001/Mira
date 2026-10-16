@@ -16,12 +16,14 @@
 
 ## Download
 
-| Your device | Download | Current build | Requires |
-| :--- | :--- | :--- | :--- |
-| iPhone | [Mira.ipa](https://github.com/4marawan001/Mira/releases/download/v0.5.37/Mira.ipa) | **181** · 0.5.37 | iOS 16.1+, signed with Sideloadly |
-| Mac with Apple silicon | [Apple silicon DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.37/Mira-macOS-arm64.dmg) | **181** · 0.5.37 | macOS 12+ |
-| Mac with Intel | [Intel DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.37/Mira-macOS-x86_64.dmg) | **181** · 0.5.37 | macOS 12+ |
-| Fire TV | [Universal APK](https://github.com/4marawan001/Mira/releases/download/v0.5.36/Mira-FireTV-universal.apk) | **180** · 0.5.36 | Android-based Fire TV, API 24+ |
+| Device | Download | Build |
+| :--- | :--- | :--- |
+| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.37/Mira.ipa) | **181** |
+| Mac · Apple silicon | [ARM64 DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.37/Mira-macOS-arm64.dmg) | **181** |
+| Mac · Intel | [Intel DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.37/Mira-macOS-x86_64.dmg) | **181** |
+| Fire TV | [APK](https://github.com/4marawan001/Mira/releases/download/v0.5.36/Mira-FireTV-universal.apk) | **180** |
+
+*iPhone/Mac 0.5.37 · TV 0.5.36. Requires iOS 16.1+, macOS 12+, or Android-based Fire TV API 24+.*
 
 [Installation guide](docs/INSTALL.md) · [Release notes](https://github.com/4marawan001/Mira/releases) · [Checksums and update feed](https://github.com/4marawan001/Mira/releases/latest/download/mira-updates.json)
 

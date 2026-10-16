@@ -1,0 +1,2 @@
+# Patch context lines must retain their leading space, including empty lines.
+*.patch -whitespace
