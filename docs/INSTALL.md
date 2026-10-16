@@ -35,10 +35,13 @@ Videos mode and automatic hover-video playback are removed in Mac 165. Poster ho
 
 ## Fire TV
 
-1. Download [Mira-FireTV-universal.apk](https://github.com/4marawan001/Mira/releases/download/v0.5.36/Mira-FireTV-universal.apk).
-2. Transfer it to a compatible Android-based Fire TV using your APK installation method.
-3. Install over your existing Mira app, then open it.
-4. Browse with D-pad, Select and Back. In **Settings → Automatic quality**, choose Low Data, Balanced or Highest.
+1. Open **Downloader by AFTVnews** on the TV.
+2. Enter **5568010** in its URL/code field and choose **Go**.
+3. Let the redirect countdown finish. When the Mira APK finishes downloading, choose **Install**. If the TV requests installation permission, allow Downloader to install apps.
+4. Install over your existing Mira app to retain its data, then open it.
+5. Browse with D-pad, Select and Back. In **Settings → Automatic quality**, choose Low Data, Balanced or Highest.
+
+The [Downloader code](https://aftv.news/5568010) points to the latest published universal Fire TV APK, currently build 180. It uses the stable GitHub download address so future TV releases can use the same code. You can also [download the APK directly](https://github.com/4marawan001/Mira/releases/latest/download/Mira-FireTV-universal.apk) and transfer it yourself.
 
 The current TV package requires Android 7/API 24+ and retains Mira's signing identity. Saved Manual/First Link/Regex preferences remain; choose Balanced if desired. Build 180 completed physical Arabic and English subtitle checks, including playback after reopening. Sustained performance and every source/provider still need device testing. [TV release checks](BUILD-180.md).
 

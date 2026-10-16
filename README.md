@@ -25,6 +25,8 @@
 
 *iPhone/Mac 0.5.38 · TV 0.5.36. Requires iOS 16.1+, macOS 12+, or Android-based Fire TV API 24+.*
 
+**On your TV:** enter **5568010** in Downloader. [Step-by-step installation](docs/INSTALL.md#fire-tv).
+
 [Installation guide](docs/INSTALL.md) · [Release notes](https://github.com/4marawan001/Mira/releases) · [Checksums and update feed](https://github.com/4marawan001/Mira/releases/latest/download/mira-updates.json)
 
 Install over your current copy to keep its data. iPhone needs signing through Sideloadly. Mac packages are ad-hoc signed and are not Apple-notarized.
