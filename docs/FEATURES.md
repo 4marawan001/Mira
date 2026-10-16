@@ -26,9 +26,9 @@ On iPhone 12 mini, Balanced favors 1080p Blu-ray encodes when suitable copies ar
 
 Choose a language or an exact file. Built-in full-dialogue tracks are preferred when suitable. On TV, add-on selection also considers release names, filenames, reported frame rate and hash matches. OpenSubtitles remains eligible even when it returns numeric IDs. A checkmark identifies the active file.
 
-Automatic timing compares an external subtitle file with a usable embedded subtitle timeline. It does not listen to dialogue. iPhone and Mac 181 write a validated correction to a temporary UTF-8 SRT for the existing player; TV 180 uses its own playback integration. Switching sources or subtitles cancels obsolete matching work. Original captions can appear while analysis runs.
+Automatic timing compares an external subtitle file with a usable embedded subtitle timeline. It does not listen to dialogue. iPhone and Mac 182 write a validated correction to a temporary UTF-8 SRT for the existing player; TV 180 uses its own playback integration. Switching sources or subtitles cancels obsolete matching work. Original captions can appear while analysis runs.
 
-A different movie cut, missing reference, unsupported container or ambiguous match can still need another subtitle file or manual delay. The iPhone/Mac index reader supports Matroska and conservative unedited MP4 text tracks; live/HLS, fragmented MP4 and edited MP4 timelines retain original timing. See [build 181](BUILD-181.md) and [build 180](BUILD-180.md) for the exact checks and limits.
+A different movie cut, missing reference, unsupported container or ambiguous match can still need another subtitle file or manual delay. The iPhone/Mac index reader supports Matroska and conservative unedited MP4 text tracks; live/HLS, fragmented MP4 and edited MP4 timelines retain original timing. See [build 182](BUILD-182.md) and [build 180](BUILD-180.md) for the exact checks and limits.
 
 The manual Delay control remains available. After automatic correction, +0.000s can be normal because the file's timestamps were already rewritten.
 

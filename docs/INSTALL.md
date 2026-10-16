@@ -1,6 +1,6 @@
 # Install Mira
 
-Use the [download table](../README.md#download) for the current package. iPhone and Mac are build 181; Fire TV is build 180. [Current testing status](STATUS.md).
+Use the [download table](../README.md#download) for the current package. iPhone and Mac are build 182; Fire TV is build 180. [Current testing status](STATUS.md).
 
 ## iPhone
 

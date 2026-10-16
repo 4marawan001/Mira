@@ -3,8 +3,8 @@
 <p align="center">Your media, with room to breathe.</p>
 <p align="center">iPhone · Apple Silicon & Intel Mac · Fire TV</p>
 <p align="center">
-  <img src="https://img.shields.io/badge/iPhone-181-9fabbc?style=flat-square" alt="iPhone build 181" />
-  <img src="https://img.shields.io/badge/Mac-181-9fabbc?style=flat-square" alt="Mac build 181" />
+  <img src="https://img.shields.io/badge/iPhone-182-9fabbc?style=flat-square" alt="iPhone build 182" />
+  <img src="https://img.shields.io/badge/Mac-182-9fabbc?style=flat-square" alt="Mac build 182" />
   <img src="https://img.shields.io/badge/Fire_TV-180-9fabbc?style=flat-square" alt="Fire TV build 180" />
   <img src="https://img.shields.io/badge/status-personal_testing-242830?style=flat-square" alt="Personal testing builds" />
 </p>
@@ -18,12 +18,12 @@
 
 | Device | Download | Build |
 | :--- | :--- | :--- |
-| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.37/Mira.ipa) | **181** |
-| Mac · Apple silicon | [ARM64 DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.37/Mira-macOS-arm64.dmg) | **181** |
-| Mac · Intel | [Intel DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.37/Mira-macOS-x86_64.dmg) | **181** |
+| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.38/Mira.ipa) | **182** |
+| Mac · Apple silicon | [ARM64 DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.38/Mira-macOS-arm64.dmg) | **182** |
+| Mac · Intel | [Intel DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.38/Mira-macOS-x86_64.dmg) | **182** |
 | Fire TV | [APK](https://github.com/4marawan001/Mira/releases/download/v0.5.36/Mira-FireTV-universal.apk) | **180** |
 
-*iPhone/Mac 0.5.37 · TV 0.5.36. Requires iOS 16.1+, macOS 12+, or Android-based Fire TV API 24+.*
+*iPhone/Mac 0.5.38 · TV 0.5.36. Requires iOS 16.1+, macOS 12+, or Android-based Fire TV API 24+.*
 
 [Installation guide](docs/INSTALL.md) · [Release notes](https://github.com/4marawan001/Mira/releases) · [Checksums and update feed](https://github.com/4marawan001/Mira/releases/latest/download/mira-updates.json)
 
@@ -48,9 +48,9 @@ Choose **Low Data**, **Balanced** or **Highest** in playback settings. Mira rank
 
 ### Subtitles that follow the film
 
-Choose a language or a specific subtitle file. Automatic timing can match an external file against a usable embedded subtitle timeline. Built-in captions and manual delay controls remain available. Different cuts, unsupported containers or missing references can still need another file or manual adjustment.
+Choose a language or a specific subtitle file. Automatic timing can match an external file against a usable embedded subtitle timeline. Built-in captions and manual delay controls remain available. Manual calibration keeps the applied cue times and cancels pending automatic work. Different cuts, unsupported containers or missing references can still need another file or manual adjustment.
 
-[How subtitle matching works](docs/FEATURES.md#subtitles) · [Build 181 checks](docs/BUILD-181.md)
+[How subtitle matching works](docs/FEATURES.md#subtitles) · [Build 182 checks](docs/BUILD-182.md)
 
 ### Search without the wait
 

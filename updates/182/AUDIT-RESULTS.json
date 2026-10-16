@@ -30,12 +30,14 @@
     ]
   },
   "delivery": {
-    "publishedIos": 181,
-    "publishedMac": 181,
+    "publishedIos": 182,
+    "publishedMac": 182,
     "publishedTV": 180,
     "sourceDevelopmentBuild": 182,
     "sourcePatchesVerified": true,
-    "newIpaPackaged": false
+    "newIpaPackaged": true,
+    "iphoneInstalledAndVersionVerified": 182,
+    "macInstalledAndHomeVerified": 182
   },
   "helper": {
     "checks": 26,
@@ -50,6 +52,8 @@
     "build": 182,
     "configuration": "Debug",
     "homeSearchViewAllVisuallyChecked": true,
-    "physicalIphoneTest": false
+    "physicalIphoneTest": false,
+    "userApprovedPackaging": true,
+    "physicalIphoneAppearanceUserConfirmed": true
   }
 }

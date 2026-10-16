@@ -41,10 +41,10 @@ for page in PAGES:
         if not re.search(r'\balt="[^\"]+"', tag):
             errors.append(f'{page.relative_to(ROOT)}: image lacks useful alt text')
 readme = (ROOT / 'README.md').read_text()
-for expected in ['iPhone-181-', 'Mac-181-', 'Fire_TV-180-']:
+for expected in ['iPhone-182-', 'Mac-182-', 'Fire_TV-180-']:
     if expected not in readme:
         errors.append('README: stale or missing badge ' + expected)
-for expected in ['v0.5.37/Mira.ipa', 'v0.5.37/Mira-macOS-arm64.dmg', 'v0.5.37/Mira-macOS-x86_64.dmg', 'v0.5.36/Mira-FireTV-universal.apk']:
+for expected in ['v0.5.38/Mira.ipa', 'v0.5.38/Mira-macOS-arm64.dmg', 'v0.5.38/Mira-macOS-x86_64.dmg', 'v0.5.36/Mira-FireTV-universal.apk']:
     if expected not in readme:
         errors.append('README: stale or missing package ' + expected)
 if errors:
