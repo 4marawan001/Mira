@@ -46,7 +46,7 @@ Home, Search and Saved keep your media close. Browse cinematic artwork, genre sh
 
 ### Play your way
 
-Choose **Low Data**, **Balanced** or **Highest** in playback settings. Mira ranks the links your sources return using device compatibility, resolution and file-size information. Balanced prefers good 1080p on iPhone and compatible 4K on Mac or a capable 4K TV. Mac and TV use a runtime-scaled budget of 40 GB per two hours. The budget is a ceiling, not a target file size.
+Choose **Low Data**, **Balanced** or **Highest** in playback settings. Mira ranks the links your sources return using device compatibility, resolution and file-size information. Balanced targets good 1080p on iPhone and compatible 4K on iPad, Mac or a capable 4K TV. Mac and TV use a runtime-scaled budget of 40 GB per two hours. The budget is a ceiling, not a target file size.
 
 [Quality modes and examples](docs/FEATURES.md#playback-quality)
 
@@ -68,7 +68,7 @@ Choose an accent, app icon and layout in **Look & feel**. iPhone Videos mode add
 
 ## Keeping Mira updated
 
-Mac checks for updates and offers **Install & Restart** after verifying the download. Fire TV uses its update/install flow. For iPhone and iPad, the optional [Mac update helper](docs/INSTALL.md#optional-iphone-update-helper) downloads the IPA and opens Sideloadly; signing refresh and feature updates are separate.
+Mac checks for updates and offers **Install & Restart** after verifying the download. Fire TV uses its update/install flow. For iPhone and iPad, the [Mac update helper 1.2.0](https://github.com/4marawan001/Mira/releases/download/v0.5.38/Mira-iPhone-iPad-Updates-1.2.0-macOS.zip) automatically downloads the verified universal IPA and can open new builds in Sideloadly. Click Start for each device; Sideloadly then renews signing separately. [Step-by-step setup](docs/INSTALL.md#automatic-updates-for-iphone-and-ipad).
 
 GitHub’s **Latest** stays on the TV release because older TV apps need its APK. The shared feed also carries the newer iPhone/iPad and Mac versions. Use the device table above for the right package.
 
@@ -77,3 +77,4 @@ GitHub’s **Latest** stays on the TV release because older TV apps need its APK
 [Install or troubleshoot](docs/INSTALL.md) · [Current testing status](docs/STATUS.md) · [Documentation](docs/README.md) · [Source and release process](docs/RELEASING.md)
 
 Mira is a personal fork of [NuvioMobile](https://github.com/NuvioMedia/NuvioMobile), [NuvioDesktop](https://github.com/NuvioMedia/NuvioDesktop) and [NuvioTV](https://github.com/NuvioMedia/NuvioTV). Complete app source archives and checked patches are attached to the platform releases; this repository holds the documentation and update helper. Upstream licenses and notices are retained. Mira does not host media.
+

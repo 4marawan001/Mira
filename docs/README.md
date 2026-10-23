@@ -6,7 +6,8 @@
 
 | I want to… | Read |
 | :--- | :--- |
-| Install or update Mira | [Installation](INSTALL.md) |
+| Install or update Mira on each device | [Installation](INSTALL.md) |
+| Set up automatic downloads and signing refresh on iPhone/iPad | [iPhone/iPad update helper](INSTALL.md#automatic-updates-for-iphone-and-ipad) |
 | Understand quality, subtitles or previews | [Using Mira](FEATURES.md) |
 | See what is tested and what is pending | [Current status](STATUS.md) |
 | Build, inspect source or publish an update | [Build and release process](RELEASING.md) |
@@ -15,7 +16,7 @@
 
 | Platform | Release | Notes |
 | :--- | :--- | :--- |
-| iPhone and Mac | [182 · 0.5.38](https://github.com/4marawan001/Mira/releases/tag/v0.5.38) | [Changes and validation](BUILD-182.md) |
+| iPhone, iPad and Mac | [182 · 0.5.38](https://github.com/4marawan001/Mira/releases/tag/v0.5.38) | [Changes and validation](BUILD-182.md) |
 | Fire TV | [180 · 0.5.36](https://github.com/4marawan001/Mira/releases/tag/v0.5.36) | [Changes and validation](BUILD-180.md) |
 
 The current package versions are in the [download table](../README.md#download). Older reports describe their own builds; their test counts and device limitations are historical.
@@ -34,3 +35,4 @@ The current package versions are in the [download table](../README.md#download).
 [All release downloads](https://github.com/4marawan001/Mira/releases)
 
 </details>
+

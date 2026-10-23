@@ -9,6 +9,10 @@ import ServiceManagement
     @Published var ready: URL?
     @Published var version = ""
     @Published var startAtLogin = SMAppService.mainApp.status == .enabled
+    @Published var loginNeedsApproval = SMAppService.mainApp.status == .requiresApproval
+    @Published var automaticallyOpen = UserDefaults.standard.bool(forKey: "automaticallyOpenVerifiedUpdates")
+    private var readyBuild = 0
+    private var openingSideloadly = false
     private let session: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
@@ -17,7 +21,7 @@ import ServiceManagement
     }()
     private let folder = FileManager.default.urls(for:.applicationSupportDirectory,in:.userDomainMask)[0].appendingPathComponent("Mira Phone Updates",isDirectory:true)
     func check(force: Bool = false) async {
-        guard !busy else {return}; ready = nil; busy = true; defer {busy = false}
+        guard !busy else {return}; ready = nil; readyBuild = 0; busy = true; defer {busy = false}
         do {
             let item = try await loadArtifact { url in
                 var request = URLRequest(url: url)
@@ -40,7 +44,8 @@ import ServiceManagement
             }.value
             if matches {
                 try await Task.detached { try validateIPA(destination, artifact: item) }.value
-                ready=destination;message="Mira \(item.version) is downloaded and ready to install.";return
+                prepared(destination, artifact: item)
+                return
             }
             message="Downloading Mira \(item.version)…"
             var downloadRequest = URLRequest(url:item.url); downloadRequest.timeoutInterval=60
@@ -61,43 +66,88 @@ import ServiceManagement
             if FileManager.default.fileExists(atPath:destination.path) {_ = try FileManager.default.replaceItemAt(destination,withItemAt:staging)}
             else {try FileManager.default.moveItem(at:staging,to:destination)}
             UserDefaults.standard.set(item.build,forKey:"downloadedBuild")
-            ready=destination;message="Mira \(item.version) (build \(item.build)) is ready. Sideloadly will sign it for your iPhone."
+            prepared(destination, artifact: item)
         } catch {message=error.localizedDescription}
     }
-    func install() {
-        guard let ready else {return}
+    private func prepared(_ file: URL, artifact: Artifact) {
+        ready = file; readyBuild = artifact.build
+        message = "Mira \(artifact.version) (build \(artifact.build)) is verified for iPhone and iPad."
+        if shouldAutomaticallyOpen(verifiedBuild: artifact.build,
+            lastOpenedBuild: UserDefaults.standard.integer(forKey: "lastOpenedVerifiedBuild"), enabled: automaticallyOpen) {
+            openInSideloadly()
+        }
+    }
+    func openInSideloadly() {
+        guard let ready, !openingSideloadly else {return}
         guard let app=NSWorkspace.shared.urlForApplication(withBundleIdentifier:"io.sideloadly.sideloadly") else {message="Install Sideloadly on this Mac first.";return}
+        openingSideloadly = true
+        let openedBuild = readyBuild
         NSWorkspace.shared.open([ready],withApplicationAt:app,configuration:NSWorkspace.OpenConfiguration()) {_,error in
-            if let error {Task {@MainActor in self.message=error.localizedDescription}}
+            Task { @MainActor in
+                self.openingSideloadly = false
+                if let error { self.message = error.localizedDescription; return }
+                UserDefaults.standard.set(openedBuild, forKey: "lastOpenedVerifiedBuild")
+                self.message = "Opened build \(openedBuild) in Sideloadly. Select your iPhone or iPad, keep AutoRefresh on, then click Start. Repeat for the other device."
+            }
+        }
+    }
+    func setAutomaticallyOpen(_ enabled: Bool) {
+        automaticallyOpen = enabled
+        UserDefaults.standard.set(enabled, forKey: "automaticallyOpenVerifiedUpdates")
+        if shouldAutomaticallyOpen(verifiedBuild: readyBuild,
+            lastOpenedBuild: UserDefaults.standard.integer(forKey: "lastOpenedVerifiedBuild"), enabled: enabled) {
+            openInSideloadly()
         }
     }
     func setLogin(_ enabled:Bool) {
-        do {if enabled {try SMAppService.mainApp.register()} else {try SMAppService.mainApp.unregister()};startAtLogin = SMAppService.mainApp.status == .enabled}
+        do {
+            if enabled {try SMAppService.mainApp.register()} else {try SMAppService.mainApp.unregister()}
+            refreshLoginState()
+            if loginNeedsApproval { message = "Approve this helper in System Settings → General → Login Items & Extensions to check after login." }
+        }
         catch {message=error.localizedDescription}
+    }
+    func refreshLoginState() {
+        startAtLogin = SMAppService.mainApp.status == .enabled
+        loginNeedsApproval = SMAppService.mainApp.status == .requiresApproval
     }
 }
 @main struct MiraPhoneUpdatesApp: App {
     @StateObject private var model=PhoneUpdates()
     let timer=Timer.publish(every:3600,on:.main,in:.common).autoconnect()
     var body: some Scene {
-        WindowGroup("Mira iPhone Updates") {
+        WindowGroup("Mira iPhone & iPad Updates") {
             VStack(alignment:.leading,spacing:20) {
                 HStack(spacing:14) {
-                    Image(systemName:"iphone.and.arrow.forward").font(.system(size:36)).foregroundStyle(.secondary)
-                    VStack(alignment:.leading,spacing:4) {Text("Mira iPhone Updates").font(.title2.bold());Text("Automatic downloads. Your Mac handles signing.").foregroundStyle(.secondary)}
+                    Image(systemName:"ipad.and.iphone").font(.system(size:36)).foregroundStyle(.secondary)
+                    VStack(alignment:.leading,spacing:4) {Text("Mira iPhone & iPad Updates").font(.title2.bold());Text("One verified download for both devices.").foregroundStyle(.secondary)}
                 }
                 Text(model.message).textSelection(.enabled).frame(minHeight:42,alignment:.topLeading)
                 if model.busy {ProgressView().controlSize(.small)}
                 HStack {Button("Check now") {Task {await model.check(force:true)}}.disabled(model.busy)
                     Spacer()
-                    Button("Open in Sideloadly") {model.install()}.buttonStyle(.borderedProminent).disabled(model.ready == nil || model.busy)
+                    Button("Update iPhone or iPad…") {model.openInSideloadly()}.buttonStyle(.borderedProminent).disabled(model.ready == nil || model.busy)
                 }
                 Divider()
                 Toggle("Start at login",isOn:Binding(get:{model.startAtLogin},set:{model.setLogin($0)}))
-                Text("Checks hourly while running. Keep your Mac and iPhone on the same Wi-Fi. Sideloadly may require you to click Start; its automatic refresh handles signing expiry separately.")
+                if model.loginNeedsApproval {
+                    Button("Open Login Items settings") { SMAppService.openSystemSettingsLoginItems() }
+                }
+                Toggle("Open verified new builds in Sideloadly automatically", isOn: Binding(
+                    get: { model.automaticallyOpen }, set: { model.setAutomaticallyOpen($0) }))
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Install once for each device").font(.headline)
+                    Text("1. Select iPhone or iPad in Sideloadly.")
+                    Text("2. Keep the same Apple ID and turn AutoRefresh on.")
+                    Text("3. Click Start, then repeat for the other device.")
+                    Link("Step-by-step installation and updates", destination: URL(string: "https://github.com/4marawan001/Mira/blob/main/docs/INSTALL.md#automatic-updates-for-iphone-and-ipad")!)
+                }.font(.callout)
+                Text("Checks and downloads hourly while running. Use USB or configured Wi-Fi for each device. New versions still need Start in Sideloadly; its automatic refresh renews signing separately. This helper does not report a device as updated just because a download opened.")
                     .font(.caption).foregroundStyle(.secondary)
-            }.padding(28).frame(width:450).task {await model.check()}
+            }.padding(28).frame(width:520).task {await model.check()}
                 .onReceive(timer) {_ in Task {await model.check()}}
+                .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in model.refreshLoginState() }
         }.windowResizability(.contentSize)
     }
 }
+

@@ -7,11 +7,20 @@
 | Platform | Published package | Verification |
 | :--- | :--- | :--- |
 | iPhone | **182 / 0.5.38** | Reviewed mini preview; Release IPA identity, architecture and archive checks; 1,481 Native tests passed |
+| iPad / M1 iPad Air | **182 / 0.5.38**, same universal IPA | iPad Air simulator setup, browsing, Search, Saved, rotation and local H.264 playback checked; Apple HLS sample failed with HTTP 400 playlist errors; physical iPad pending |
 | Apple silicon Mac | **182 / 0.5.38** | Release signature, native libraries and packaged JVM checked; 1,658 desktop tests passed |
 | Intel Mac | **182 / 0.5.38** | Release architecture and packaged JVM checked under Rosetta; physical Intel playback pending |
 | Fire TV | **180 / 0.5.36** | Signed packages; previous user-confirmed Arabic/English dialogue and restart checks; two bundled runtime audit failures remain open |
 
 [182 release report](BUILD-182.md) · [181 release report](BUILD-181.md) · [180 release report](BUILD-180.md)
+
+## October 23 iPad and updater checks
+
+Build 182 already targets 4K on iPad and 1080p on iPhone in Balanced. Two added regression cases verify compatible iPad 4K selection and avoiding software AV1 ahead of compatible HEVC. The focused catalog/source suite passed **120 tests**. This does not establish physical 4K playback performance.
+
+The new Mac helper **1.2.0** supports both iPhone and iPad, validates universal IPA support, and can hand off each new verified build to Sideloadly automatically. It passed **36 feed/checksum/package/handoff checks** and builds for arm64 and x86_64. A feature update still needs Start in Sideloadly for each device; signing renewal is handled separately by Sideloadly. [Installation and automatic updates](INSTALL.md#automatic-updates-for-iphone-and-ipad).
+
+[iPad simulator report](https://github.com/4marawan001/Mira/releases/download/v0.5.38/IPAD-VALIDATION.md) records the UI checks and open HLS result. The app IPA remains build 182; these changes add verification, helper software and documentation.
 
 ## October 16 audit and fixes
 
@@ -28,7 +37,7 @@ The full unchanged Fire TV suite ran **2,177 checks: 2,174 passed, two failed, o
 - Automatic subtitle matching requires a usable embedded timeline and a sufficiently compatible external file. It does not transcribe speech. Different movie cuts and ambiguous matches may need another subtitle file or manual adjustment.
 - The portable index reader handles bounded Matroska and conservative unedited MP4 text tables. Edited/fragmented MP4, HLS, live sources and missing references are outside its coverage.
 - Hardware-aware quality ranks provider metadata; it does not measure internet speed or inspect the actual picture.
-- Mac packages are ad-hoc signed and not Apple-notarized. iPhone installation requires signing through Sideloadly.
+- Mac packages are ad-hoc signed and not Apple-notarized. iPhone and iPad installation requires signing through Sideloadly.
 - Fire OS performance outside Mira is outside the app's control. No unrelated background services are disabled by Mira.
 
 ## Reporting a problem
@@ -36,3 +45,4 @@ The full unchanged Fire TV suite ran **2,177 checks: 2,174 passed, two failed, o
 Include platform, build, device, action and error text. For subtitles, include the provider name and whether captions are early, late or drifting. Do not post passwords, private add-on URLs, API keys or unredacted logs.
 
 Older reports in the [documentation index](README.md) describe their own builds and historical checks.
+

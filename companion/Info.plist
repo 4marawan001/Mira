@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDisplayName</key>
-	<string>Mira iPhone Updates</string>
+	<string>Mira iPhone &amp; iPad Updates</string>
 	<key>CFBundleExecutable</key>
 	<string>MiraPhoneUpdates</string>
 	<key>CFBundleIconFile</key>
@@ -11,16 +11,17 @@
 	<key>CFBundleIdentifier</key>
 	<string>app.mira.phone-updates</string>
 	<key>CFBundleName</key>
-	<string>Mira iPhone Updates</string>
+	<string>Mira iPhone &amp; iPad Updates</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.1.1</string>
+	<string>1.2.0</string>
 	<key>CFBundleVersion</key>
-	<string>169</string>
+	<string>170</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>13.0</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 </dict>
 </plist>
+

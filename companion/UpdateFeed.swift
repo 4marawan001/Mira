@@ -59,7 +59,11 @@ func cachedDownloadMatches(_ file: URL, artifact: Artifact, downloadedBuild: Int
     return try checksum(file) == artifact.sha256.lowercased()
 }
 
-struct IPAIdentity { let identifier: String; let build: Int; let version: String }
+struct IPAIdentity { let identifier: String; let build: Int; let version: String; let deviceFamilies: Set<Int> }
+
+func shouldAutomaticallyOpen(verifiedBuild: Int, lastOpenedBuild: Int, enabled: Bool) -> Bool {
+    enabled && verifiedBuild > 0 && verifiedBuild > lastOpenedBuild
+}
 private func zipOutput(_ arguments: [String]) throws -> Data {
     let process = Process()
     process.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
@@ -93,14 +97,15 @@ func readIPAIdentity(_ file: URL) throws -> IPAIdentity {
           let version = value?["CFBundleShortVersionString"] as? String,
           let buildString = value?["CFBundleVersion"] as? String,
           let build = Int(buildString), build > 0 else { throw URLError(.cannotParseResponse) }
-    return IPAIdentity(identifier: identifier, build: build, version: version)
+    return IPAIdentity(identifier: identifier, build: build, version: version,
+                       deviceFamilies: Set(value?["UIDeviceFamily"] as? [Int] ?? []))
 }
 func validateIPA(_ file: URL, artifact: Artifact) throws {
     let identity = try readIPAIdentity(file)
     guard identity.identifier == "com.nuvio.media", identity.build == artifact.build,
-          identity.version == artifact.version else {
+          identity.version == artifact.version, identity.deviceFamilies.isSuperset(of: [1, 2]) else {
         throw NSError(domain: "Mira", code: 4, userInfo: [NSLocalizedDescriptionKey:
-            "The published IPA’s app identity or internal version disagrees with the update feed. Nothing was installed. Check again after the channel is corrected."])
+            "The IPA must match the update feed and support both iPhone and iPad. Nothing was installed. Check again after the channel is corrected."])
     }
 }
 func checksum(_ file: URL) throws -> String {
@@ -109,3 +114,4 @@ func checksum(_ file: URL) throws -> String {
     while let data = try handle.read(upToCount:1024*1024), !data.isEmpty { hash.update(data:data) }
     return hash.finalize().map {String(format:"%02x",$0)}.joined()
 }
+

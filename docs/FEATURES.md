@@ -12,13 +12,15 @@ Search shows results as each source responds. Slow or failed sources do not hold
 
 Choose a mode in playback settings. Mira ranks available links from your enabled sources using device capabilities and the metadata those sources supply.
 
-| Mode | iPhone | Mac | Fire TV |
-| :--- | :--- | :--- | :--- |
-| Low Data | Prefers smaller 720p | Prefers smaller 1080p | Prefers smaller 1080p |
-| Balanced | Prefers good 1080p | Prefers compatible 4K | Prefers compatible 4K on a capable 4K TV, otherwise 1080p |
-| Highest | Prioritizes compatible resolution and disc sources | Prioritizes compatible resolution and disc/REMUX | Prioritizes compatible resolution and disc/REMUX |
+| Mode | iPhone | iPad | Mac | Fire TV |
+| :--- | :--- | :--- | :--- | :--- |
+| Low Data | Prefers smaller 720p | Prefers smaller 720p | Prefers smaller 1080p | Prefers smaller 1080p |
+| Balanced | Targets good 1080p | Targets compatible 4K / 2160p | Prefers compatible 4K | Prefers compatible 4K on a capable 4K TV, otherwise 1080p |
+| Highest | Prioritizes compatible resolution and disc sources | Prioritizes compatible resolution and disc sources | Prioritizes compatible resolution and disc/REMUX | Prioritizes compatible resolution and disc/REMUX |
 
 Mac and TV Balanced use a ceiling of 40 decimal GB per two hours, scaled by known runtime. A substantial encode can rank above a heavily compressed copy; the ceiling is not a target download size. For example, an 18 GB two-hour 4K Blu-ray HEVC encode can beat a 2 GB 4K copy. A 39 GB REMUX does not win automatically. Unknown-size and oversized files remain available manually.
+
+On iPad, including M1 iPad Air, Balanced already targets 2160p in build 182. Hardware-compatible HEVC/H.264 copies are favored over a codec that needs software decoding. The iPad still uses the mobile size penalties; the Mac/TV 40 GB policy is separate. On M1 iPad Air, 4K sources are scaled to its 2360 × 1640 display. [Apple specifications](https://support.apple.com/en-us/111887).
 
 On iPhone 12 mini, Balanced favors 1080p Blu-ray encodes when suitable copies are available. Codec and source readiness also affect the ranking. Highest can select much larger disc/remux copies. Metadata checks do not measure your connection speed or inspect picture quality; playback still validates the actual source when opening it.
 
@@ -42,6 +44,7 @@ Mac uses static hover cards and has no automatic hover-video mode. Fire TV uses 
 
 ## Updates
 
-Mac checks on opening and hourly while running, verifies the download and offers Install & Restart. TV uses its install confirmation flow. The optional iPhone helper runs on Mac, downloads a verified IPA and opens Sideloadly. New features require installing the new IPA; Sideloadly's signing refresh renews its existing installation.
+Mac checks on opening and hourly while running, verifies the download and offers Install & Restart. TV uses its install confirmation flow. The iPhone/iPad helper 1.2.0 runs on Mac and downloads a verified universal IPA automatically. An optional setting opens each new verified build in Sideloadly once. Install it separately on each device with the same signing identity and AutoRefresh enabled; signing refresh then renews that installed version. [Setup and installation steps](INSTALL.md#automatic-updates-for-iphone-and-ipad).
 
 The shared GitHub update feed contains independent versions for all platforms. GitHub Latest stays on the current TV release for compatibility with older TV apps. Use the [download table](../README.md#download) to choose your package.
+
