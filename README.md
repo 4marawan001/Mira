@@ -1,7 +1,7 @@
 <p align="center"><img src="docs/assets/icon.png" width="112" alt="Mira silver icon" /></p>
 <h1 align="center">Mira</h1>
 <p align="center">Your media, with room to breathe.</p>
-<p align="center">iPhone · Apple Silicon & Intel Mac · Fire TV</p>
+<p align="center">iPhone · iPad · Apple Silicon & Intel Mac · Fire TV</p>
 <p align="center">
   <img src="https://img.shields.io/badge/iPhone-182-9fabbc?style=flat-square" alt="iPhone build 182" />
   <img src="https://img.shields.io/badge/Mac-182-9fabbc?style=flat-square" alt="Mac build 182" />
@@ -18,18 +18,20 @@
 
 | Device | Download | Build |
 | :--- | :--- | :--- |
-| iPhone | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.38/Mira.ipa) | **182** |
+| iPhone & iPad | [IPA](https://github.com/4marawan001/Mira/releases/download/v0.5.38/Mira.ipa) | **182** |
 | Mac · Apple silicon | [ARM64 DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.38/Mira-macOS-arm64.dmg) | **182** |
 | Mac · Intel | [Intel DMG](https://github.com/4marawan001/Mira/releases/download/v0.5.38/Mira-macOS-x86_64.dmg) | **182** |
 | Fire TV | [APK](https://github.com/4marawan001/Mira/releases/download/v0.5.36/Mira-FireTV-universal.apk) | **180** |
 
-*iPhone/Mac 0.5.38 · TV 0.5.36. Requires iOS 16.1+, macOS 12+, or Android-based Fire TV API 24+.*
+*iPhone/iPad/Mac 0.5.38 · TV 0.5.36. Requires iOS or iPadOS 16.1+, macOS 12+, or Android-based Fire TV API 24+.*
 
 **On your TV:** enter **5568010** in Downloader. [Step-by-step installation](docs/INSTALL.md#fire-tv).
 
 [Installation guide](docs/INSTALL.md) · [Release notes](https://github.com/4marawan001/Mira/releases) · [Checksums and update feed](https://github.com/4marawan001/Mira/releases/latest/download/mira-updates.json)
 
-Install over your current copy to keep its data. iPhone needs signing through Sideloadly. Mac packages are ad-hoc signed and are not Apple-notarized.
+Install over your current copy to keep its data. iPhone and iPad use the same universal IPA and need signing through Sideloadly. Mac packages are ad-hoc signed and are not Apple-notarized.
+
+M1 iPad Air uses this same IPA. [iPad simulator verification](https://github.com/4marawan001/Mira/releases/download/v0.5.38/IPAD-VALIDATION.md) covers Home, Search, Saved, catalog scrolling and rotation. Local H.264 video rendered; an Apple HLS sample remained buffering with HTTP 400 playlist errors. Physical iPad installation and hardware performance testing remain pending.
 
 ## Inside Mira
 
@@ -66,9 +68,9 @@ Choose an accent, app icon and layout in **Look & feel**. iPhone Videos mode add
 
 ## Keeping Mira updated
 
-Mac checks for updates and offers **Install & Restart** after verifying the download. Fire TV uses its update/install flow. For iPhone, the optional [Mac update helper](docs/INSTALL.md#optional-iphone-update-helper) downloads the IPA and opens Sideloadly; signing refresh and feature updates are separate.
+Mac checks for updates and offers **Install & Restart** after verifying the download. Fire TV uses its update/install flow. For iPhone and iPad, the optional [Mac update helper](docs/INSTALL.md#optional-iphone-update-helper) downloads the IPA and opens Sideloadly; signing refresh and feature updates are separate.
 
-GitHub’s **Latest** stays on the TV release because older TV apps need its APK. The shared feed also carries the newer iPhone and Mac versions. Use the device table above for the right package.
+GitHub’s **Latest** stays on the TV release because older TV apps need its APK. The shared feed also carries the newer iPhone/iPad and Mac versions. Use the device table above for the right package.
 
 ## Help and project information
 
