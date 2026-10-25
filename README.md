@@ -1,7 +1,7 @@
 <p align="center"><img src="docs/assets/icon.png" width="112" alt="Mira silver icon" /></p>
 <h1 align="center">Mira</h1>
 <p align="center">Your media, with room to breathe.</p>
-<p align="center">iPhone · iPad · Apple Silicon & Intel Mac · Fire TV</p>
+<p align="center">iPhone · iPad · Apple Silicon & Intel Mac · Fire TV · Android phone/tablet</p>
 <p align="center">
   <img src="https://img.shields.io/badge/iPhone-182-9fabbc?style=flat-square" alt="iPhone build 182" />
   <img src="https://img.shields.io/badge/Mac-182-9fabbc?style=flat-square" alt="Mac build 182" />
@@ -15,6 +15,20 @@
 *Real Mac screenshot from build 155. Catalog artwork depends on your sources; the current Mac uses static poster hover cards.*
 
 ## Download
+
+**[Mira 0.6.0 overhaul preview](https://github.com/4marawan001/Mira/releases/tag/v0.6.0-preview.1)** is available for manual installation. It adds five interface designs, more customization, TV menu/startup fixes, the Mac player runtime repair, Android updater checks and an empty Live TV section for a future playlist. [What changed and remaining checks](docs/OVERHAUL-PREVIEW.md) · [Install the preview](docs/INSTALL-OVERHAUL-PREVIEW.md).
+
+| Device | Preview download | Build |
+| :--- | :--- | :--- |
+| iPhone & iPad | [Universal IPA](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira.ipa) | **194** |
+| Mac · Apple silicon | [ARM64 DMG](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-macOS-arm64.dmg) | **197** |
+| Mac · Intel | [Intel DMG](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-macOS-x86_64.dmg) | **197** |
+| Fire TV | [ARMv7](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-FireTV-armv7.apk) · [ARM64](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-FireTV-arm64.apk) · [Universal](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-FireTV-universal.apk) | **196** |
+| Android phone/tablet | [ARM64](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-Android-195-arm64-v8a.apk) · [ARMv7](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-Android-195-armeabi-v7a.apk) · [x86](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-Android-195-x86.apk) · [x86_64](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-Android-195-x86_64.apk) | **195** |
+
+The preview still drops frames during fast TV scrolling. Physical iPhone/iPad/Android playback, HDR output and actual English/Arabic subtitle timing remain unverified. Some specialist screens retain shared controls. GitHub Latest, the stable feed and Downloader code continue to serve the earlier releases.
+
+### Earlier stable builds
 
 | Device | Download | Build |
 | :--- | :--- | :--- |

@@ -1,5 +1,9 @@
 # Current status
 
+**October 25: [0.6.0 overhaul preview](https://github.com/4marawan001/Mira/releases/tag/v0.6.0-preview.1)** — TV 196, Mac 197, iPhone/iPad 194 and Android mobile 195. [Changes](OVERHAUL-PREVIEW.md), [installation](INSTALL-OVERHAUL-PREVIEW.md) and [validation](VALIDATION-OVERHAUL-PREVIEW.md) describe the new designs, checks and open limits. The earlier stable channel remains unchanged.
+
+
+
 [Documentation](README.md) · [Downloads](../README.md#download)
 
 ## Available now
