@@ -16,13 +16,15 @@
 
 ## Download
 
+**Mac updater repair:** [build 198 · 0.6.1-preview.1](https://github.com/4marawan001/Mira/releases/tag/v0.6.1-preview.1) fixes the “Release changed” preview-download error. Older Mac builds need one manual replacement. [Repair and installation steps](docs/MAC-UPDATER-198.md).
+
 **[Mira 0.6.0 overhaul preview](https://github.com/4marawan001/Mira/releases/tag/v0.6.0-preview.1)** is available for manual installation. It adds five interface designs, more customization, TV menu/startup fixes, the Mac player runtime repair, Android updater checks and an empty Live TV section for a future playlist. [What changed and remaining checks](docs/OVERHAUL-PREVIEW.md) · [Install the preview](docs/INSTALL-OVERHAUL-PREVIEW.md).
 
 | Device | Preview download | Build |
 | :--- | :--- | :--- |
 | iPhone & iPad | [Universal IPA](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira.ipa) | **194** |
-| Mac · Apple silicon | [ARM64 DMG](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-macOS-arm64.dmg) | **197** |
-| Mac · Intel | [Intel DMG](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-macOS-x86_64.dmg) | **197** |
+| Mac · Apple silicon | [ARM64 DMG](https://github.com/4marawan001/Mira/releases/download/v0.6.1-preview.1/Mira-macOS-arm64.dmg) | **198** |
+| Mac · Intel | [Intel DMG](https://github.com/4marawan001/Mira/releases/download/v0.6.1-preview.1/Mira-macOS-x86_64.dmg) | **198** |
 | Fire TV | [ARMv7](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-FireTV-armv7.apk) · [ARM64](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-FireTV-arm64.apk) · [Universal](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-FireTV-universal.apk) | **196** |
 | Android phone/tablet | [ARM64](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-Android-195-arm64-v8a.apk) · [ARMv7](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-Android-195-armeabi-v7a.apk) · [x86](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-Android-195-x86.apk) · [x86_64](https://github.com/4marawan001/Mira/releases/download/v0.6.0-preview.1/Mira-Android-195-x86_64.apk) | **195** |
 
