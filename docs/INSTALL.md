@@ -77,13 +77,13 @@ The former iPhone-only helper link now leads here; helper 1.2.0 supports both de
 This APK requires an Android-based device with Android 7 (API 24) or newer. Amazon devices running Vega OS and Samsung TVs running Tizen need packages for their own operating systems. On a Samsung TV with a compatible Fire TV Stick, do these steps on the Stick’s HDMI input. [Amazon Fire TV operating systems by model](https://developer.amazon.com/docs/fire-tv/fire-os-overview.html)
 
 1. Open **Downloader by AFTVnews** on the TV device.
-2. Enter **8262801** and choose **Go**. The code opens the universal APK for **build 209**.
+2. Enter **6346914** for the latest TV preview (**build 210**) or **8262801** for the stable TV release (**build 209**). Choose **Go**.
 3. When the download finishes, choose **Install**. If the device prompts you for permission to install from Downloader, review and approve that prompt.
-4. Install over the existing copy with the same signing identity to keep its data. Open Mira and confirm **build 209** in Settings.
+4. Install over the existing copy with the same signing identity to keep its data. Open Mira and confirm the build number in Settings.
 
-[Downloader code](https://aftv.news/8262801) · [Direct universal APK](https://github.com/4marawan001/Mira/releases/download/v0.6.2/Mira-FireTV-209-universal.apk) · [TV validation and known issues](STATUS.md#tv)
+[Build 210 Downloader code](https://aftv.news/6346914) · [Build 210 APK](https://github.com/4marawan001/Mira/releases/download/v0.6.2-tv.210/Mira-FireTV-210-universal.apk) · [Build 209 Downloader code](https://aftv.news/8262801) · [Build 209 APK](https://github.com/4marawan001/Mira/releases/download/v0.6.2/Mira-FireTV-209-universal.apk)
 
-For newer builds, check the [latest release](https://github.com/4marawan001/Mira/releases/latest) or use Mira’s in-app updater. Code **8262801** always points to build 209.
+Each Downloader code points to its named build. See [TV validation and known issues](STATUS.md#tv) for the difference between the preview and stable builds.
 
 ## Android phone and tablet
 

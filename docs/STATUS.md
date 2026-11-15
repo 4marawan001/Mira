@@ -6,6 +6,8 @@
 
 ## TV
 
+[Build 210](https://github.com/4marawan001/Mira/releases/tag/v0.6.2-tv.210) is a manual-install preview with a four-second update toast and update controls in Settings. The 15 targeted updater tests passed. Physical TV verification is pending.
+
 Build 209 restores the earlier TV navigation after the build 208 experiment and keeps the updated source filenames and branding. Fast scrolling can still drop frames. HDR output and sustained frame pacing remain open hardware checks. [TV test results](https://github.com/4marawan001/Mira/releases/download/v0.6.2/VALIDATION.md)
 
 ## Mac

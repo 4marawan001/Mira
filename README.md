@@ -5,7 +5,9 @@
 
 ## Download
 
-**Fire TV and Android TV:** Open **Downloader by AFTVnews**, enter **`8262801`**, and select **Go**. This code downloads the universal TV APK for **Mira 0.6.2, build 209**. [Downloader link](https://aftv.news/8262801) · [TV installation and compatibility](docs/INSTALL.md#fire-tv-and-android-tv)
+**Latest TV preview, build 210:** Open **Downloader by AFTVnews**, enter **`6346914`**, and select **Go**. [Downloader link](https://aftv.news/6346914) · [Build 210 release notes and APK](https://github.com/4marawan001/Mira/releases/tag/v0.6.2-tv.210) · [TV installation and compatibility](docs/INSTALL.md#fire-tv-and-android-tv)
+
+The table below lists the stable downloads. TV build 209 uses Downloader code [`8262801`](https://aftv.news/8262801).
 
 | Device | Build | Installer |
 | --- | ---: | --- |

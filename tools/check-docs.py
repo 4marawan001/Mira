@@ -52,8 +52,10 @@ for expected in expected_links:
     if expected not in readme:
         errors.append('README: missing release package ' + expected)
 for page in (ROOT / 'README.md', ROOT / 'docs/INSTALL.md'):
-    if 'https://aftv.news/8262801' not in page.read_text():
-        errors.append(f'{page.relative_to(ROOT)}: missing current Downloader code link')
+    body = page.read_text()
+    for code in ('6346914', '8262801'):
+        if f'https://aftv.news/{code}' not in body:
+            errors.append(f'{page.relative_to(ROOT)}: missing Downloader code {code}')
 if errors:
     print('\n'.join(errors))
     sys.exit(1)
