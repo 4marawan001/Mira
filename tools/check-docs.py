@@ -41,13 +41,20 @@ for page in PAGES:
         if not re.search(r'\balt="[^\"]+"', tag):
             errors.append(f'{page.relative_to(ROOT)}: image lacks useful alt text')
 readme = (ROOT / 'README.md').read_text()
-for expected in ['iPhone-182-', 'Mac-182-', 'Fire_TV-180-']:
+expected_links = (
+    'v0.6.2/Mira-FireTV-209-universal.apk',
+    'v0.6.2/Mira-iOS-iPadOS-204.ipa',
+    'v0.6.2/Mira-macOS-arm64.dmg',
+    'v0.6.2/Mira-macOS-x86_64.dmg',
+    'v0.6.2/Mira-Android-204-arm64-v8a.apk',
+)
+for expected in expected_links:
     if expected not in readme:
-        errors.append('README: stale or missing badge ' + expected)
-for expected in ['v0.5.38/Mira.ipa', 'v0.5.38/Mira-macOS-arm64.dmg', 'v0.5.38/Mira-macOS-x86_64.dmg', 'v0.5.36/Mira-FireTV-universal.apk']:
-    if expected not in readme:
-        errors.append('README: stale or missing package ' + expected)
+        errors.append('README: missing release package ' + expected)
+for page in (ROOT / 'README.md', ROOT / 'docs/INSTALL.md'):
+    if 'https://aftv.news/8262801' not in page.read_text():
+        errors.append(f'{page.relative_to(ROOT)}: missing current Downloader code link')
 if errors:
     print('\n'.join(errors))
     sys.exit(1)
-print(f'Checked {len(PAGES)} Markdown pages and {checked} local links/images; current downloads and badges match.')
+print(f'Checked {len(PAGES)} Markdown pages and {checked} local links/images; current downloads match.')

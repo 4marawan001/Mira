@@ -48,4 +48,4 @@ The output is a universal arm64/x86_64 app requiring macOS 13+. ZIP only the `.a
 
 ## Documentation checks
 
-After changing a guide, run `python3 tools/check-docs.py` from the repository root. It checks Markdown links, section anchors, image descriptions and the current package/badge references. Update those version assertions whenever the public channel changes. Keep technical reports in the docs index and the main README focused on downloads and the app.
+After changing a guide, run `python3 tools/check-docs.py` from the repository root. It checks Markdown links, section anchors, image descriptions and current package references. When updating the TV download instructions, verify that any new AFTVnews code resolves to the intended APK and update the download table, install guide, release page, and documentation checks together. Existing codes keep their original destinations. Keep technical reports in the docs index and the main README focused on downloads and the app.

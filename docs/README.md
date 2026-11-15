@@ -12,17 +12,15 @@
 | See what is tested and what is pending | [Current status](STATUS.md) |
 | Build, inspect source or publish an update | [Build and release process](RELEASING.md) |
 
-## Current releases
+## Current release
 
-| Platform | Release | Notes |
-| :--- | :--- | :--- |
-| iPhone, iPad and Mac | [182 · 0.5.38](https://github.com/4marawan001/Mira/releases/tag/v0.5.38) | [Changes and validation](BUILD-182.md) |
-| Fire TV | [180 · 0.5.36](https://github.com/4marawan001/Mira/releases/tag/v0.5.36) | [Changes and validation](BUILD-180.md) |
-
-The current package versions are in the [download table](../README.md#download). Older reports describe their own builds; their test counts and device limitations are historical.
+[Mira 0.6.2](https://github.com/4marawan001/Mira/releases/tag/v0.6.2) includes TV build 209, Mac build 203, and iPhone, iPad, and Android mobile build 204. See the [download table](../README.md#download) for device-specific packages.
 
 <details>
 <summary>Earlier builds and investigations</summary>
+
+- [Build 182 report](BUILD-182.md) · [TV build 180 report](BUILD-180.md)
+- [Overhaul preview](OVERHAUL-PREVIEW.md) · [TV interfaces 199](TV-INTERFACES-199.md) · [Mac updater repair 198](MAC-UPDATER-198.md)
 
 - [iPhone & Mac 181](BUILD-181.md)
 - [October 14 audit](AUDIT-2026-10-14.md)
